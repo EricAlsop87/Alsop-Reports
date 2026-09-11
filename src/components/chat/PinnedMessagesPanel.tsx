@@ -73,7 +73,7 @@ export default function PinnedMessagesPanel({
   }
 
   return (
-    <div className="w-[300px] sm:w-[350px] border-l border-slate-200 bg-white flex flex-col h-full shrink-0 select-none animate-in slide-in-from-right duration-200">
+    <div className="w-full sm:w-[350px] absolute sm:relative inset-y-0 right-0 z-30 sm:z-auto shadow-2xl sm:shadow-none border-l border-slate-200 bg-white flex flex-col h-full shrink-0 select-none animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-2 text-slate-700">

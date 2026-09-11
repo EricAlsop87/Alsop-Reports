@@ -434,6 +434,11 @@ export default function MessageBubble({
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => { if (showEmojiPicker) return; setShowActions(false); setShowEmojiPicker(false); }}
+      onClick={() => {
+        if (window.matchMedia('(hover: none)').matches) {
+          setShowActions(prev => !prev)
+        }
+      }}
     >
       {isGrouped && (
         <div className="absolute left-[16px] top-1/2 -translate-y-1/2 w-[36px] text-right opacity-0 group-hover:opacity-100 transition-opacity duration-150 select-none pointer-events-none z-10">
@@ -649,7 +654,7 @@ export default function MessageBubble({
 
       {/* Modern Hover Action Bar with 1-Click Quick Emojis */}
       {showActions && (
-        <div className="absolute right-4 -top-3.5 flex items-center gap-0.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-700/80 rounded-full shadow-md px-1.5 py-0.5 z-20 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-2 sm:right-4 -top-3.5 flex items-center gap-0.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-700/80 rounded-full shadow-md px-1.5 py-0.5 z-20 animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)] overflow-x-auto">
           {/* 1-Click Popular Quick Reactions */}
           <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-slate-200 dark:border-slate-700">
             {['👍', '❤️', '😂', '🔥', '🎉', '🚀'].map((emoji) => (

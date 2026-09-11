@@ -103,7 +103,7 @@ export default function GifPicker({ onSelect, onClose }: GifPickerProps) {
 
   return (
     <div
-      className="w-[320px] sm:w-[384px] max-w-[100vw] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl z-40 animate-in fade-in zoom-in-95 duration-100"
+      className="w-[min(384px,calc(100vw-32px))] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl z-40 animate-in fade-in zoom-in-95 duration-100"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

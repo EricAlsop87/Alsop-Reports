@@ -26,6 +26,7 @@ interface ConversationSidebarProps {
   onCreateNew: (defaultTab?: 'dm' | 'group' | 'channel') => void
   onStatusChange: (status: PresenceStatus) => void
   onTogglePin: (conversationId: string, currentlyPinned: boolean) => void
+  className?: string
 }
 
 function getDmDisplayName(conversation: Conversation, currentAgentId: string): string {
@@ -78,6 +79,7 @@ export default function ConversationSidebar({
   onCreateNew,
   onStatusChange,
   onTogglePin,
+  className,
 }: ConversationSidebarProps) {
   const [search, setSearch] = useState('')
   const [channelsOpen, setChannelsOpen] = useState(true)
@@ -136,7 +138,7 @@ export default function ConversationSidebar({
   }, [directMessages, search, currentAgent.id])
 
   return (
-    <div className="w-[280px] flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden shrink-0">
+    <div className={cn("w-full md:w-[280px] md:min-w-[280px] flex flex-col bg-white border-b md:border-b-0 md:border-r border-slate-200 h-full shrink-0", className)}>
       {/* Search */}
       <div className="p-3 border-b border-slate-100">
         <div className="relative">

@@ -507,8 +507,8 @@ export default function AgentHudPanel() {
           </div>
         ) : (
           /* ── List View ── */
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-[13px]">
+          <div className="rounded-lg border border-slate-200 bg-white overflow-x-auto shadow-xs">
+            <table className="w-full text-left text-[13px] min-w-[600px]">
               <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Agent</th>

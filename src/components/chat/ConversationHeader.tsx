@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Hash, Search, Pin, Settings, Users, X } from 'lucide-react'
+import { Hash, Search, Pin, Settings, Users, X, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
 import UserHoverCard from './UserHoverCard'
@@ -16,6 +16,7 @@ interface ConversationHeaderProps {
   onSearchClick: () => void
   onPinnedClick: () => void
   onSettingsClick: () => void
+  onBackClick?: () => void
 }
 
 import { Avatar } from "@/components/ui/Avatar"
@@ -29,6 +30,7 @@ export default function ConversationHeader({
   onSearchClick,
   onPinnedClick,
   onSettingsClick,
+  onBackClick,
 }: ConversationHeaderProps) {
   const [isMembersPinned, setIsMembersPinned] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
@@ -82,9 +84,21 @@ export default function ConversationHeader({
   }, [sortedMembers])
 
   return (
-    <div className="px-4 py-3 border-b border-slate-100 bg-white flex items-center justify-between gap-4 shrink-0 relative z-20">
+    <div className="px-3 sm:px-4 py-3 border-b border-slate-100 bg-white flex items-center justify-between gap-2 sm:gap-4 shrink-0 relative z-20">
       {/* Left side */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Back Button */}
+        {onBackClick && (
+          <button
+            onClick={onBackClick}
+            className="md:hidden -ml-1 mr-0.5 p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+            title="Back to channels"
+            aria-label="Back to channels"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Icon / Avatar */}
         {isChannel ? (
           <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">

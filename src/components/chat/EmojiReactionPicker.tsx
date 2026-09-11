@@ -305,7 +305,7 @@ export default function EmojiReactionPicker({
       )}
     >
       {!showExpanded ? (
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full shadow-lg p-1.5 px-2">
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full shadow-lg p-1.5 px-2 max-w-[calc(100vw-32px)] overflow-x-auto">
           {QUICK_REACTIONS.map((emoji) => (
             <button
               key={emoji}
@@ -330,7 +330,7 @@ export default function EmojiReactionPicker({
           </button>
         </div>
       ) : (
-        <div className="w-[300px] sm:w-[320px] bg-white border border-slate-200 rounded-xl shadow-2xl p-3 flex flex-col gap-2">
+        <div className="w-[min(320px,calc(100vw-32px))] bg-white border border-slate-200 rounded-xl shadow-2xl p-3 flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />

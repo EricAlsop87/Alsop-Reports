@@ -40,6 +40,7 @@ import AgentHudPanel from "@/components/chat/AgentHudPanel"
 import { updatePresence } from "@/lib/chat/realtime"
 import { MessageSquare, MonitorSmartphone } from "lucide-react"
 import { useToast } from "@/components/ui/Toast"
+import { cn } from "@/lib/utils"
 
 export default function CommunicationHub() {
   const { currentAgent, hasPermission, unreadCounts, refreshUnreadCounts, signOut, setManualPresence, setActiveConversationId } = useChat()
@@ -478,14 +479,29 @@ export default function CommunicationHub() {
     [currentAgent, setManualPresence]
   )
 
+  const handleBackToSidebar = useCallback(() => {
+    setSelectedId(null)
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('id')
+      newUrl.searchParams.delete('channel')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [])
+
   // ── Render ────────────────────────────────────────────────────
   if (!currentAgent) return null
 
+  const isMobileChatActive = (selectedId !== null || showHudPanel)
+
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
-      <div className="flex flex-1 min-h-0 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="h-full md:h-[calc(100vh-2rem)] flex flex-col p-0 sm:p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
+      <div className="flex flex-1 min-h-0 rounded-none sm:rounded-xl border-0 sm:border border-slate-200 bg-white shadow-none sm:shadow-sm overflow-hidden relative">
         {/* Left Sidebar */}
         <ConversationSidebar
+          className={cn(
+            isMobileChatActive ? "hidden md:flex" : "flex flex-1 md:flex-initial w-full md:w-[280px]"
+          )}
           conversations={conversations}
           selectedId={selectedId}
           unreadCounts={unreadCounts}
@@ -522,12 +538,25 @@ export default function CommunicationHub() {
         />
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={cn(
+          "flex-1 flex flex-col min-w-0 h-full",
+          !isMobileChatActive ? "hidden md:flex" : "flex"
+        )}>
           {/* Chat / HUD Tab Toggle */}
           <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200 bg-slate-50/80 shrink-0">
+            {/* Mobile back to channel list button when in HUD view */}
+            {showHudPanel && (
+              <button
+                onClick={handleBackToSidebar}
+                className="md:hidden mr-1 p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+                title="Back to conversations"
+              >
+                <span className="text-xs font-semibold">← Channels</span>
+              </button>
+            )}
             <button
               onClick={() => setShowHudPanel(false)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 !showHudPanel
                   ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
@@ -538,7 +567,7 @@ export default function CommunicationHub() {
             </button>
             <button
               onClick={() => setShowHudPanel(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 showHudPanel
                   ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
                   : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
@@ -562,6 +591,7 @@ export default function CommunicationHub() {
                 onSearchClick={() => {}}
                 onPinnedClick={() => setShowPinnedPanel(prev => !prev)}
                 onSettingsClick={() => setShowSettingsModal(true)}
+                onBackClick={handleBackToSidebar}
               />
 
               <MessageList
@@ -589,7 +619,7 @@ export default function CommunicationHub() {
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-slate-50/50">
-              <div className="text-center">
+              <div className="text-center p-4">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="w-8 h-8 text-slate-400" />
                 </div>
@@ -602,7 +632,7 @@ export default function CommunicationHub() {
               </div>
             </div>
           )}
-         </div>
+        </div>
 
         {showPinnedPanel && selectedConversation && (
           <PinnedMessagesPanel
