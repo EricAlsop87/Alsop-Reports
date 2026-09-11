@@ -72,11 +72,16 @@ export function subscribeToConversation(
         table: 'chat_message_reactions',
       },
       (payload) => {
-        // Only forward reactions for messages in this conversation.
-        // Supabase doesn't support multi-table joins on filters, so we
-        // let the caller filter if necessary — most UIs already scope to
-        // the current conversation's message IDs.
         callbacks.onNewReaction(payload.new as any)
+      },
+    )
+    .on(
+      'broadcast',
+      { event: 'typing' },
+      (payload) => {
+        if (callbacks.onTyping && payload.payload) {
+          callbacks.onTyping(payload.payload as any)
+        }
       },
     )
 
@@ -88,6 +93,23 @@ export function subscribeToConversation(
   })
 
   return channel
+}
+
+/**
+ * Broadcast typing status to all participants in the active conversation channel.
+ */
+export function broadcastTyping(
+  channel: RealtimeChannel | null,
+  agentId: string,
+  agentName: string,
+  isTyping: boolean,
+): void {
+  if (!channel) return
+  channel.send({
+    type: 'broadcast',
+    event: 'typing',
+    payload: { agent_id: agentId, agent_name: agentName, is_typing: isTyping },
+  }).catch(() => {})
 }
 
 // ---------------------------------------------------------------------------

@@ -12,13 +12,17 @@ import {
   AlertCircle,
   ExternalLink,
   Plus,
+  Check,
+  CheckCheck,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChat } from '@/lib/chat/chatContext'
+import { triggerConfetti } from '@/lib/chat/confetti'
 import type { Message, Reaction, Agent } from './types'
 import UserPresenceBadge from './UserPresenceBadge'
 import UserHoverCard from './UserHoverCard'
-import EmojiReactionPicker from './EmojiReactionPicker'
+import EmojiReactionPicker, { QUICK_REACTIONS } from './EmojiReactionPicker'
 
 interface MessageBubbleProps {
   message: Message
@@ -459,12 +463,12 @@ export default function MessageBubble({
       )}
 
       {/* Message Row */}
-      <div className={cn('flex items-start gap-3 px-4', isGrouped ? 'pl-[60px]' : '')}>
+      <div className={cn('flex items-start gap-3 px-4 py-1 transition-colors', isGrouped ? 'pl-[60px]' : 'mt-1')}>
         {/* Avatar with presence status dot overlay */}
         {!isGrouped && (
           <UserHoverCard agent={message.sender ? { ...message.sender, id: senderId, presence: senderPresence, status_message: senderStatusMsg } : { id: senderId, name: senderName, presence: senderPresence, status_message: senderStatusMsg }} side="top" className="shrink-0 self-start">
             <div className="relative shrink-0 mt-0.5 w-8 h-8 cursor-pointer group/avatar">
-              <Avatar name={senderName} url={message.sender?.avatar_url} className="w-8 h-8 text-xs select-none transition-transform group-hover/avatar:scale-105 shadow-none" fallbackClassName="w-8 h-8 text-xs select-none transition-transform group-hover/avatar:scale-105 shadow-none" />
+              <Avatar name={senderName} url={message.sender?.avatar_url} className="w-8 h-8 text-xs select-none transition-transform group-hover/avatar:scale-105 shadow-xs" fallbackClassName="w-8 h-8 text-xs select-none transition-transform group-hover/avatar:scale-105 shadow-xs" />
               <UserPresenceBadge
                 status={senderPresence as any}
                 size="sm"
@@ -480,10 +484,29 @@ export default function MessageBubble({
           {!isGrouped && (
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
               <UserHoverCard agent={message.sender || { name: senderName }} side="top">
-                <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer transition-colors">
+                <span className={cn(
+                  "text-[13px] font-bold hover:underline cursor-pointer transition-colors",
+                  isOwn ? "text-blue-700 dark:text-blue-400" : "text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
+                )}>
                   {senderName}
                 </span>
               </UserHoverCard>
+
+              {/* Role / Team Badge */}
+              {message.sender?.team && (
+                <span className={cn(
+                  "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border select-none",
+                  message.sender.team.toLowerCase().includes('sales')
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
+                    : message.sender.team.toLowerCase().includes('csr')
+                    ? "bg-sky-50 text-sky-700 border-sky-200/80"
+                    : message.sender.team.toLowerCase().includes('ea')
+                    ? "bg-purple-50 text-purple-700 border-purple-200/80"
+                    : "bg-slate-100 text-slate-600 border-slate-200"
+                )}>
+                  {message.sender.team}
+                </span>
+              )}
               
               {/* Premium Inline Status Badge */}
               {statusInfo.text && (
@@ -499,6 +522,15 @@ export default function MessageBubble({
               <span className="text-[11px] text-slate-400 font-medium">
                 {formatTime(message.created_at)}
               </span>
+
+              {/* Seen / Delivered Indicator for your own messages */}
+              {isOwn && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 font-semibold ml-0.5 select-none" title="Delivered & Seen">
+                  <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="hidden sm:inline">Seen</span>
+                </span>
+              )}
+
               {message.is_pinned && (
                 <Pin className="w-3 h-3 text-amber-500 shrink-0" />
               )}
@@ -534,7 +566,7 @@ export default function MessageBubble({
                   <button
                     onClick={handleSaveEdit}
                     disabled={isSaving}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.25 rounded transition-colors font-medium disabled:opacity-50"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.25 rounded transition-colors font-medium disabled:opacity-50 cursor-pointer"
                   >
                     Save
                   </button>
@@ -544,7 +576,7 @@ export default function MessageBubble({
                       setEditValue(message.content)
                     }}
                     disabled={isSaving}
-                    className="text-slate-500 hover:text-slate-700 font-medium px-2 py-1.25 transition-colors"
+                    className="text-slate-500 hover:text-slate-700 font-medium px-2 py-1.25 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -570,12 +602,17 @@ export default function MessageBubble({
                 return (
                   <div key={r.emoji} className="relative group/reaction inline-flex">
                     <button
-                      onClick={() => onReact(message.id, r.emoji)}
+                      onClick={() => {
+                        if (['🎉', '🚀', '🥳', '🏆', '💯', '✨'].includes(r.emoji)) {
+                          triggerConfetti()
+                        }
+                        onReact(message.id, r.emoji)
+                      }}
                       title={`${r.emoji} ${reactorNames}`}
                       className={cn(
-                        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border transition-all duration-150 cursor-pointer select-none',
+                        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border transition-all duration-150 cursor-pointer select-none active:scale-90',
                         isReactedByMe
-                          ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium hover:bg-blue-100 hover:border-blue-300'
+                          ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium hover:bg-blue-100 hover:border-blue-300 shadow-2xs'
                           : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
                       )}
                     >
@@ -610,37 +647,64 @@ export default function MessageBubble({
         </div>
       </div>
 
-      {/* Hover action bar */}
+      {/* Modern Hover Action Bar with 1-Click Quick Emojis */}
       {showActions && (
-        <div className="absolute right-3 -top-3 flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg shadow-sm px-1 py-0.5 z-10">
-          <button
-            onClick={() => onReply(message.id)}
-            className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-            title="Reply"
-          >
-            <Reply className="w-3.5 h-3.5" />
-          </button>
+        <div className="absolute right-4 -top-3.5 flex items-center gap-0.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-700/80 rounded-full shadow-md px-1.5 py-0.5 z-20 animate-in fade-in zoom-in-95 duration-100">
+          {/* 1-Click Popular Quick Reactions */}
+          <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-slate-200 dark:border-slate-700">
+            {['👍', '❤️', '😂', '🔥', '🎉', '🚀'].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => {
+                  if (['🎉', '🚀', '🥳', '🏆', '💯', '✨'].includes(emoji)) {
+                    triggerConfetti()
+                  }
+                  onReact(message.id, emoji)
+                }}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:scale-125 transition-all text-sm cursor-pointer select-none"
+                title={`React with ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
 
           <div className="relative">
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors cursor-pointer"
-              title="React"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+              title="More reactions..."
             >
               <Smile className="w-3.5 h-3.5" />
             </button>
             {showEmojiPicker && (
               <EmojiReactionPicker
                 align="right"
-                onSelect={(emoji) => onReact(message.id, emoji)}
+                placement="bottom"
+                onSelect={(emoji) => {
+                  if (['🎉', '🚀', '🥳', '🏆', '💯', '✨'].includes(emoji)) {
+                    triggerConfetti()
+                  }
+                  onReact(message.id, emoji)
+                  setShowEmojiPicker(false)
+                  setShowActions(false)
+                }}
                 onClose={() => { setShowEmojiPicker(false); setShowActions(false); }}
               />
             )}
           </div>
 
           <button
+            onClick={() => onReply(message.id)}
+            className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+            title="Reply"
+          >
+            <Reply className="w-3.5 h-3.5" />
+          </button>
+
+          <button
             onClick={() => onPin(message.id)}
-            className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
             title={message.is_pinned ? 'Unpin' : 'Pin'}
           >
             <Pin className="w-3.5 h-3.5" />
@@ -652,20 +716,20 @@ export default function MessageBubble({
                 setIsEditing(true)
                 setEditValue(message.content)
               }}
-              className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               title="Edit"
             >
-              <Pencil className="w-3.5 h-3.5" />
+              <Pencil className="w-3 h-3" />
             </button>
           )}
 
           {(isOwn || isAdmin) && (
             <button
               onClick={() => onDelete(message.id)}
-              className="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
               title="Delete"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3 h-3" />
             </button>
           )}
         </div>

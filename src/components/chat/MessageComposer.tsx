@@ -9,10 +9,11 @@ import React, {
   type ClipboardEvent,
   type FormEvent,
 } from 'react'
-import { Send, X, ChevronDown, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react'
+import { Send, X, ChevronDown, AlertTriangle, AlertCircle, Loader2, Smile } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import MentionAutocomplete from './MentionAutocomplete'
 import GifPicker from './GifPicker'
+import EmojiReactionPicker from './EmojiReactionPicker'
 import type { Agent, Message } from './types'
 
 interface MessageComposerProps {
@@ -88,6 +89,7 @@ export default function MessageComposer({
   const [isUploading, setIsUploading] = useState(false)
   const [showPriority, setShowPriority] = useState(false)
   const [showGifPicker, setShowGifPicker] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
   const editorRef = useRef<HTMLDivElement>(null)
@@ -273,6 +275,60 @@ export default function MessageComposer({
 
   const handleInput = useCallback(
     (e: FormEvent<HTMLDivElement>) => {
+      // Auto-replace emoji shortcodes like :fire:, :rocket:, <3
+      const sel = window.getSelection()
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0)
+        const node = range.startContainer
+        if (node && node.nodeType === Node.TEXT_NODE && node.textContent) {
+          let text = node.textContent
+          let replaced = false
+          const shortcodeMap: Record<string, string> = {
+            ':fire:': '🔥',
+            ':lit:': '🔥',
+            ':rocket:': '🚀',
+            ':tada:': '🎉',
+            ':party:': '🎉',
+            ':celebrate:': '🥳',
+            ':heart:': '❤️',
+            '<3': '❤️',
+            ':thumbsup:': '👍',
+            ':+1:': '👍',
+            ':thumbsdown:': '👎',
+            ':-1:': '👎',
+            ':smile:': '😄',
+            ':joy:': '😂',
+            ':lol:': '😂',
+            ':sunglasses:': '😎',
+            ':cool:': '😎',
+            ':100:': '💯',
+            ':clap:': '👏',
+            ':pray:': '🙏',
+            ':star:': '⭐',
+            ':eyes:': '👀',
+            ':wink:': '😉',
+            ':mindblown:': '🤯',
+            ':muscle:': '💪',
+            ':target:': '🎯',
+            ':trophy:': '🏆',
+            ':sparkles:': '✨',
+            ':check:': '✅',
+          }
+          for (const [code, emoji] of Object.entries(shortcodeMap)) {
+            if (text.includes(code)) {
+              text = text.replace(code, emoji)
+              replaced = true
+            }
+          }
+          if (replaced) {
+            node.textContent = text
+            range.setStartAfter(node)
+            range.setEndAfter(node)
+            sel.removeAllRanges()
+            sel.addRange(range)
+          }
+        }
+      }
       updateContentFromDom()
     },
     [updateContentFromDom]
@@ -310,6 +366,27 @@ export default function MessageComposer({
     updateContentFromDom()
     setShowGifPicker(false)
     editorRef.current.focus()
+  }, [updateContentFromDom])
+
+  const handleEmojiSelect = useCallback((emoji: string) => {
+    if (!editorRef.current) return
+    editorRef.current.focus()
+
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      const textNode = document.createTextNode(emoji)
+      range.insertNode(textNode)
+      range.setStartAfter(textNode)
+      range.setEndAfter(textNode)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    } else {
+      editorRef.current.appendChild(document.createTextNode(emoji))
+    }
+    updateContentFromDom()
+    setShowEmojiPicker(false)
   }, [updateContentFromDom])
 
   const canSendUrgent = hasPermission('send_urgent_messages')
@@ -375,6 +452,37 @@ export default function MessageComposer({
           {/* Action buttons toolbar */}
           <div className={cn("flex items-center gap-1 shrink-0", isCompact ? "justify-between w-full pb-0" : "pb-1")}>
             <div className="flex items-center gap-1">
+              {/* Built-in Emoji Picker Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer select-none',
+                    showEmojiPicker
+                      ? 'bg-amber-100 text-amber-800 shadow-xs ring-1 ring-amber-300'
+                      : 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
+                  )}
+                  title="Insert an Emoji"
+                >
+                  <Smile className="w-4 h-4 text-amber-500" />
+                  <span className={cn("hidden", isCompact ? "" : "sm:inline")}>Emoji</span>
+                </button>
+
+                {/* Emoji Picker Dropdown */}
+                {showEmojiPicker && (
+                  <div className="absolute z-50 bottom-full left-0 mb-2">
+                    <EmojiReactionPicker
+                      align="left"
+                      placement="top"
+                      defaultExpanded={true}
+                      onSelect={handleEmojiSelect}
+                      onClose={() => setShowEmojiPicker(false)}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Built-in GIF Picker Button */}
               <div className="relative">
                 <button

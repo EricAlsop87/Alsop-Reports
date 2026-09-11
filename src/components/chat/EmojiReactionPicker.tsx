@@ -227,16 +227,20 @@ interface EmojiReactionPickerProps {
   onSelect: (emoji: string) => void
   onClose: () => void
   align?: 'left' | 'right'
+  defaultExpanded?: boolean
+  placement?: 'top' | 'bottom'
 }
 
 export default function EmojiReactionPicker({
   onSelect,
   onClose,
   align = 'right',
+  defaultExpanded = false,
+  placement = 'bottom',
 }: EmojiReactionPickerProps) {
   const [activeTab, setActiveTab] = useState<string>('popular')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showExpanded, setShowExpanded] = useState(false)
+  const [showExpanded, setShowExpanded] = useState(defaultExpanded)
   const containerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -295,7 +299,8 @@ export default function EmojiReactionPicker({
     <div
       ref={containerRef}
       className={cn(
-        'absolute top-full mt-1.5 z-40 select-none animate-in fade-in zoom-in-95 duration-150',
+        'absolute z-40 select-none animate-in fade-in zoom-in-95 duration-150',
+        placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-1.5',
         align === 'right' ? 'right-0' : 'left-0'
       )}
     >
