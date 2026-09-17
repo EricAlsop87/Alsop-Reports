@@ -495,7 +495,7 @@ export default function CommunicationHub() {
   const isMobileChatActive = (selectedId !== null || showHudPanel)
 
   return (
-    <div className="h-full md:h-[calc(100vh-2rem)] flex flex-col p-0 sm:p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
+    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col p-0 sm:p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto overflow-hidden">
       <div className="flex flex-1 min-h-0 rounded-none sm:rounded-xl border-0 sm:border border-slate-200 bg-white shadow-none sm:shadow-sm overflow-hidden relative">
         {/* Left Sidebar */}
         <ConversationSidebar

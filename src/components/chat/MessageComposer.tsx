@@ -8,8 +8,22 @@ import React, {
   type KeyboardEvent,
   type ClipboardEvent,
   type FormEvent,
+  type DragEvent,
 } from 'react'
-import { Send, X, ChevronDown, AlertTriangle, AlertCircle, Loader2, Smile } from 'lucide-react'
+import {
+  Send,
+  X,
+  ChevronDown,
+  AlertTriangle,
+  AlertCircle,
+  Loader2,
+  Smile,
+  Paperclip,
+  FileText,
+  Image as ImageIcon,
+  File as FileIcon,
+  Plus,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import MentionAutocomplete from './MentionAutocomplete'
 import GifPicker from './GifPicker'
@@ -25,6 +39,15 @@ interface MessageComposerProps {
   onCancelReply: () => void
   hasPermission: (key: string) => boolean
   isCompact?: boolean
+}
+
+interface UploadedAttachment {
+  id: string
+  url: string
+  name: string
+  type: string
+  size?: number
+  ext: string
 }
 
 type PriorityLevel = 'normal' | 'important' | 'urgent'
@@ -44,6 +67,13 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; icon: React.React
     color: 'text-red-600',
   },
 ]
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 /**
  * Extracts plain text and image URLs from contentEditable DOM tree
@@ -84,15 +114,18 @@ export default function MessageComposer({
   isCompact = false,
 }: MessageComposerProps) {
   const [content, setContent] = useState('')
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([])
   const [priority, setPriority] = useState<PriorityLevel>('normal')
   const [isSending, setIsSending] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [showPriority, setShowPriority] = useState(false)
   const [showGifPicker, setShowGifPicker] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
   const editorRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Focus editor on mount and conversation change
   useEffect(() => {
@@ -129,15 +162,73 @@ export default function MessageComposer({
     }
   }, [])
 
+  // File upload processor
+  const handleUploadFiles = useCallback(async (files: FileList | File[]) => {
+    if (!files || files.length === 0) return
+    setIsUploading(true)
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const res = await fetch('/api/chat/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.url) {
+            setAttachments(prev => [
+              ...prev,
+              {
+                id: `${Date.now()}-${Math.random()}`,
+                url: data.url,
+                name: data.originalName || file.name,
+                type: data.fileType || file.type,
+                size: data.fileSize || file.size,
+                ext: data.ext || file.name.split('.').pop() || 'bin'
+              }
+            ])
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to upload files:', err)
+    } finally {
+      setIsUploading(false)
+      setTimeout(() => {
+        editorRef.current?.focus()
+      }, 0)
+    }
+  }, [])
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleUploadFiles(e.target.files)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id))
+  }
+
   const handleSend = useCallback(async () => {
     const text = content.trim()
-    if (!text || isSending || isUploading) return
+    const attachmentLinks = attachments.map(a => a.url).join('\n')
+    const fullMessage = [text, attachmentLinks].filter(Boolean).join('\n')
+
+    if (!fullMessage.trim() || isSending || isUploading) return
 
     // Clear input immediately for better UX
     if (editorRef.current) {
       editorRef.current.innerHTML = ''
     }
     setContent('')
+    setAttachments([])
     setPriority('normal')
     setShowGifPicker(false)
     
@@ -146,11 +237,11 @@ export default function MessageComposer({
 
     setIsSending(true)
     try {
-      await onSend(text, replyTo?.id, priority)
+      await onSend(fullMessage, replyTo?.id, priority)
     } finally {
       setIsSending(false)
     }
-  }, [content, isSending, isUploading, onSend, replyTo, priority])
+  }, [content, attachments, isSending, isUploading, onSend, replyTo, priority])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -390,10 +481,54 @@ export default function MessageComposer({
   }, [updateContentFromDom])
 
   const canSendUrgent = hasPermission('send_urgent_messages')
-  const isEmpty = !content.trim()
+  const isEmpty = !content.trim() && attachments.length === 0
 
   return (
-    <div className={cn("relative border-t border-slate-100 bg-white", isCompact ? "shrink-0" : "")}>
+    <div
+      className={cn(
+        "relative border-t border-slate-100 bg-white transition-all",
+        isDraggingOver && "ring-2 ring-blue-400 bg-blue-50/20",
+        isCompact ? "shrink-0" : ""
+      )}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDraggingOver(true)
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDraggingOver(false)
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDraggingOver(false)
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleUploadFiles(e.dataTransfer.files)
+        }
+      }}
+    >
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+
+      {/* Drag & Drop Visual Overlay */}
+      {isDraggingOver && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center rounded-lg border-2 border-dashed border-blue-500 bg-blue-50/95 backdrop-blur-xs transition-all pointer-events-none">
+          <div className="flex flex-col items-center gap-1.5 text-blue-700 font-semibold text-xs sm:text-sm animate-pulse">
+            <Paperclip className="h-6 w-6 text-blue-600 animate-bounce" />
+            <span>Drop files or PDFs to attach</span>
+          </div>
+        </div>
+      )}
+
       {/* Reply preview */}
       {replyTo && (
         <div className={cn("pb-0", isCompact ? "px-2 pt-2" : "px-4 pt-3")}>
@@ -419,9 +554,53 @@ export default function MessageComposer({
       <div className={cn(isCompact ? "p-2" : "p-3 sm:p-4")}>
         {/* Uploading indicator */}
         {isUploading && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-pink-50 border border-pink-100 px-3 py-1.5 text-xs text-pink-700 font-medium animate-pulse">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-pink-600" />
-            <span>Processing and uploading GIF...</span>
+          <div className="mb-2 flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-100 px-3 py-1.5 text-xs text-blue-700 font-medium animate-pulse">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+            <span>Uploading file / media attachment...</span>
+          </div>
+        )}
+
+        {/* Pending Attachments Tray */}
+        {attachments.length > 0 && (
+          <div className="mb-2.5 flex flex-wrap gap-2">
+            {attachments.map((att) => {
+              const isPdf = att.ext.toLowerCase() === 'pdf'
+              const isImg = att.type.startsWith('image/')
+              return (
+                <div
+                  key={att.id}
+                  className="group relative flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white p-1.5 pr-2.5 shadow-xs transition-all"
+                >
+                  {isImg ? (
+                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded bg-slate-200 border border-slate-300">
+                      <img src={att.url} alt={att.name} className="h-full w-full object-cover" />
+                    </div>
+                  ) : isPdf ? (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-red-100 text-red-600">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-blue-100 text-blue-600">
+                      <FileIcon className="h-4 w-4" />
+                    </div>
+                  )}
+                  <div className="max-w-[130px] sm:max-w-[190px] min-w-0">
+                    <p className="truncate text-xs font-semibold text-slate-800">{att.name}</p>
+                    {att.size && (
+                      <p className="text-[10px] text-slate-400 font-medium">{formatFileSize(att.size)}</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(att.id)}
+                    className="ml-1 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                    title="Remove attachment"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         )}
 
@@ -429,10 +608,10 @@ export default function MessageComposer({
           "flex bg-slate-50 border border-slate-200 rounded-xl p-2 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all",
           isCompact ? "flex-col gap-2" : "flex-row items-end gap-2 sm:gap-3"
         )}>
-          {/* ContentEditable Rich Text Input */}
+          {/* ContentEditable Rich Text Input with 16px mobile font to prevent auto-zoom */}
           <div className="relative flex-1 min-w-0 min-h-[40px] max-h-[160px] overflow-y-auto">
             {isEmpty && (
-              <div className="pointer-events-none absolute left-2 sm:left-3 top-2 text-sm text-slate-400 select-none">
+              <div className="pointer-events-none absolute left-2 sm:left-3 top-2 text-base sm:text-sm text-slate-400 select-none">
                 Write a message...
               </div>
             )}
@@ -444,7 +623,7 @@ export default function MessageComposer({
               onInput={handleInput}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              className="w-full bg-transparent border-none px-2 sm:px-3 py-2 text-sm text-slate-900 focus:outline-none min-h-[40px] whitespace-pre-wrap break-words leading-normal cursor-text"
+              className="w-full bg-transparent border-none px-2 sm:px-3 py-2 text-base sm:text-sm text-slate-900 focus:outline-none min-h-[40px] whitespace-pre-wrap break-words leading-normal cursor-text"
               style={{ minHeight: '40px' }}
             />
           </div>
@@ -452,6 +631,21 @@ export default function MessageComposer({
           {/* Action buttons toolbar */}
           <div className={cn("flex items-center gap-1 shrink-0", isCompact ? "justify-between w-full pb-0" : "pb-1")}>
             <div className="flex items-center gap-1">
+              {/* Attachment Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer',
+                  isUploading && 'opacity-50 cursor-not-allowed'
+                )}
+                title="Attach Images, PDFs, or Documents"
+              >
+                <Paperclip className="w-4 h-4 text-slate-500" />
+                <span className={cn("hidden", isCompact ? "" : "sm:inline")}>Attach</span>
+              </button>
+
               {/* Built-in Emoji Picker Button */}
               <div className="relative">
                 <button

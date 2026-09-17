@@ -15,6 +15,15 @@ import {
   Check,
   CheckCheck,
   Sparkles,
+  FileText,
+  File,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Eye,
+  Copy,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChat } from '@/lib/chat/chatContext'
@@ -99,75 +108,354 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Known image/GIF CDN domains and file extensions for inline rendering
-const IMAGE_EXTENSIONS = /\.(gif|png|jpg|jpeg|webp|svg|bmp)(\?.*)?$/i
-const IMAGE_CDN_DOMAINS = [
-  'media.tenor.com',
-  'media.giphy.com',
-  'media0.giphy.com',
-  'media1.giphy.com',
-  'media2.giphy.com',
-  'media3.giphy.com',
-  'media4.giphy.com',
-  'i.giphy.com',
-  'i.imgur.com',
-  'c.tenor.com',
-]
+// File extension matchers
+const PDF_EXTENSIONS = /\.(pdf)(\?.*)?$/i
+const DOC_EXTENSIONS = /\.(docx|doc|xlsx|xls|csv|txt)(\?.*)?$/i
+const IMAGE_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|svg|bmp)(\?.*)?$/i
 
 function isImageUrl(url: string): boolean {
   if (IMAGE_EXTENSIONS.test(url)) return true
-  if (url.startsWith('data:image/')) return true
   try {
     const parsed = new URL(url)
-    const hostname = parsed.hostname.toLowerCase()
-    if (parsed.pathname.includes('/storage/v1/object/public/chat-media/')) return true
-    return IMAGE_CDN_DOMAINS.some(domain => hostname === domain || hostname.endsWith('.' + domain))
+    return (
+      /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(parsed.pathname) ||
+      parsed.hostname.includes('giphy.com') ||
+      parsed.hostname.includes('tenor.com') ||
+      (parsed.hostname.includes('supabase.co') && parsed.pathname.includes('/chat-media/'))
+    )
   } catch {
     return false
   }
 }
 
-/**
- * Detect GIF platform "view" pages (tenor.com/view/..., giphy.com/gifs/...)
- * and return their embed iframe URL, or null if not a GIF page.
- */
 function getGifEmbedUrl(url: string): string | null {
   try {
     const parsed = new URL(url)
-    const host = parsed.hostname.toLowerCase()
-    const path = parsed.pathname
-
-    // tenor.com/view/some-slug-gif-12345 → iframe embed
-    if (host === 'tenor.com' && path.startsWith('/view/')) {
-      // Extract the numeric ID from the end of the slug
-      const match = path.match(/-(\d+)$/)
-      if (match) return `https://tenor.com/embed/${match[1]}`
-      return `https://tenor.com/embed${path.replace('/view/', '/')}`
+    if (parsed.hostname.includes('giphy.com')) {
+      const match = parsed.pathname.match(/gifs\/(?:.*-)?([a-zA-Z0-9]+)$/)
+      if (match && match[1]) {
+        return `https://giphy.com/embed/${match[1]}`
+      }
     }
-
-    // tenor.com/bXYzA.gif style short URLs
-    if (host === 'tenor.com' && /^\/[a-zA-Z0-9]+\.gif$/i.test(path)) {
-      return url // These are direct GIF files
+    if (parsed.hostname.includes('tenor.com')) {
+      const match = parsed.pathname.match(/view\/(?:.*-)?([0-9]+)$/)
+      if (match && match[1]) {
+        return `https://tenor.com/embed/${match[1]}`
+      }
     }
-
-    // giphy.com/gifs/some-slug-abc123 → iframe embed
-    if (host === 'giphy.com' && path.startsWith('/gifs/')) {
-      const slug = path.replace('/gifs/', '')
-      const id = slug.includes('-') ? slug.split('-').pop() : slug
-      return `https://giphy.com/embed/${id}`
-    }
-
-    return null
+    return url
   } catch {
     return null
   }
 }
 
+function isPdfUrl(url: string): boolean {
+  if (PDF_EXTENSIONS.test(url)) return true
+  try {
+    const parsed = new URL(url)
+    return parsed.pathname.endsWith('.pdf') || parsed.searchParams.get('type') === 'pdf'
+  } catch {
+    return false
+  }
+}
+
+function isDocUrl(url: string): boolean {
+  return DOC_EXTENSIONS.test(url)
+}
+
+function getFileNameFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    const name = parsed.pathname.split('/').pop() || 'document'
+    return decodeURIComponent(name)
+  } catch {
+    return 'document'
+  }
+}
+
 /**
- * Renders message content with inline markdown, mentions, and media.
- * Supports: **bold**, *italic*, `code`, @Mentions, URLs, inline images/GIFs
+ * Interactive Fullscreen Image Lightbox Modal (Zoom, Pan, Download, Copy)
  */
-function renderContent(content: string, currentAgent?: Agent | null): React.ReactNode[] {
+function ImageLightboxModal({
+  url,
+  onClose,
+}: {
+  url: string
+  onClose: () => void
+}) {
+  const [zoom, setZoom] = useState(1)
+  const [copied, setCopied] = useState(false)
+
+  const handleDownload = () => {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = getFileNameFromUrl(url)
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    a.click()
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-150 select-none"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="relative max-w-5xl w-full max-h-[92vh] flex flex-col items-center justify-center">
+        {/* Floating Toolbar */}
+        <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 rounded-full px-3 py-1.5 z-10 shadow-xl text-white">
+          <button
+            onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
+            className="p-1 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <span className="text-xs font-mono font-medium px-1">{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
+            className="p-1 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            title="Zoom In"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          <div className="w-[1px] h-4 bg-slate-700 mx-1" />
+          <button
+            onClick={handleCopy}
+            className="p-1 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            title="Copy Image Link"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={handleDownload}
+            className="p-1 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            title="Download Image"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-red-500/80 rounded-full transition-colors ml-1 cursor-pointer"
+            title="Close (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Image Display */}
+        <div className="overflow-auto max-h-[84vh] max-w-full flex items-center justify-center p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={url}
+            alt="Expanded view"
+            style={{ transform: `scale(${zoom})`, transition: 'transform 0.15s ease-out' }}
+            className="rounded-lg max-h-[80vh] max-w-full object-contain shadow-2xl"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Interactive In-App PDF Viewer Modal
+ */
+function PdfViewerModal({
+  url,
+  fileName,
+  onClose,
+}: {
+  url: string
+  fileName: string
+  onClose: () => void
+}) {
+  const handleDownload = () => {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    a.click()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+        {/* PDF Header */}
+        <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded">
+              PDF Document
+            </span>
+            <span className="font-semibold text-sm text-slate-100 truncate">{fileName}</span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-sky-400" />
+              <span>Download</span>
+            </button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              title="Open in new tab"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              title="Close viewer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Embedded PDF iframe */}
+        <div className="flex-1 w-full bg-slate-100 dark:bg-slate-950 relative">
+          <iframe
+            src={`${url}#toolbar=1`}
+            className="w-full h-full border-none"
+            title={fileName}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Modern In-Chat PDF Card Component
+ */
+function PdfCard({
+  url,
+  onOpenModal,
+}: {
+  url: string
+  onOpenModal: (url: string, name: string) => void
+}) {
+  const fileName = getFileNameFromUrl(url)
+
+  return (
+    <div className="my-1.5 max-w-sm bg-white dark:bg-slate-900 border border-red-200/80 dark:border-red-950/60 rounded-xl p-2.5 shadow-xs hover:shadow-md transition-all group/pdf">
+      <div className="flex items-center gap-3">
+        {/* Red PDF Icon */}
+        <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900/50 flex items-center justify-center shrink-0 text-red-600">
+          <FileText className="w-5 h-5" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/80 px-1.5 py-0.2 rounded">
+              PDF
+            </span>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{fileName}</p>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">Click to preview document in-app</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => onOpenModal(url, fileName)}
+          className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Preview PDF</span>
+        </button>
+
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          download={fileName}
+          className="flex items-center justify-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          title="Download PDF"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Modern In-Chat General Document Card Component
+ */
+function DocCard({ url }: { url: string }) {
+  const fileName = getFileNameFromUrl(url)
+  const isExcel = /\.xlsx?$/i.test(fileName) || /\.csv$/i.test(fileName)
+  const isWord = /\.docx?$/i.test(fileName)
+
+  const iconColor = isExcel ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : isWord ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-slate-600 bg-slate-50 border-slate-200'
+  const badgeColor = isExcel ? 'text-emerald-700 bg-emerald-50' : isWord ? 'text-blue-700 bg-blue-50' : 'text-slate-700 bg-slate-100'
+
+  return (
+    <div className="my-1.5 max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 shadow-xs hover:shadow-md transition-all">
+      <div className="flex items-center gap-3">
+        <div className={cn("w-10 h-10 rounded-lg border flex items-center justify-center shrink-0", iconColor)}>
+          <File className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className={cn("text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded", badgeColor)}>
+              {isExcel ? 'Spreadsheet' : isWord ? 'Document' : 'File'}
+            </span>
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{fileName}</p>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-0.5">Attachment file</p>
+        </div>
+
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          download={fileName}
+          className="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer shrink-0"
+          title="Download file"
+        >
+          <Download className="w-4 h-4" />
+        </a>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Renders message content with inline markdown, mentions, media, PDFs, and docs.
+ */
+function renderContent(
+  content: string,
+  currentAgent: Agent | null | undefined,
+  onOpenImage: (url: string) => void,
+  onOpenPdf: (url: string, name: string) => void
+): React.ReactNode[] {
   const parts: React.ReactNode[] = []
   
   // Multi-word mention targets or single word mention targets
@@ -215,7 +503,7 @@ function renderContent(content: string, currentAgent?: Agent | null): React.Reac
         </code>
       )
     } else if (full.startsWith('@')) {
-      // @Mention — only the exact target name is highlighted as a blue pill
+      // @Mention
       const targetName = full.slice(1).toLowerCase()
       const isTargetingMe = currentAgent && (
         currentAgent.name.toLowerCase() === targetName ||
@@ -240,67 +528,78 @@ function renderContent(content: string, currentAgent?: Agent | null): React.Reac
         </span>
       )
     } else if (full.startsWith('http') || full.startsWith('data:image/')) {
-      // 1. Check for GIF platform view pages (tenor.com/view, giphy.com/gifs)
-      const embedUrl = full.startsWith('http') ? getGifEmbedUrl(full) : null
-      if (embedUrl && embedUrl !== full) {
-        // Render as iframe embed for view pages
+      // 1. PDF detection
+      if (isPdfUrl(full)) {
         parts.push(
-          <div key={match.index} className="my-1">
-            <iframe
-              src={embedUrl}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"
-              width="280"
-              height="220"
-              frameBorder="0"
-              allowFullScreen
-              loading="lazy"
-              title="GIF"
-              style={{ maxWidth: '100%' }}
-            />
-          </div>
+          <PdfCard key={match.index} url={full} onOpenModal={onOpenPdf} />
         )
-      } else if (isImageUrl(full) || (embedUrl === full)) {
-        // 2. Direct image/GIF CDN URLs — render inline
+      } else if (isDocUrl(full)) {
+        // 2. Document attachment (Word / Excel / CSV)
         parts.push(
-          <a
-            key={match.index}
-            href={full}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block my-1"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={full}
-              alt="Shared image"
-              className="rounded-lg max-w-xs sm:max-w-sm max-h-64 object-contain border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-              loading="lazy"
-              onError={(e) => {
-                // Fallback: if image fails to load, replace with a text link
-                const target = e.currentTarget
-                const parent = target.parentElement
-                if (parent) {
-                  parent.className = 'text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 dark:text-blue-400'
-                  target.replaceWith(document.createTextNode(full.length > 50 ? full.slice(0, 50) + '…' : full))
-                }
-              }}
-            />
-          </a>
+          <DocCard key={match.index} url={full} />
         )
       } else {
-        // 3. Regular URL — render as clickable text link
-        parts.push(
-          <a
-            key={match.index}
-            href={full}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 dark:text-blue-400"
-          >
-            {full.length > 50 ? full.slice(0, 50) + '…' : full}
-            <ExternalLink className="w-3 h-3 inline shrink-0" />
-          </a>
-        )
+        // 3. Check for GIF platform view pages
+        const embedUrl = full.startsWith('http') ? getGifEmbedUrl(full) : null
+        if (embedUrl && embedUrl !== full) {
+          parts.push(
+            <div key={match.index} className="my-1">
+              <iframe
+                src={embedUrl}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"
+                width="280"
+                height="220"
+                frameBorder="0"
+                allowFullScreen
+                loading="lazy"
+                title="GIF"
+                style={{ maxWidth: '100%' }}
+              />
+            </div>
+          )
+        } else if (isImageUrl(full) || (embedUrl === full)) {
+          // 4. Image with Interactive Lightbox on Click
+          parts.push(
+            <div
+              key={match.index}
+              onClick={() => onOpenImage(full)}
+              className="inline-block my-1 group/img relative cursor-pointer"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={full}
+                alt="Shared image"
+                className="rounded-xl max-w-xs sm:max-w-sm max-h-64 object-contain border border-slate-200 dark:border-slate-700 shadow-xs hover:shadow-md transition-all group-hover/img:scale-[1.01]"
+                loading="lazy"
+                onError={(e) => {
+                  const target = e.currentTarget
+                  const parent = target.parentElement
+                  if (parent) {
+                    parent.className = 'text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 dark:text-blue-400'
+                    target.replaceWith(document.createTextNode(full.length > 50 ? full.slice(0, 50) + '…' : full))
+                  }
+                }}
+              />
+              <div className="absolute top-2 right-2 opacity-0 group-hover/img:opacity-100 bg-black/60 text-white p-1 rounded-md backdrop-blur-xs transition-opacity shadow-sm">
+                <Maximize2 className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          )
+        } else {
+          // 5. Regular URL
+          parts.push(
+            <a
+              key={match.index}
+              href={full}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 dark:text-blue-400"
+            >
+              {full.length > 50 ? full.slice(0, 50) + '…' : full}
+              <ExternalLink className="w-3 h-3 inline shrink-0" />
+            </a>
+          )
+        }
       }
     }
 
@@ -328,10 +627,20 @@ export default function MessageBubble({
 }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [activeLightboxUrl, setActiveLightboxUrl] = useState<string | null>(null)
+  const [activePdf, setActivePdf] = useState<{ url: string; name: string } | null>(null)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.content)
   const [isSaving, setIsSaving] = useState(false)
+
+  const handleOpenPdf = useCallback((url: string, name: string) => {
+    setActivePdf({ url, name })
+  }, [])
+
+  const handleOpenImage = useCallback((url: string) => {
+    setActiveLightboxUrl(url)
+  }, [])
 
   const handleSaveEdit = async () => {
     if (editValue.trim() === '' || editValue === message.content) {
@@ -580,7 +889,7 @@ export default function MessageBubble({
               </div>
             ) : (
               <>
-                {renderContent(message.content, currentAgent)}
+                {renderContent(message.content, currentAgent, handleOpenImage, handleOpenPdf)}
                 {message.is_edited && (
                   <span className="text-[11px] text-slate-400 ml-1">(edited)</span>
                 )}
@@ -728,6 +1037,23 @@ export default function MessageBubble({
             </button>
           )}
         </div>
+      )}
+
+      {/* Fullscreen Image Lightbox Modal */}
+      {activeLightboxUrl && (
+        <ImageLightboxModal
+          url={activeLightboxUrl}
+          onClose={() => setActiveLightboxUrl(null)}
+        />
+      )}
+
+      {/* In-App PDF Document Viewer Modal */}
+      {activePdf && (
+        <PdfViewerModal
+          url={activePdf.url}
+          fileName={activePdf.name}
+          onClose={() => setActivePdf(null)}
+        />
       )}
     </div>
   )
