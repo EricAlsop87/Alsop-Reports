@@ -679,14 +679,14 @@ export default function MessageBubble({
   }
   const currentAgent = chat?.currentAgent ?? null
 
-  const isOwn = message.sender_id === currentAgentId
-  const isAdmin = hasPermission('admin')
   const senderName = message.sender?.name ?? 'Unknown'
   const senderId = message.sender_id || message.sender?.id
 
   const isSelf = Boolean(
     currentAgent && (senderId === currentAgent.id || senderName.toLowerCase() === currentAgent.name.toLowerCase())
   )
+  const isOwn = message.sender_id === currentAgentId || isSelf || Boolean(currentAgent && message.sender_id === currentAgent.id)
+  const isAdmin = hasPermission('admin')
 
   const senderPresence = senderId && chat?.getLivePresence
     ? chat.getLivePresence(senderId, message.sender)
@@ -830,10 +830,11 @@ export default function MessageBubble({
                   {formatTime(message.created_at)}
                 </span>
 
-                {/* Seen / Delivered Indicator for your own messages in direct 1-on-1 chats */}
-                {isOwn && isDirectDM && (
+                {/* Seen / Delivered Indicator for your own messages */}
+                {isOwn && (
                   (() => {
                     const isSeen = Boolean(
+                      isDirectDM &&
                       otherMemberLastReadAt &&
                       new Date(otherMemberLastReadAt).getTime() >= new Date(message.created_at).getTime()
                     )
@@ -845,7 +846,11 @@ export default function MessageBubble({
                         )}
                         title={isSeen ? "Delivered & Seen by recipient" : "Delivered to chat (Unread by recipient)"}
                       >
-                        <CheckCheck className={cn("w-3.5 h-3.5", isSeen ? "text-blue-500" : "text-slate-400")} />
+                        {isSeen ? (
+                          <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                        ) : (
+                          <CheckCheck className="w-3.5 h-3.5 text-slate-400" />
+                        )}
                         <span className="hidden sm:inline">{isSeen ? "Seen" : "Delivered"}</span>
                       </span>
                     )

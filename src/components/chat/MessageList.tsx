@@ -89,7 +89,7 @@ export default function MessageList({
   const [userScrolledUp, setUserScrolledUp] = useState(false)
   const isInitialLoadRef = useRef(true)
 
-  const isDirectDM = conversationType === 'direct'
+  const isDirectDM = conversationType === 'direct_dm' || conversationType === 'direct' || conversationType === 'dm'
 
   // Find the other member in a 1-on-1 direct message
   const otherMember = useMemo(() => {
