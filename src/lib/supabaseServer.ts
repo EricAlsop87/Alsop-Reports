@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Create a Supabase client for use in Server Components, Server Actions, and Route Handlers.
@@ -41,7 +42,6 @@ export async function createSupabaseServerClient() {
  * NEVER expose this to the browser.
  */
 export function createSupabaseAdmin() {
-  const { createClient } = require('@supabase/supabase-js')
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

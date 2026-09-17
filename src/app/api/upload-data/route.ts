@@ -154,6 +154,19 @@ export async function POST(request: NextRequest) {
         allLogs += (error.stdout || "") + "\n" + (error.stderr || "") + "\n" + error.message
       }
 
+            if (allSuccess) {
+        try {
+          const { recalculateSummaries } = await import("@/lib/pipeline/recalculate-summaries")
+          const { createSupabaseAdmin } = await import("@/lib/supabaseServer")
+          const supabase = createSupabaseAdmin()
+          const year = parseInt(defaultDate.substring(0, 4)) || new Date().getFullYear()
+          const rlogs = await recalculateSummaries(supabase, year, { ytd: true, weekly: true })
+          allLogs += "\n\n" + rlogs.join("\n")
+        } catch (e: any) {
+          allLogs += "\n\n[Warning] Failed to recalculate summaries: " + e.message
+        }
+      }
+
       return NextResponse.json({
         success: allSuccess,
         files: [],
@@ -217,8 +230,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Clean up staging folder (async, don't block)
+        // Clean up staging folder (async, don't block)
     exec(`rmdir /s /q "${uploadDir}"`, { cwd: pythonDir })
+
+    if (allSuccess) {
+      try {
+        const { recalculateSummaries } = await import("@/lib/pipeline/recalculate-summaries")
+        const { createSupabaseAdmin } = await import("@/lib/supabaseServer")
+        const supabase = createSupabaseAdmin()
+        const year = parseInt(defaultDate.substring(0, 4)) || new Date().getFullYear()
+        const rlogs = await recalculateSummaries(supabase, year, { ytd: true, weekly: true })
+        allLogs += "\n\n" + rlogs.join("\n")
+      } catch (e: any) {
+        allLogs += "\n\n[Warning] Failed to recalculate summaries: " + e.message
+      }
+    }
 
     // Update upload history record with final status and logs
     if (uploadId) {

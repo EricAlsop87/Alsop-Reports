@@ -154,13 +154,6 @@ function LeaderboardCard({
               </p>
               {subtitle && <p className={`${isMTD ? "text-xs mt-1" : "text-[9px] mt-0.5"} text-slate-400 leading-tight`}>{subtitle}</p>}
             </div>
-            <span className={`${isMTD ? "text-[10px] px-2 py-1" : "text-[9px] px-1.5 py-0.5"} font-extrabold uppercase rounded tracking-wider shrink-0 select-none border ${
-              isMTD 
-                ? "bg-indigo-50 text-indigo-700 border-indigo-100" 
-                : "bg-slate-50 text-slate-600 border-slate-200"
-            }`}>
-              {isMTD ? "MTD" : "Weekly"}
-            </span>
           </div>
 
           {hasProj && (

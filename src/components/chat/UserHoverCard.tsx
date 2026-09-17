@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Building2, Users, Shield, Sparkles, MessageSquare, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
@@ -47,9 +48,21 @@ export default function UserHoverCard({
 }: UserHoverCardProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isStartingDM, setIsStartingDM] = useState(false)
+  const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0 })
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { currentAgent, getLivePresence, getLiveStatusMessage } = useChat()
+
+  const updateCoords = useCallback(() => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    setCoords({
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      width: rect.width
+    })
+  }, [])
 
   const handleMouseEnter = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -66,10 +79,18 @@ export default function UserHoverCard({
   }, [])
 
   useEffect(() => {
+    if (isOpen) {
+      updateCoords()
+      window.addEventListener('scroll', updateCoords, true)
+      window.addEventListener('resize', updateCoords)
+    }
+
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      window.removeEventListener('scroll', updateCoords, true)
+      window.removeEventListener('resize', updateCoords)
     }
-  }, [])
+  }, [isOpen, updateCoords])
 
   const handleStartDirectDM = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -125,22 +146,24 @@ export default function UserHoverCard({
     >
       {children}
 
-      {isOpen && (
+      {isOpen && typeof window !== 'undefined' && typeof document !== 'undefined' && createPortal(
         <div
           className={cn(
-            'absolute z-50 w-64 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 text-left transition-all animate-in fade-in zoom-in-95 duration-150 select-none pointer-events-auto',
-            side === 'top'
-              ? 'bottom-full left-0 mb-2'
-              : 'top-full left-0 mt-2'
+            'fixed z-[99999] w-64 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200/80 dark:border-slate-700/80 text-left transition-all animate-in fade-in zoom-in-95 duration-150 select-none pointer-events-auto'
           )}
+          style={{
+            top: side === 'top' ? undefined : coords.bottom + 8,
+            bottom: side === 'top' ? (window.innerHeight - coords.top) + 8 : undefined,
+            left: Math.min(coords.left, window.innerWidth - 270),
+          }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           {/* Zero-gap invisible hover bridge */}
           <div
             className={cn(
-              'absolute left-0 right-0 h-3',
-              side === 'top' ? '-bottom-3' : '-top-3'
+              'absolute left-0 right-0 h-4',
+              side === 'top' ? '-bottom-4' : '-top-4'
             )}
           />
 
@@ -235,7 +258,8 @@ export default function UserHoverCard({
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

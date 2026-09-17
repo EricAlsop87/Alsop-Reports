@@ -5,7 +5,8 @@ import { promisify } from "util"
 import path from "path"
 import { revalidatePath } from "next/cache"
 import { unstable_noStore as noStore } from "next/cache"
-import { supabase } from "@/lib/supabaseClient"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
+const supabase = createSupabaseAdmin()
 import { requireAdmin } from "@/lib/auth"
 
 const execAsync = promisify(exec)

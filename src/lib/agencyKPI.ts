@@ -1,6 +1,7 @@
 "use server"
 
-import { supabase } from "@/lib/supabaseClient"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
+const supabase = createSupabaseAdmin()
 
 const PAGE_SIZE = 1000
 

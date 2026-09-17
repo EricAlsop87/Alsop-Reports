@@ -13,6 +13,7 @@ import Link from "next/link"
 import { formatValue } from "@/lib/formatters"
 import { TableSkeleton } from "@/components/ui/Skeleton"
 import { EAgentModal } from "@/components/reports/EAgentModal"
+import { PacingModal } from "@/components/reports/PacingModal"
 import { LeadsModal } from "@/components/reports/LeadsModal"
 import AgencyMTDPacing from "@/components/ui/AgencyMTDPacing"
 import { runDataSyncPipeline } from "@/app/admin/sync/actions"
@@ -111,7 +112,7 @@ function getTop3Ties(data: any[], accessor: (m: any) => number) {
 // ── Leaderboard Card ──
 function LeaderboardCard({ 
   title, subtitle, icon, data, accessor, format, colorClass, className,
-  holidays, year, month, goals, agencyTotal
+  holidays, year, month, goals, agencyTotal, onViewAll
 }: { 
   title: string; subtitle?: string; icon: React.ReactNode; data: any[]; 
   accessor: (m: any) => number; format: (v: number) => string;
@@ -119,6 +120,7 @@ function LeaderboardCard({
   holidays?: { holiday_date: string }[]; year?: number; month?: number;
   goals?: any[];
   agencyTotal?: number;
+  onViewAll?: () => void;
 }) {
   const topGroups = getTop3Ties(data, accessor)
   if (topGroups.length === 0) return null
@@ -171,7 +173,7 @@ function LeaderboardCard({
   return (
     <div className={`${className || ""} flex flex-col`}>
       <Card className="bg-white border border-slate-200 shadow-sm flex-1 flex flex-col">
-        <CardContent className={`${isMTD ? "p-5" : "p-3"} flex-1 flex flex-col`}>
+        <CardContent className={`${isMTD ? "p-5" : "p-3"} flex-1 flex flex-col relative`}>
           <div className={`flex items-start justify-between gap-2 ${isMTD ? "mb-4" : "mb-2"}`}>
             <div className="min-w-0">
               <p className={`${isMTD ? "text-base" : "text-xs"} font-bold text-slate-800 flex items-center gap-1.5`}>
@@ -179,13 +181,14 @@ function LeaderboardCard({
               </p>
               {subtitle && <p className={`${isMTD ? "text-xs mt-1" : "text-[9px] mt-0.5"} text-slate-400 leading-tight`}>{subtitle}</p>}
             </div>
-            <span className={`${isMTD ? "text-[10px] px-2 py-1" : "text-[9px] px-1.5 py-0.5"} font-extrabold uppercase rounded tracking-wider shrink-0 select-none border ${
-              isMTD 
-                ? "bg-indigo-50 text-indigo-700 border-indigo-100" 
-                : "bg-slate-50 text-slate-600 border-slate-200"
-            }`}>
-              {isMTD ? "MTD" : "Daily"}
-            </span>
+            <div className="flex items-center gap-2">
+              {onViewAll && (
+                <button onClick={onViewAll} className="text-[9px] px-2 py-1 font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors whitespace-nowrap cursor-pointer">
+                  VIEW ALL
+                </button>
+              )}
+              
+            </div>
           </div>
           
           {hasProj && (
@@ -294,6 +297,7 @@ export default function DailyReport() {
   const [filters, setFilters] = useState<FilterState>({ offices: [], teams: [], agents: [], meetings: [] })
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isPacingModalOpen, setIsPacingModalOpen] = useState(false)
   const [isLeadsModalOpen, setIsLeadsModalOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<"idle" | "success" | "error">("idle")
@@ -816,6 +820,7 @@ export default function DailyReport() {
           month={date ? Number(date.split('-')[1]) : undefined}
           goals={goals}
           agencyTotal={agencyItemsMTD}
+          onViewAll={() => setIsPacingModalOpen(true)}
         />
 
         {/* Row 1 & 2, Col 3-12 (Desktop): Agency MTD Pacing */}
@@ -1363,6 +1368,14 @@ export default function DailyReport() {
           const covResult = await getDailyCoverage(date)
           if (covResult.success && covResult.data) setCoverage(covResult.data)
         }}
+      />
+      <PacingModal
+        isOpen={isPacingModalOpen}
+        onClose={() => setIsPacingModalOpen(false)}
+        data={metrics}
+        elapsedBizDays={elapsedBizDays}
+        totalBizDays={totalBizDays}
+        goals={goals}
       />
     </div>
     </PageGuard>

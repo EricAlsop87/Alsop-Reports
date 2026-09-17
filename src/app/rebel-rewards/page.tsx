@@ -6,6 +6,7 @@ import { getRebelRewardsStandings, uploadRebelRewardsExcel } from "./actions"
 import { REBEL_TIERS, AgentRebelStandings, RebelRewardTier } from "@/lib/rebelRewards"
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 import { Badge } from "@/components/ui/Badge"
+import { FilterBar, FilterState } from "@/components/ui/FilterBar"
 import { Button } from "@/components/ui/Button"
 import {
   Trophy, Upload, Car, Heart, Home,
@@ -42,7 +43,7 @@ export default function RebelRewardsPage() {
 
   const [selectedTierFilter, setSelectedTierFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [officeFilter, setOfficeFilter] = useState("all")
+  const [filters, setFilters] = useState<FilterState>({ offices: [], teams: [], agents: [], meetings: [] })
   const [sortKey, setSortKey] = useState<string>("rank")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [selectedAgent, setSelectedAgent] = useState<AgentRebelStandings | null>(null)
@@ -101,13 +102,20 @@ export default function RebelRewardsPage() {
 
   const tierRank: Record<string, number> = { none: 0, anakin: 1, rey: 2, luke: 3, obiwan: 4 }
 
+    const availableAgents = useMemo(() => {
+    return Array.from(new Set(standings.map(s => s.agentName).filter(Boolean))).sort()
+  }, [standings])
+
   const filteredStandings = useMemo(() => {
-    const filtered = standings.filter((agent) => {
+        const filtered = standings.filter((agent) => {
+      if (filters.offices.length > 0 && (!agent.office || !filters.offices.includes(agent.office))) return false;
+      if (filters.teams.length > 0 && (!agent.team || !filters.teams.includes(agent.team))) return false;
+      if (filters.agents.length > 0 && (!agent.agentName || !filters.agents.includes(agent.agentName))) return false;
+      
       if (searchTerm) {
         const q = searchTerm.toLowerCase()
         if (!agent.agentName.toLowerCase().includes(q) && !agent.office?.toLowerCase().includes(q) && !agent.team?.toLowerCase().includes(q)) return false
       }
-      if (officeFilter !== "all" && agent.office !== officeFilter) return false
       if (selectedTierFilter === "winners") return agent.totalPayout > 0
       if (selectedTierFilter === "anakin") return agent.anakin.earned
       if (selectedTierFilter === "rey") return agent.rey.earned
@@ -130,7 +138,7 @@ export default function RebelRewardsPage() {
       return sortDir === "desc" ? -cmp : cmp
     })
     return sorted
-  }, [standings, searchTerm, officeFilter, selectedTierFilter, sortKey, sortDir])
+  }, [standings, searchTerm, filters, selectedTierFilter, sortKey, sortDir])
 
   const toggleSort = (key: string) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc")
@@ -277,10 +285,7 @@ export default function RebelRewardsPage() {
                 <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full sm:w-48 pl-8 pr-3 h-8 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white text-slate-900 placeholder:text-slate-400" />
               </div>
-              <select value={officeFilter} onChange={(e) => setOfficeFilter(e.target.value)}
-                className="h-8 text-xs font-semibold px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 outline-none focus:border-blue-500">
-                <option value="all">All</option><option value="MCM">MCM</option><option value="RC">RC</option><option value="CH">CH</option><option value="MB">MB</option>
-              </select>
+              
             </div>
           </div>
 

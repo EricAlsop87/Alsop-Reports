@@ -1,6 +1,7 @@
 "use server"
 
-import { supabase } from "@/lib/supabaseClient"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
+const supabase = createSupabaseAdmin()
 import { unstable_noStore as noStore } from "next/cache"
 
 const PAGE_SIZE = 1000

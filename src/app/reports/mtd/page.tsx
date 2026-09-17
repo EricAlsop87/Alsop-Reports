@@ -144,9 +144,7 @@ function LeaderboardCard({
                 <span className={colorClass}>{icon}</span> <span className="truncate">{title}</span>
               </p>
             </div>
-            <span className={`${isMTD ? "text-[10px] px-2 py-1" : "text-[9px] px-1.5 py-0.5"} font-extrabold uppercase rounded tracking-wider shrink-0 select-none border bg-indigo-50 text-indigo-700 border-indigo-100`}>
-              MTD
-            </span>
+            
           </div>
 
           {hasProj && (

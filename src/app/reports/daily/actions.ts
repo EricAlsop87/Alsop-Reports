@@ -1,7 +1,8 @@
 "use server"
 
 import { unstable_noStore as noStore } from "next/cache"
-import { supabase } from "@/lib/supabaseClient"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
+const supabase = createSupabaseAdmin()
 import { getAgencyKPITotals } from "@/lib/agencyKPI"
 
 /** Paginated Supabase fetch — loops .range() pages of 1000 to defeat the server-side max-rows cap. */

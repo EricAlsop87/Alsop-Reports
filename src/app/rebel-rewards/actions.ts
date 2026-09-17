@@ -1,7 +1,8 @@
 "use server"
 
 import { unstable_noStore as noStore } from "next/cache"
-import { supabase } from "@/lib/supabaseClient"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
+const supabase = createSupabaseAdmin()
 import { REBEL_REWARDS_2026_SEED, RawRebelAgentRow } from "@/lib/rebelRewardsSeed"
 import { calculateAgentRebelStatus, AgentRebelStandings, resolveContestAgentMatch } from "@/lib/rebelRewards"
 import * as XLSX from "xlsx"

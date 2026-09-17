@@ -98,7 +98,20 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      proc.on("close", (code) => {
+            proc.on("close", async (code) => {
+        if (code === 0) {
+          send("step", "Recalculating YTD and Monthly Summaries...")
+          try {
+            const { createSupabaseAdmin } = await import("@/lib/supabaseServer")
+            const { recalculateSummaries } = await import("@/lib/pipeline/recalculate-summaries")
+            const supabase = createSupabaseAdmin()
+            const year = parseInt(date.substring(0, 4)) || new Date().getFullYear()
+            const logs = await recalculateSummaries(supabase, year, { ytd: true, weekly: true })
+            for (const log of logs) { send("log", log) }
+          } catch (e: any) {
+             send("error", "Recalculate failed: " + e.message)
+          }
+        }
         send("done", code === 0 ? "success" : "completed_with_warnings")
         controller.close()
       })
