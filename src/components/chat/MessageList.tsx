@@ -4,12 +4,14 @@ import { useRef, useEffect, useMemo, useCallback, useState } from 'react'
 import { ArrowDown, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import MessageBubble from './MessageBubble'
-import type { Message } from './types'
+import type { Message, ConversationMember } from './types'
 
 interface MessageListProps {
   messages: Message[]
   currentAgentId: string
   isLoading: boolean
+  conversationMembers?: ConversationMember[]
+  conversationType?: string
   onReply: (messageId: string) => void
   onEdit: (messageId: string, newContent: string) => Promise<void> | void
   onDelete: (messageId: string) => void
@@ -70,6 +72,8 @@ export default function MessageList({
   messages,
   currentAgentId,
   isLoading,
+  conversationMembers = [],
+  conversationType = 'direct',
   onReply,
   onEdit,
   onDelete,
@@ -85,6 +89,16 @@ export default function MessageList({
   const [userScrolledUp, setUserScrolledUp] = useState(false)
   const isInitialLoadRef = useRef(true)
 
+  const isDirectDM = conversationType === 'direct'
+
+  // Find the other member in a 1-on-1 direct message
+  const otherMember = useMemo(() => {
+    if (!isDirectDM) return null
+    return (conversationMembers || []).find((m) => m.agent_id !== currentAgentId)
+  }, [isDirectDM, conversationMembers, currentAgentId])
+
+  const otherMemberLastReadAt = otherMember?.last_read_at ?? null
+
   const scrollToBottom = useCallback((smooth = false) => {
     if (scrollContainerRef.current) {
       if (smooth) {
@@ -98,32 +112,19 @@ export default function MessageList({
     }
     bottomRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
     setShowScrollButton(false)
-    setUserScrolledUp(false)
   }, [])
 
-  // Snap to bottom immediately when messages finish loading or conversation loads
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (!isLoading && messages.length > 0) {
-      scrollToBottom(false)
-      const timer1 = setTimeout(() => scrollToBottom(false), 50)
-      const timer2 = setTimeout(() => scrollToBottom(false), 150)
-      return () => {
-        clearTimeout(timer1)
-        clearTimeout(timer2)
-      }
-    }
-  }, [isLoading, scrollToBottom])
+    if (isLoading) return
 
-  // When new messages are received while already viewing, smoothly scroll if user hasn't scrolled up
-  useEffect(() => {
     if (isInitialLoadRef.current) {
-      if (!isLoading && messages.length > 0) {
-        isInitialLoadRef.current = false
-      }
+      scrollToBottom(false)
+      isInitialLoadRef.current = false
       return
     }
 
-    if (!userScrolledUp && !isLoading && messages.length > 0) {
+    if (!userScrolledUp) {
       scrollToBottom(true)
     }
   }, [messages.length, isLoading, userScrolledUp, scrollToBottom])
@@ -174,6 +175,9 @@ export default function MessageList({
           message={msg}
           currentAgentId={currentAgentId}
           isGrouped={isGrouped}
+          isGroupChannel={conversationType === 'channel'}
+          isDirectDM={isDirectDM}
+          otherMemberLastReadAt={otherMemberLastReadAt}
           onReply={onReply}
           onEdit={onEdit}
           onDelete={onDelete}
@@ -185,7 +189,19 @@ export default function MessageList({
     })
 
     return result
-  }, [activeMessages, currentAgentId, onReply, onEdit, onDelete, onPin, onReact, hasPermission])
+  }, [
+    activeMessages,
+    currentAgentId,
+    conversationType,
+    isDirectDM,
+    otherMemberLastReadAt,
+    onReply,
+    onEdit,
+    onDelete,
+    onPin,
+    onReact,
+    hasPermission,
+  ])
 
   // Loading skeleton
   if (isLoading) {

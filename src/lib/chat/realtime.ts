@@ -76,6 +76,20 @@ export function subscribeToConversation(
       },
     )
     .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'chat_conversation_members',
+        filter: `conversation_id=eq.${conversationId}`,
+      },
+      (payload) => {
+        if (callbacks.onMemberUpdate && payload.new) {
+          callbacks.onMemberUpdate(payload.new as any)
+        }
+      },
+    )
+    .on(
       'broadcast',
       { event: 'typing' },
       (payload) => {

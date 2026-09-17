@@ -38,6 +38,8 @@ interface MessageBubbleProps {
   currentAgentId: string
   isGrouped: boolean
   isGroupChannel?: boolean
+  isDirectDM?: boolean
+  otherMemberLastReadAt?: string | null
   onReply: (messageId: string) => void
   onEdit: (messageId: string, newContent: string) => Promise<void> | void
   onDelete: (messageId: string) => void
@@ -618,6 +620,8 @@ export default function MessageBubble({
   currentAgentId,
   isGrouped,
   isGroupChannel,
+  isDirectDM,
+  otherMemberLastReadAt,
   onReply,
   onEdit,
   onDelete,
@@ -826,12 +830,26 @@ export default function MessageBubble({
                   {formatTime(message.created_at)}
                 </span>
 
-                {/* Seen / Delivered Indicator for your own messages */}
-                {isOwn && !isGroupChannel && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 font-semibold ml-0.5 select-none" title="Delivered & Seen">
-                    <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                    <span className="hidden sm:inline">Seen</span>
-                  </span>
+                {/* Seen / Delivered Indicator for your own messages in direct 1-on-1 chats */}
+                {isOwn && isDirectDM && (
+                  (() => {
+                    const isSeen = Boolean(
+                      otherMemberLastReadAt &&
+                      new Date(otherMemberLastReadAt).getTime() >= new Date(message.created_at).getTime()
+                    )
+                    return (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-0.5 text-[10px] font-semibold ml-0.5 select-none transition-colors",
+                          isSeen ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                        )}
+                        title={isSeen ? "Delivered & Seen by recipient" : "Delivered to chat (Unread by recipient)"}
+                      >
+                        <CheckCheck className={cn("w-3.5 h-3.5", isSeen ? "text-blue-500" : "text-slate-400")} />
+                        <span className="hidden sm:inline">{isSeen ? "Seen" : "Delivered"}</span>
+                      </span>
+                    )
+                  })()
                 )}
               </div>
 

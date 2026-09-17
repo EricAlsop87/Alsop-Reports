@@ -192,6 +192,7 @@ export interface ConversationCallbacks {
   onMessageDelete: (message: Message) => void
   onNewReaction: (reaction: MessageReaction) => void
   onTyping?: (data: { agent_id: string; agent_name: string; is_typing: boolean }) => void
+  onMemberUpdate?: (member: ConversationMember) => void
 }
 
 export interface GlobalCallbacks {

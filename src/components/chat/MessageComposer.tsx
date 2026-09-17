@@ -103,41 +103,50 @@ function extractContentFromDom(node: Node, isRoot = true): string {
   return ''
 }
 
-export default function MessageComposer({
-  conversationId,
-  currentAgentId,
-  replyTo,
-  members,
-  onSend,
-  onCancelReply,
-  hasPermission,
-  isCompact = false,
-}: MessageComposerProps) {
-  const [content, setContent] = useState('')
-  const [attachments, setAttachments] = useState<UploadedAttachment[]>([])
-  const [priority, setPriority] = useState<PriorityLevel>('normal')
-  const [isSending, setIsSending] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
-  const [showPriority, setShowPriority] = useState(false)
-  const [showGifPicker, setShowGifPicker] = useState(false)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
-  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
-  const editorRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export interface MessageComposerHandle {
+  uploadFiles: (files: FileList | File[]) => Promise<void>
+  focus: () => void
+}
 
-  // Focus editor on mount and conversation change
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.focus()
-    }
-  }, [conversationId, replyTo])
+const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerProps>(
+  function MessageComposer(
+    {
+      conversationId,
+      currentAgentId,
+      replyTo,
+      members,
+      onSend,
+      onCancelReply,
+      hasPermission,
+      isCompact = false,
+    },
+    ref
+  ) {
+    const [content, setContent] = useState('')
+    const [attachments, setAttachments] = useState<UploadedAttachment[]>([])
+    const [priority, setPriority] = useState<PriorityLevel>('normal')
+    const [isSending, setIsSending] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
+    const [isDraggingOver, setIsDraggingOver] = useState(false)
+    const [showPriority, setShowPriority] = useState(false)
+    const [showGifPicker, setShowGifPicker] = useState(false)
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+    const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
+    const editorRef = useRef<HTMLDivElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Sync content state when DOM changes
-  const updateContentFromDom = useCallback(() => {
-    if (!editorRef.current) return
-    const text = extractContentFromDom(editorRef.current).trim()
+    // Focus editor on mount and conversation change
+    useEffect(() => {
+      if (editorRef.current) {
+        editorRef.current.focus()
+      }
+    }, [conversationId, replyTo])
+
+    // Sync content state when DOM changes
+    const updateContentFromDom = useCallback(() => {
+      if (!editorRef.current) return
+      const text = extractContentFromDom(editorRef.current).trim()
     setContent(text)
 
     // Check for @ mention trigger
@@ -205,108 +214,104 @@ export default function MessageComposer({
     }
   }, [])
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleUploadFiles(e.target.files)
-      e.target.value = ''
-    }
-  }
+    React.useImperativeHandle(ref, () => ({
+      uploadFiles: handleUploadFiles,
+      focus: () => editorRef.current?.focus(),
+    }), [handleUploadFiles])
 
-  const handleRemoveAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id))
-  }
-
-  const handleSend = useCallback(async () => {
-    const text = content.trim()
-    const attachmentLinks = attachments.map(a => a.url).join('\n')
-    const fullMessage = [text, attachmentLinks].filter(Boolean).join('\n')
-
-    if (!fullMessage.trim() || isSending || isUploading) return
-
-    // Clear input immediately for better UX
-    if (editorRef.current) {
-      editorRef.current.innerHTML = ''
-    }
-    setContent('')
-    setAttachments([])
-    setPriority('normal')
-    setShowGifPicker(false)
-    
-    // Ensure focus remains
-    editorRef.current?.focus()
-
-    setIsSending(true)
-    try {
-      await onSend(fullMessage, replyTo?.id, priority)
-    } finally {
-      setIsSending(false)
-    }
-  }, [content, attachments, isSending, isUploading, onSend, replyTo, priority])
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      // Don't intercept Enter if mention picker is open
-      if (mentionQuery !== null) return
-
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault()
-        handleSend()
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        handleUploadFiles(e.target.files)
+        e.target.value = ''
       }
-    },
-    [handleSend, mentionQuery]
-  )
+    }
 
-  /**
-   * Handle pasting images/GIFs from Windows "Win + ." or clipboard
-   */
-  const handlePaste = useCallback(
-    async (e: ClipboardEvent<HTMLDivElement>) => {
-      const clipboardData = e.clipboardData
-      if (!clipboardData) return
+    const handleRemoveAttachment = (id: string) => {
+      setAttachments(prev => prev.filter(a => a.id !== id))
+    }
 
-      // 1. Check for image files/blobs from Windows GIF picker or clipboard
-      let imageFile: File | null = null
+    const handleSend = useCallback(async () => {
+      const text = content.trim()
+      const attachmentLinks = attachments.map(a => a.url).join('\n')
+      const fullMessage = [text, attachmentLinks].filter(Boolean).join('\n')
 
-      if (clipboardData.files && clipboardData.files.length > 0) {
-        for (let i = 0; i < clipboardData.files.length; i++) {
-          const file = clipboardData.files[i]
-          if (file.type.startsWith('image/')) {
-            imageFile = file
-            break
+      if (!fullMessage.trim() || isSending || isUploading) return
+
+      // Clear input immediately for better UX
+      if (editorRef.current) {
+        editorRef.current.innerHTML = ''
+      }
+      setContent('')
+      setAttachments([])
+      setPriority('normal')
+      setShowGifPicker(false)
+      
+      // Ensure focus remains
+      editorRef.current?.focus()
+
+      setIsSending(true)
+      try {
+        await onSend(fullMessage, replyTo?.id, priority)
+      } finally {
+        setIsSending(false)
+      }
+    }, [content, attachments, isSending, isUploading, onSend, replyTo, priority])
+
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent<HTMLDivElement>) => {
+        // Don't intercept Enter if mention picker is open
+        if (mentionQuery !== null) return
+
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault()
+          handleSend()
+        }
+      },
+      [handleSend, mentionQuery]
+    )
+
+    /**
+     * Handle pasting files, PDFs, images, or GIFs from clipboard
+     */
+    const handlePaste = useCallback(
+      async (e: ClipboardEvent<HTMLDivElement>) => {
+        const clipboardData = e.clipboardData
+        if (!clipboardData) return
+
+        // 1. Check for files (PDFs, Docs, Spreadsheets, Images) in clipboard
+        const filesToUpload: File[] = []
+        if (clipboardData.files && clipboardData.files.length > 0) {
+          for (let i = 0; i < clipboardData.files.length; i++) {
+            filesToUpload.push(clipboardData.files[i])
+          }
+        } else if (clipboardData.items) {
+          for (let i = 0; i < clipboardData.items.length; i++) {
+            const item = clipboardData.items[i]
+            if (item.kind === 'file') {
+              const file = item.getAsFile()
+              if (file) filesToUpload.push(file)
+            }
           }
         }
-      }
 
-      if (!imageFile && clipboardData.items) {
-        for (let i = 0; i < clipboardData.items.length; i++) {
-          const item = clipboardData.items[i]
-          if (item.type.startsWith('image/')) {
-            imageFile = item.getAsFile()
-            if (imageFile) break
-          }
+        if (filesToUpload.length > 0) {
+          e.preventDefault()
+          await handleUploadFiles(filesToUpload)
+          return
         }
-      }
 
-      if (imageFile) {
-        e.preventDefault()
-        setIsUploading(true)
-        try {
-          const formData = new FormData()
-          formData.append('file', imageFile)
-
-          const res = await fetch('/api/chat/upload', {
-            method: 'POST',
-            body: formData,
-          })
-
-          if (res.ok) {
-            const data = await res.json()
-            if (data.url && editorRef.current) {
-              // Insert image element into contentEditable
+        // 2. Check for HTML snippet with <img src="...">
+        const html = clipboardData.getData('text/html')
+        if (html) {
+          const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+          if (imgMatch && imgMatch[1] && (imgMatch[1].startsWith('http') || imgMatch[1].startsWith('data:image/'))) {
+            e.preventDefault()
+            const src = imgMatch[1]
+            if (editorRef.current) {
               const img = document.createElement('img')
-              img.src = data.url
+              img.src = src
               img.className = 'max-h-28 rounded-lg my-1 inline-block'
-              img.alt = 'GIF'
+              img.alt = 'Pasted image'
 
               const selection = window.getSelection()
               if (selection && selection.rangeCount > 0) {
@@ -319,50 +324,12 @@ export default function MessageComposer({
               }
               updateContentFromDom()
             }
+            return
           }
-        } catch (err) {
-          console.error('Failed to upload pasted image:', err)
-        } finally {
-          setIsUploading(false)
-          setTimeout(() => {
-            if (editorRef.current) {
-              editorRef.current.focus()
-            }
-          }, 0)
         }
-        return
-      }
-
-      // 2. Check for HTML snippet with <img src="...">
-      const html = clipboardData.getData('text/html')
-      if (html) {
-        const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
-        if (imgMatch && imgMatch[1] && (imgMatch[1].startsWith('http') || imgMatch[1].startsWith('data:image/'))) {
-          e.preventDefault()
-          const src = imgMatch[1]
-          if (editorRef.current) {
-            const img = document.createElement('img')
-            img.src = src
-            img.className = 'max-h-28 rounded-lg my-1 inline-block'
-            img.alt = 'GIF'
-
-            const selection = window.getSelection()
-            if (selection && selection.rangeCount > 0) {
-              const range = selection.getRangeAt(0)
-              range.deleteContents()
-              range.insertNode(img)
-              range.collapse(false)
-            } else {
-              editorRef.current.appendChild(img)
-            }
-            updateContentFromDom()
-          }
-          return
-        }
-      }
-    },
-    [updateContentFromDom]
-  )
+      },
+      [handleUploadFiles, updateContentFromDom]
+    )
 
   const handleInput = useCallback(
     (e: FormEvent<HTMLDivElement>) => {
@@ -812,4 +779,6 @@ export default function MessageComposer({
       )}
     </div>
   )
-}
+})
+
+export default MessageComposer

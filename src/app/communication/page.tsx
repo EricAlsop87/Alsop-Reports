@@ -32,13 +32,13 @@ import type { RealtimeChannel } from "@supabase/supabase-js"
 import ConversationSidebar from "@/components/chat/ConversationSidebar"
 import ConversationHeader from "@/components/chat/ConversationHeader"
 import MessageList from "@/components/chat/MessageList"
-import MessageComposer from "@/components/chat/MessageComposer"
+import MessageComposer, { type MessageComposerHandle } from "@/components/chat/MessageComposer"
 import CreateConversationModal from "@/components/chat/CreateConversationModal"
 import PinnedMessagesPanel from "@/components/chat/PinnedMessagesPanel"
 import ConversationSettingsModal from "@/components/chat/ConversationSettingsModal"
 import AgentHudPanel from "@/components/chat/AgentHudPanel"
 import { updatePresence } from "@/lib/chat/realtime"
-import { MessageSquare, MonitorSmartphone } from "lucide-react"
+import { MessageSquare, MonitorSmartphone, Paperclip } from "lucide-react"
 import { useToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +51,7 @@ export default function CommunicationHub() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [members, setMembers] = useState<Agent[]>([])
+  const [conversationMembers, setConversationMembers] = useState<ConversationMember[]>([])
   const [memberCount, setMemberCount] = useState(0)
   const [pinnedCount, setPinnedCount] = useState(0)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
@@ -62,9 +63,11 @@ export default function CommunicationHub() {
   const [editingMessage, setEditingMessage] = useState<string | null>(null)
   const [showPinnedPanel, setShowPinnedPanel] = useState(false)
   const [showHudPanel, setShowHudPanel] = useState(false)
+  const [isChatDraggingOver, setIsChatDraggingOver] = useState(false)
 
-  // Realtime channel ref
+  // Realtime channel ref & Composer ref
   const conversationChannelRef = useRef<RealtimeChannel | null>(null)
+  const composerRef = useRef<MessageComposerHandle>(null)
 
   const selectedConversation = conversations.find(c => c.id === selectedId) || null
 
@@ -158,6 +161,7 @@ export default function CommunicationHub() {
           getConversationMembers(selectedId),
         ])
         setMessages(msgs.reverse())
+        setConversationMembers(memberData)
         const agentMembers = memberData
           .filter((m: ConversationMember) => m.agent)
           .map((m: ConversationMember) => m.agent as Agent)
@@ -289,6 +293,11 @@ export default function CommunicationHub() {
               ? { ...m, is_deleted: true, content: "" }
               : m
           )
+        )
+      },
+      onMemberUpdate: (updatedMember) => {
+        setConversationMembers(prev =>
+          prev.map(m => m.agent_id === updatedMember.agent_id ? { ...m, ...updatedMember } : m)
         )
       },
       onNewReaction: async () => {
@@ -538,10 +547,52 @@ export default function CommunicationHub() {
         />
 
         {/* Main Chat Area */}
-        <div className={cn(
-          "flex-1 flex flex-col min-w-0 h-full",
-          !isMobileChatActive ? "hidden md:flex" : "flex"
-        )}>
+        <div
+          className={cn(
+            "flex-1 flex flex-col min-w-0 h-full relative",
+            !isMobileChatActive ? "hidden md:flex" : "flex"
+          )}
+          onDragOver={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (!isChatDraggingOver && selectedConversation) {
+              setIsChatDraggingOver(true)
+            }
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return
+            setIsChatDraggingOver(false)
+          }}
+          onDrop={async (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsChatDraggingOver(false)
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              composerRef.current?.uploadFiles(e.dataTransfer.files)
+            }
+          }}
+        >
+          {/* Full-Window Drag & Drop Frosted Overlay */}
+          {isChatDraggingOver && selectedConversation && (
+            <div
+              className="absolute inset-0 z-50 flex items-center justify-center bg-blue-600/20 backdrop-blur-xs border-2 border-dashed border-blue-500 rounded-xl m-2 transition-all pointer-events-none animate-in fade-in duration-150"
+            >
+              <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/60 rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-2 text-center scale-105 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/50 flex items-center justify-center text-blue-600">
+                  <Paperclip className="w-6 h-6 animate-bounce" />
+                </div>
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                  Drop files to upload
+                </h4>
+                <p className="text-xs text-slate-500 max-w-[240px]">
+                  PDFs, Images, Word, Excel, CSV, and Documents
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Chat / HUD Tab Toggle */}
           <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200 bg-slate-50/80 shrink-0">
             {/* Mobile back to channel list button when in HUD view */}
@@ -599,6 +650,8 @@ export default function CommunicationHub() {
                 messages={messages}
                 currentAgentId={currentAgent.id}
                 isLoading={isLoadingMessages}
+                conversationMembers={conversationMembers}
+                conversationType={selectedConversation.type}
                 onReply={handleReplyMessage}
                 onEdit={handleEditMessage}
                 onDelete={handleDeleteMessage}
@@ -608,6 +661,7 @@ export default function CommunicationHub() {
               />
 
               <MessageComposer
+                ref={composerRef}
                 conversationId={selectedId!}
                 currentAgentId={currentAgent.id}
                 replyTo={replyTo}
