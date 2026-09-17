@@ -177,6 +177,7 @@ export default function MessageList({
           isGrouped={isGrouped}
           isGroupChannel={conversationType === 'channel'}
           isDirectDM={isDirectDM}
+          conversationMembers={conversationMembers}
           otherMemberLastReadAt={otherMemberLastReadAt}
           onReply={onReply}
           onEdit={onEdit}
@@ -194,6 +195,7 @@ export default function MessageList({
     currentAgentId,
     conversationType,
     isDirectDM,
+    conversationMembers,
     otherMemberLastReadAt,
     onReply,
     onEdit,

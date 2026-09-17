@@ -8,7 +8,7 @@ import { fetchMessages, sendMessage, deleteMessage, editMessage, addReaction, re
 import { getConversationMembers } from '@/lib/chat/conversations'
 import { markConversationRead, clearDesktopNotifications } from '@/lib/chat/notifications'
 import { subscribeToConversation, unsubscribeChannel } from '@/lib/chat/realtime'
-import type { Message, Agent, ConversationMember } from '@/components/chat/types'
+import type { Message, Agent, ConversationMember, Conversation } from '@/components/chat/types'
 import MessageList from '@/components/chat/MessageList'
 import MessageComposer from '@/components/chat/MessageComposer'
 import { useToast } from '@/components/ui/Toast'
@@ -27,6 +27,8 @@ export function MiniChatRoom({ conversationId, conversationName, onBack, onClose
   const { dismissToasts } = useToast()
   const [messages, setMessages] = useState<Message[]>([])
   const [members, setMembers] = useState<Agent[]>([])
+  const [conversationMembers, setConversationMembers] = useState<ConversationMember[]>([])
+  const [conversation, setConversation] = useState<Conversation | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const channelRef = useRef<any>(null)
@@ -54,6 +56,7 @@ export function MiniChatRoom({ conversationId, conversationName, onBack, onClose
         ])
         if (!isMounted) return
         setMessages(msgs.reverse())
+        setConversationMembers(memberData)
         const agentMembers = memberData
           .filter((m: ConversationMember) => m.agent)
           .map((m: ConversationMember) => m.agent as Agent)
@@ -151,6 +154,11 @@ export function MiniChatRoom({ conversationId, conversationName, onBack, onClose
       onMessageDelete: (deletedMsg: Message) => {
         setMessages(prev => prev.map(m => m.id === deletedMsg.id ? { ...m, is_deleted: true, content: 'This message was deleted' } : m))
       },
+      onMemberUpdate: (updatedMember) => {
+        setConversationMembers(prev =>
+          prev.map(m => m.agent_id === updatedMember.agent_id ? { ...m, ...updatedMember, agent: m.agent || updatedMember.agent } : m)
+        )
+      },
       onNewReaction: async () => {
         try {
           const msgs = await fetchMessages(conversationId, 40)
@@ -235,6 +243,7 @@ export function MiniChatRoom({ conversationId, conversationName, onBack, onClose
           messages={messages}
           currentAgentId={currentAgent.id}
           isLoading={isLoading}
+          conversationMembers={conversationMembers}
           onReply={(msgId) => {
             const msg = messages.find(m => m.id === msgId)
             if (msg) setReplyTo(msg)

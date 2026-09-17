@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
 import { Avatar, getAvatarColor } from "@/components/ui/Avatar"
 import type { Agent, Conversation, PresenceStatus } from './types'
-import { useChat } from '@/lib/chat/chatContext'
+import { useChat, formatAwayTime } from '@/lib/chat/chatContext'
 
 interface ConversationSidebarProps {
   conversations: Conversation[]
@@ -84,7 +84,7 @@ export default function ConversationSidebar({
   const [search, setSearch] = useState('')
   const [channelsOpen, setChannelsOpen] = useState(true)
   const [dmsOpen, setDmsOpen] = useState(true)
-  const { getLivePresence } = useChat()
+  const { getLivePresence, getLiveLastSeen } = useChat()
 
   const getDmPresence = (conversation: Conversation, currentAgentId: string): PresenceStatus => {
     if (conversation.type === 'direct_dm' && conversation.members) {
@@ -148,40 +148,39 @@ export default function ConversationSidebar({
             placeholder="Search conversations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all placeholder:text-slate-400"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all"
           />
         </div>
       </div>
 
-      {/* Channels */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-3 pt-3 pb-1">
-          <div className="flex items-center justify-between">
+      {/* Lists */}
+      <div className="flex-1 overflow-y-auto py-2">
+        {/* Channels section */}
+        <div className="px-3 mb-1">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider py-1.5 px-1">
             <button
               onClick={() => setChannelsOpen(!channelsOpen)}
-              className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+              className="flex items-center gap-1.5 hover:text-slate-600 transition-colors"
             >
               {channelsOpen ? (
                 <ChevronDown className="w-3 h-3" />
               ) : (
                 <ChevronRight className="w-3 h-3" />
               )}
-              Channels
+              <span>Channels</span>
             </button>
-            {currentAgent.role === 'admin' && (
-              <button
-                onClick={() => onCreateNew('channel')}
-                className="w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-                title="New channel"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <button
+              onClick={() => onCreateNew('channel')}
+              className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+              title="Create channel"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
         {channelsOpen && (
-          <div className="px-2 pb-1 space-y-0.5">
+          <div className="px-2 mb-4 space-y-0.5">
             {filteredChannels.map((conv) => {
               const unread = unreadCounts[conv.id] ?? 0
               const isSelected = selectedId === conv.id
@@ -190,63 +189,62 @@ export default function ConversationSidebar({
                   key={conv.id}
                   onClick={() => onSelect(conv.id)}
                   className={cn(
-                    'group/item w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-all duration-200',
+                    'group/item w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200',
                     isSelected
                       ? 'bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600/10'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
                     unread > 0 && !isSelected && 'font-semibold text-slate-900'
                   )}
                 >
-                  <span className="text-base leading-none shrink-0">
-                    <Hash
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Hash className={cn("w-4 h-4 shrink-0 transition-colors", isSelected ? "text-blue-600" : "text-slate-400 group-hover/item:text-slate-600")} />
+                    <span className="truncate">{conv.name}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span
+                      role="button"
+                      onClick={(e) => { e.stopPropagation(); onTogglePin(conv.id, !!conv.is_pinned) }}
                       className={cn(
-                        'w-4 h-4',
-                        isSelected ? 'text-blue-500' : 'text-slate-400'
+                        'w-5 h-5 flex items-center justify-center rounded transition-all',
+                        conv.is_pinned
+                          ? 'text-amber-500 hover:text-amber-600'
+                          : 'text-slate-300 opacity-0 group-hover/item:opacity-100 hover:text-amber-500'
                       )}
-                    />
-                  </span>
-                  <span className="truncate flex-1 text-left">{conv.name ?? 'Unnamed Channel'}</span>
-                  <span
-                    role="button"
-                    onClick={(e) => { e.stopPropagation(); onTogglePin(conv.id, !!conv.is_pinned) }}
-                    className={cn(
-                      'shrink-0 w-5 h-5 flex items-center justify-center rounded transition-all',
-                      conv.is_pinned
-                        ? 'text-amber-500 hover:text-amber-600'
-                        : 'text-slate-300 opacity-0 group-hover/item:opacity-100 hover:text-amber-500'
-                    )}
-                    title={conv.is_pinned ? 'Unpin' : 'Pin'}
-                  >
-                    <Pin className={cn('w-3 h-3', conv.is_pinned && 'fill-current')} />
-                  </span>
-                  {unread > 0 && (
-                    <span className="ml-auto bg-blue-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shrink-0">
-                      {unread > 99 ? '99+' : unread}
+                      title={conv.is_pinned ? 'Unpin' : 'Pin'}
+                    >
+                      <Pin className={cn('w-3 h-3', conv.is_pinned && 'fill-current')} />
                     </span>
-                  )}
+
+                    {unread > 0 && (
+                      <span className="bg-blue-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shrink-0">
+                        {unread > 99 ? '99+' : unread}
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })}
           </div>
         )}
 
-        {/* Direct Messages */}
-        <div className="px-3 pt-3 pb-1">
-          <div className="flex items-center justify-between">
+        {/* Direct Messages section */}
+        <div className="px-3 mb-1">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider py-1.5 px-1">
             <button
               onClick={() => setDmsOpen(!dmsOpen)}
-              className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+              className="flex items-center gap-1.5 hover:text-slate-600 transition-colors"
             >
               {dmsOpen ? (
                 <ChevronDown className="w-3 h-3" />
               ) : (
                 <ChevronRight className="w-3 h-3" />
               )}
-              Direct Messages
+              <span>Direct Messages</span>
             </button>
             <button
               onClick={() => onCreateNew('dm')}
-              className="w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+              className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
               title="New conversation"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -262,10 +260,18 @@ export default function ConversationSidebar({
               const displayName = getDmDisplayName(conv, currentAgent.id)
               const presence = getDmPresence(conv, currentAgent.id)
 
+              const otherMember = conv.type === 'direct_dm' && conv.members
+                ? conv.members.find((m) => m.agent_id !== currentAgent.id)?.agent
+                : null
+              const otherId = otherMember?.id
+              const lastSeenAt = otherId && getLiveLastSeen ? getLiveLastSeen(otherId, otherMember) : otherMember?.last_seen_at
+              const awayTimeText = formatAwayTime(lastSeenAt, presence)
+
               return (
                 <button
                   key={conv.id}
                   onClick={() => onSelect(conv.id)}
+                  title={conv.type === 'direct_dm' ? `${displayName} • ${awayTimeText}` : displayName}
                   className={cn(
                     'group/item w-full flex items-start text-left gap-2.5 px-3 py-2 rounded-md text-sm transition-all duration-200',
                     isSelected
@@ -277,8 +283,7 @@ export default function ConversationSidebar({
                   {/* Avatar with presence */}
                   <div className="relative shrink-0 mt-0.5">
                     {conv.type === 'direct_dm' && conv.members ? (() => {
-                      const other = conv.members.find((m) => m.agent_id !== currentAgent.id)?.agent
-                      return <Avatar name={other?.name || displayName} url={other?.avatar_url} className="w-8 h-8 text-xs shadow-none" fallbackClassName="w-8 h-8 text-xs shadow-none" />
+                      return <Avatar name={otherMember?.name || displayName} url={otherMember?.avatar_url} className="w-8 h-8 text-xs shadow-none" fallbackClassName="w-8 h-8 text-xs shadow-none" />
                     })() : (
                       <div
                         className={cn(
@@ -294,7 +299,7 @@ export default function ConversationSidebar({
                       </div>
                     )}
                     {conv.type === 'direct_dm' && (
-                      <div className="absolute -bottom-0.5 -right-0.5">
+                      <div className="absolute -bottom-0.5 -right-0.5" title={awayTimeText}>
                         <UserPresenceBadge status={presence} size="sm" />
                       </div>
                     )}
@@ -310,7 +315,7 @@ export default function ConversationSidebar({
                         </span>
                       )}
                     </div>
-                    {/* Subtitle: member names for groups, last message for DMs */}
+                    {/* Subtitle: member names for groups, last message or away duration for DMs */}
                     {conv.type === 'group_dm' && conv.members && conv.members.length > 0 ? (
                       <p className="text-[11px] text-slate-400 truncate mt-0.5 font-normal leading-tight text-left">
                         {conv.members
@@ -322,7 +327,16 @@ export default function ConversationSidebar({
                       <p className="text-[11px] text-slate-400 truncate mt-0.5 font-normal leading-tight text-left">
                         {getMessagePreviewText(conv.last_message.content)}
                       </p>
-                    ) : null}
+                    ) : (
+                      <p className={cn(
+                        "text-[10px] truncate mt-0.5 font-medium leading-tight text-left",
+                        presence === 'online' && "text-emerald-600 dark:text-emerald-400",
+                        presence === 'away' && "text-amber-600 dark:text-amber-400",
+                        (presence === 'busy' || presence === 'offline') && "text-slate-400"
+                      )}>
+                        {awayTimeText}
+                      </p>
+                    )}
                   </div>
 
                   {/* Pin + Unread */}

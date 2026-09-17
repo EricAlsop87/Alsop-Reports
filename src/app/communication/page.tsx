@@ -297,7 +297,7 @@ export default function CommunicationHub() {
       },
       onMemberUpdate: (updatedMember) => {
         setConversationMembers(prev =>
-          prev.map(m => m.agent_id === updatedMember.agent_id ? { ...m, ...updatedMember } : m)
+          prev.map(m => m.agent_id === updatedMember.agent_id ? { ...m, ...updatedMember, agent: m.agent || updatedMember.agent } : m)
         )
       },
       onNewReaction: async () => {

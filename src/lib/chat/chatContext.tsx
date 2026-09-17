@@ -78,6 +78,8 @@ export interface ChatContextValue {
   getLivePresence: (agentId: string, fallback?: any) => 'online' | 'away' | 'busy' | 'offline'
   /** Helper to get an agent's true realtime status message. */
   getLiveStatusMessage: (agentId: string, fallback?: string | null) => string | null
+  /** Helper to get an agent's last active timestamp. */
+  getLiveLastSeen: (agentId: string, fallback?: any) => string | null
   /** The currently open conversation ID (if any) across the main page or widget. */
   activeConversationId: string | null
   setActiveConversationId: (id: string | null) => void
@@ -723,6 +725,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [currentAgent, livePresenceMap]
   )
 
+  const getLiveLastSeen = useCallback(
+    (agentId: string, fallback?: any): string | null => {
+      if (agentIdRef.current && agentId === agentIdRef.current && currentAgent) {
+        return currentAgent.last_seen_at || new Date().toISOString()
+      }
+      const data = livePresenceMap[agentId]
+      return data?.last_seen_at ?? (typeof fallback === 'object' && fallback ? fallback.last_seen_at : null)
+    },
+    [currentAgent, livePresenceMap]
+  )
+
   // -----------------------------------------------------------------------
   // Memoized context value
   // -----------------------------------------------------------------------
@@ -742,6 +755,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       livePresenceMap,
       getLivePresence,
       getLiveStatusMessage,
+      getLiveLastSeen,
       activeConversationId,
       setActiveConversationId,
       notificationPreferences: notifPrefsRef.current,
@@ -760,12 +774,56 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       livePresenceMap,
       getLivePresence,
       getLiveStatusMessage,
+      getLiveLastSeen,
       activeConversationId,
       setActiveConversationId,
     ],
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
+}
+
+/**
+ * Format away / offline duration in human-readable minutes and hours
+ */
+export function formatAwayTime(lastSeenAt?: string | null, presence?: string | null): string {
+  if (!lastSeenAt) {
+    if (presence === 'online') return 'Active now'
+    if (presence === 'away') return 'Away'
+    if (presence === 'busy') return 'Busy'
+    return 'Offline'
+  }
+
+  const diffMs = Date.now() - new Date(lastSeenAt).getTime()
+  if (diffMs < 0 || isNaN(diffMs)) return presence || 'Offline'
+
+  const diffMins = Math.floor(diffMs / (60 * 1000))
+  const diffHours = Math.floor(diffMs / (60 * 60 * 1000))
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000))
+
+  if (presence === 'online') {
+    if (diffMins <= 5) return 'Active now'
+    return `Active ${diffMins}m ago`
+  }
+
+  if (presence === 'away') {
+    if (diffMins < 1) return 'Away (just now)'
+    if (diffMins < 60) return `Away for ${diffMins}m`
+    if (diffHours < 24) return `Away for ${diffHours}h`
+    return `Away for ${diffDays}d`
+  }
+
+  if (presence === 'busy') {
+    if (diffMins < 1) return 'Busy'
+    if (diffMins < 60) return `Busy (${diffMins}m)`
+    return `Busy (${diffHours}h)`
+  }
+
+  // Offline
+  if (diffMins < 1) return 'Offline (just now)'
+  if (diffMins < 60) return `Offline ${diffMins}m ago`
+  if (diffHours < 24) return `Offline ${diffHours}h ago`
+  return `Offline ${diffDays}d ago`
 }
 
 // ---------------------------------------------------------------------------

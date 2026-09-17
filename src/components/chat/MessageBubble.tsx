@@ -28,9 +28,10 @@ import {
 import { cn } from '@/lib/utils'
 import { useChat } from '@/lib/chat/chatContext'
 import { triggerConfetti } from '@/lib/chat/confetti'
-import type { Message, Reaction, Agent } from './types'
+import type { Message, Reaction, Agent, ConversationMember } from './types'
 import UserPresenceBadge from './UserPresenceBadge'
 import UserHoverCard from './UserHoverCard'
+import SeenByHoverCard from './SeenByHoverCard'
 import EmojiReactionPicker, { QUICK_REACTIONS } from './EmojiReactionPicker'
 
 interface MessageBubbleProps {
@@ -39,6 +40,7 @@ interface MessageBubbleProps {
   isGrouped: boolean
   isGroupChannel?: boolean
   isDirectDM?: boolean
+  conversationMembers?: ConversationMember[]
   otherMemberLastReadAt?: string | null
   onReply: (messageId: string) => void
   onEdit: (messageId: string, newContent: string) => Promise<void> | void
@@ -621,6 +623,7 @@ export default function MessageBubble({
   isGrouped,
   isGroupChannel,
   isDirectDM,
+  conversationMembers = [],
   otherMemberLastReadAt,
   onReply,
   onEdit,
@@ -715,6 +718,18 @@ export default function MessageBubble({
 
     return directMention || everyoneMention || teamMention || officeMention || roleMention
   }, [currentAgent, message.content, message.is_deleted, message.is_system])
+
+  // Calculate seen count for this message
+  const seenByCount = useMemo(() => {
+    if (!conversationMembers || conversationMembers.length === 0) return 0
+    const msgTime = new Date(message.created_at).getTime()
+    return conversationMembers.filter(
+      (m) =>
+        m.agent_id !== message.sender_id &&
+        m.last_read_at &&
+        new Date(m.last_read_at).getTime() >= msgTime - 1000
+    ).length
+  }, [conversationMembers, message.sender_id, message.created_at])
 
   // System messages
   if (message.is_system) {
@@ -825,36 +840,83 @@ export default function MessageBubble({
                 </span>
               )}
               
-              <div className="flex items-center gap-1.5 mt-0.5 opacity-70 group-hover/msg:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1.5 mt-0.5 opacity-80 group-hover/msg:opacity-100 transition-opacity">
                 <span className="text-[10px] font-medium text-slate-500 select-none">
                   {formatTime(message.created_at)}
                 </span>
 
-                {/* Seen / Delivered Indicator for your own messages */}
-                {isOwn && (
-                  (() => {
-                    const isSeen = Boolean(
-                      isDirectDM &&
-                      otherMemberLastReadAt &&
-                      new Date(otherMemberLastReadAt).getTime() >= new Date(message.created_at).getTime()
-                    )
-                    return (
-                      <span
+                {/* Live Seen / Delivered Indicator & Hover Card */}
+                {!isDirectDM ? (
+                  // Channels & Group Chats: Seen by N (or Eye badge for others)
+                  <SeenByHoverCard
+                    message={message}
+                    conversationMembers={conversationMembers}
+                    isOwn={isOwn}
+                    isGroupChannel={true}
+                    isDirectDM={false}
+                  >
+                    {isOwn ? (
+                      <button
+                        type="button"
                         className={cn(
-                          "inline-flex items-center gap-0.5 text-[10px] font-semibold ml-0.5 select-none transition-colors",
-                          isSeen ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                          "inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full cursor-pointer transition-all select-none shadow-2xs",
+                          seenByCount > 0
+                            ? "text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/60"
+                            : "text-slate-400 dark:text-slate-500 bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 border border-slate-200/50 dark:border-slate-700/50"
                         )}
-                        title={isSeen ? "Delivered & Seen by recipient" : "Delivered to chat (Unread by recipient)"}
+                        title={seenByCount > 0 ? `Seen by ${seenByCount} members (Hover to view)` : "Delivered to channel (Unread)"}
                       >
-                        {isSeen ? (
-                          <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                        ) : (
-                          <CheckCheck className="w-3.5 h-3.5 text-slate-400" />
-                        )}
-                        <span className="hidden sm:inline">{isSeen ? "Seen" : "Delivered"}</span>
-                      </span>
-                    )
-                  })()
+                        <CheckCheck className={cn("w-3.5 h-3.5", seenByCount > 0 ? "text-blue-500" : "text-slate-400")} />
+                        <span>{seenByCount > 0 ? `Seen by ${seenByCount}` : "Delivered"}</span>
+                      </button>
+                    ) : (
+                      seenByCount > 0 ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 hover:text-blue-600 dark:text-slate-500 dark:hover:text-blue-400 bg-transparent hover:bg-blue-50/80 dark:hover:bg-blue-950/60 border border-transparent hover:border-blue-200/50 px-1.5 py-0.5 rounded-full cursor-pointer transition-all select-none"
+                          title={`Seen by ${seenByCount} members (Hover to view)`}
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>{seenByCount}</span>
+                        </button>
+                      ) : null
+                    )}
+                  </SeenByHoverCard>
+                ) : (
+                  // Direct DM (1-on-1): Seen / Delivered
+                  isOwn && (
+                    <SeenByHoverCard
+                      message={message}
+                      conversationMembers={conversationMembers}
+                      isOwn={true}
+                      isGroupChannel={false}
+                      isDirectDM={true}
+                      otherMemberLastReadAt={otherMemberLastReadAt}
+                    >
+                      {(() => {
+                        const msgTime = new Date(message.created_at).getTime()
+                        const isSeen = Boolean(
+                          otherMemberLastReadAt &&
+                          new Date(otherMemberLastReadAt).getTime() >= msgTime - 1000
+                        )
+                        return (
+                          <button
+                            type="button"
+                            className={cn(
+                              "inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full cursor-pointer transition-all select-none shadow-2xs",
+                              isSeen
+                                ? "text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/60"
+                                : "text-slate-400 dark:text-slate-500 bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 border border-slate-200/50 dark:border-slate-700/50"
+                            )}
+                            title={isSeen ? "Delivered & Seen (Hover to view)" : "Delivered to chat (Unread by recipient)"}
+                          >
+                            <CheckCheck className={cn("w-3.5 h-3.5", isSeen ? "text-blue-500" : "text-slate-400")} />
+                            <span className="hidden sm:inline">{isSeen ? "Seen" : "Delivered"}</span>
+                          </button>
+                        )
+                      })()}
+                    </SeenByHoverCard>
+                  )
                 )}
               </div>
 

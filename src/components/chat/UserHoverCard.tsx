@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Building2, Users, Shield, Sparkles, MessageSquare, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
-import { useChat } from '@/lib/chat/chatContext'
+import { useChat, formatAwayTime } from '@/lib/chat/chatContext'
 import { getOrCreateDirectDM } from '@/lib/chat/conversations'
 
 interface UserHoverCardProps {
@@ -51,7 +51,7 @@ export default function UserHoverCard({
   const [coords, setCoords] = useState({ top: 0, bottom: 0, left: 0, width: 0 })
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const { currentAgent, getLivePresence, getLiveStatusMessage } = useChat()
+  const { currentAgent, getLivePresence, getLiveStatusMessage, getLiveLastSeen } = useChat()
 
   const updateCoords = useCallback(() => {
     if (!containerRef.current) return
@@ -100,23 +100,16 @@ export default function UserHoverCard({
     setIsStartingDM(true)
     try {
       const convo = await getOrCreateDirectDM(currentAgent.id, agent.id)
-      setIsOpen(false)
-      if (typeof window !== 'undefined') {
-        if (window.location.pathname.startsWith('/communication')) {
-          window.dispatchEvent(
-            new CustomEvent('select-conversation', {
-              detail: { conversationId: convo.id },
-            })
-          )
-          const newUrl = new URL(window.location.href)
-          newUrl.searchParams.set('id', convo.id)
-          window.history.pushState({}, '', newUrl.toString())
-        } else {
-          window.location.href = `/communication?id=${convo.id}`
-        }
+      if (convo) {
+        setIsOpen(false)
+        window.dispatchEvent(
+          new CustomEvent('select-conversation', {
+            detail: { conversationId: convo.id },
+          })
+        )
       }
     } catch (err) {
-      console.error('Failed to start Direct DM:', err)
+      console.error('[UserHoverCard] Failed to open DM:', err)
     } finally {
       setIsStartingDM(false)
     }
@@ -128,6 +121,8 @@ export default function UserHoverCard({
   )
 
   const effectivePresence = agent.id ? getLivePresence(agent.id, agent) : (agent.presence || 'offline')
+  const effectiveLastSeen = agent.id && getLiveLastSeen ? getLiveLastSeen(agent.id, agent) : (agent as any).last_seen_at
+  const awayTimeText = formatAwayTime(effectiveLastSeen, effectivePresence)
 
   const effectiveStatusMessage = isSelf
     ? currentAgent?.status_message
@@ -190,8 +185,15 @@ export default function UserHoverCard({
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-slate-400 capitalize">
-                {effectivePresence}
+              <div className="text-[11px] text-slate-400 capitalize font-medium flex items-center gap-1">
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full inline-block",
+                  effectivePresence === 'online' && "bg-emerald-500",
+                  effectivePresence === 'away' && "bg-amber-500",
+                  effectivePresence === 'busy' && "bg-rose-500",
+                  (!effectivePresence || effectivePresence === 'offline') && "bg-slate-400"
+                )} />
+                <span>{awayTimeText}</span>
               </div>
             </div>
           </div>
