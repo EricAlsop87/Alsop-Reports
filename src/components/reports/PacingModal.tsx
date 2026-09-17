@@ -91,38 +91,22 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
   }, [])
 
   /**
-   * Generates clean, modern, formal HTML table formatted for email clients (Outlook, Gmail, etc.)
+   * Generates clean, modern, single-view HTML table formatted for email clients (Outlook, Gmail, etc.)
    */
   const getModernEmailHtml = useCallback(() => {
     const exportTime = getExportTimestamp()
     return `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
   <!-- Header Banner -->
-  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 12px 16px; color: #ffffff;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8;">Alsop Agency &bull; Performance Pacing</div>
-      <div style="font-size: 9px; color: #94a3b8;">${exportTime}</div>
-    </div>
-    <div style="font-size: 16px; font-weight: 800; margin-top: 2px; color: #ffffff;">Allstate Auto Items MTD Ranking</div>
-    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
-      Day <strong>${elapsedBizDays}</strong> of <strong>${totalBizDays}</strong> Business Days (${pctElapsed}% Elapsed)
-    </div>
-  </div>
-
-  <!-- Summary KPI Bar -->
-  <table style="width: 100%; border-collapse: collapse; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+  <table style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
     <tr>
-      <td style="padding: 8px 10px; text-align: center; border-right: 1px solid #e2e8f0;">
-        <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.03em;">Total Items MTD</div>
-        <div style="font-size: 17px; font-weight: 800; color: #0f172a; margin-top: 1px;">${totalItems}</div>
+      <td style="padding: 10px 14px; text-align: left; vertical-align: middle;">
+        <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8;">Alsop Agency &bull; Auto Pacing</div>
+        <div style="font-size: 15px; font-weight: 800; color: #ffffff; margin-top: 1px;">Allstate Auto Items MTD Ranking</div>
       </td>
-      <td style="padding: 8px 10px; text-align: center; border-right: 1px solid #e2e8f0;">
-        <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.03em;">Daily Run Rate</div>
-        <div style="font-size: 17px; font-weight: 800; color: #0284c7; margin-top: 1px;">${totalDailyAvg.toFixed(2)}<span style="font-size: 10px; font-weight: normal; color: #64748b;"> /day</span></div>
-      </td>
-      <td style="padding: 8px 10px; text-align: center;">
-        <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.03em;">Projected Finish</div>
-        <div style="font-size: 17px; font-weight: 800; color: #16a34a; margin-top: 1px;">${totalOnPace}</div>
+      <td style="padding: 10px 14px; text-align: right; vertical-align: middle;">
+        <div style="font-size: 11px; font-weight: 600; color: #e2e8f0;">Day ${elapsedBizDays} of ${totalBizDays} (${pctElapsed}%)</div>
+        <div style="font-size: 9px; color: #94a3b8; margin-top: 1px;">${exportTime}</div>
       </td>
     </tr>
   </table>
@@ -130,11 +114,11 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
   <!-- Main Table -->
   <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
     <thead>
-      <tr style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0;">
-        <th style="padding: 7px 12px; text-align: left;">Rank &amp; Agent</th>
-        <th style="padding: 7px 12px; text-align: center;">Items MTD</th>
-        <th style="padding: 7px 12px; text-align: center;">Daily Run Rate</th>
-        <th style="padding: 7px 12px; text-align: right;">On Pace MTD</th>
+      <tr style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #cbd5e1;">
+        <th style="padding: 6px 12px; text-align: left;">Rank &amp; Agent</th>
+        <th style="padding: 6px 12px; text-align: center; width: 85px;">Items MTD</th>
+        <th style="padding: 6px 12px; text-align: center; width: 100px;">Daily Run Rate</th>
+        <th style="padding: 6px 12px; text-align: right; width: 95px;">On Pace MTD</th>
       </tr>
     </thead>
     <tbody>
@@ -143,35 +127,35 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
         const onPaceColor = row.onPace >= row.goal ? '#16a34a' : '#0f172a'
         return `
         <tr style="background: ${bg}; border-bottom: 1px solid #f1f5f9;">
-          <td style="padding: 6px 12px; font-weight: 600; color: #0f172a;">
+          <td style="padding: 5px 12px; font-weight: 600; color: #0f172a;">
             <span style="color: #64748b; font-size: 11px; font-weight: 700; margin-right: 6px; font-family: monospace;">#${idx + 1}</span>
             <span>${row.agentName}</span>
-            ${row.office ? `<span style="font-size: 9px; font-weight: 700; background: #e2e8f0; color: #475569; padding: 1px 5px; border-radius: 3px; margin-left: 6px;">${row.office}</span>` : ''}
+            ${row.office ? `<span style="font-size: 9px; font-weight: 700; background: #e2e8f0; color: #475569; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">${row.office}</span>` : ''}
           </td>
-          <td style="padding: 6px 12px; text-align: center; font-weight: 700; font-size: 13px; color: ${row.isGoalMet ? '#16a34a' : '#0f172a'};">
+          <td style="padding: 5px 12px; text-align: center; font-weight: 700; font-size: 12px; color: ${row.isGoalMet ? '#16a34a' : '#0f172a'};">
             ${row.mtd}
           </td>
-          <td style="padding: 6px 12px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">
+          <td style="padding: 5px 12px; text-align: center; font-family: monospace; font-size: 11px; color: #475569;">
             ${row.dailyAvg.toFixed(2)}
           </td>
-          <td style="padding: 6px 12px; text-align: right; font-weight: 700; font-size: 13px; color: ${onPaceColor};">
+          <td style="padding: 5px 12px; text-align: right; font-weight: 700; font-size: 12px; color: ${onPaceColor};">
             ${row.onPace}
           </td>
         </tr>`
       }).join('')}
       <!-- Grand Total Row -->
-      <tr style="background: #0f172a; color: #ffffff; font-weight: 700; font-size: 12px;">
+      <tr style="background: #0f172a; color: #ffffff; font-weight: 800; font-size: 12px;">
         <td style="padding: 8px 12px; color: #ffffff;">GRAND TOTAL (AGENCY)</td>
         <td style="padding: 8px 12px; text-align: center; color: #ffffff; font-size: 14px;">${totalItems}</td>
-        <td style="padding: 8px 12px; text-align: center; color: #38bdf8; font-family: monospace; font-size: 13px;">${totalDailyAvg.toFixed(2)}</td>
+        <td style="padding: 8px 12px; text-align: center; color: #38bdf8; font-family: monospace; font-size: 12px;">${totalDailyAvg.toFixed(2)}/day</td>
         <td style="padding: 8px 12px; text-align: right; color: #4ade80; font-size: 14px;">${totalOnPace}</td>
       </tr>
     </tbody>
   </table>
 
-  <!-- Footer with Export Date -->
-  <div style="padding: 6px 12px; background: #f8fafc; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0;">
-    Exported: ${exportTime} &bull; Alsop Reports Dashboard &bull; Pacing excludes weekends and holidays
+  <!-- Sub-footer with Export Date -->
+  <div style="padding: 5px 12px; background: #f8fafc; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0;">
+    Exported: ${exportTime} &bull; Alsop Reports Dashboard &bull; Pacing excludes weekends &amp; holidays
   </div>
 </div>`
   }, [sortedData, totalItems, totalDailyAvg, totalOnPace, elapsedBizDays, totalBizDays, pctElapsed, getExportTimestamp])
@@ -225,18 +209,17 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
   }
 
   /**
-   * Modern Formal High-DPI Canvas Renderer for Screenshot & Image Copying
+   * Modern Single-View High-DPI Canvas Renderer for Screenshot & Image Copying
    */
   const renderModernCanvas = useCallback((): HTMLCanvasElement => {
     const dpr = 2
-    const totalW = 560
-    const headerH = 68
-    const kpiH = 44
-    const tableHeaderH = 26
-    const rowH = 28
-    const footerH = 32
-    const subFooterH = 18
-    const totalH = headerH + kpiH + tableHeaderH + (sortedData.length * rowH) + footerH + subFooterH
+    const totalW = 520
+    const headerH = 46
+    const tableHeaderH = 24
+    const rowH = 22
+    const footerH = 28
+    const subFooterH = 16
+    const totalH = headerH + tableHeaderH + (sortedData.length * rowH) + footerH + subFooterH
 
     const canvas = document.createElement('canvas')
     canvas.width = totalW * dpr
@@ -255,95 +238,48 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, totalW, headerH)
 
-    // Subtitle Top Pill + Export date on right
+    // Left Title
     ctx.fillStyle = '#38bdf8'
-    ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     ctx.textAlign = 'left'
-    ctx.fillText('ALSOP AGENCY • PERFORMANCE PACING', 20, 20)
+    ctx.fillText('ALSOP AGENCY • AUTO PACING', 16, 16)
 
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText('Allstate Auto Items MTD Ranking', 16, 34)
+
+    // Right Progress & Timestamp
     const exportTime = getExportTimestamp()
+    ctx.fillStyle = '#e2e8f0'
+    ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(`Day ${elapsedBizDays} of ${totalBizDays} (${pctElapsed}%)`, totalW - 16, 18)
+
     ctx.fillStyle = '#94a3b8'
     ctx.font = '8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.textAlign = 'right'
-    ctx.fillText(exportTime, totalW - 20, 20)
+    ctx.fillText(exportTime, totalW - 16, 32)
 
-    // Title
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.textAlign = 'left'
-    ctx.fillText('Allstate Auto Items MTD Ranking', 20, 40)
-
-    // Date & Progress Badge
-    ctx.fillStyle = '#94a3b8'
-    ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(`Day ${elapsedBizDays} of ${totalBizDays} Business Days (${pctElapsed}% Elapsed)`, 20, 56)
-
-    // 2. Summary KPI Bar
-    ctx.fillStyle = '#f8fafc'
-    ctx.fillRect(0, headerH, totalW, kpiH)
-    ctx.strokeStyle = '#e2e8f0'
-    ctx.lineWidth = 1
-    ctx.strokeRect(0, headerH, totalW, kpiH)
-
-    // KPI 1: Total Items
-    const kpiW = totalW / 3
-    ctx.fillStyle = '#64748b'
-    ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('TOTAL ITEMS MTD', kpiW * 0.5, headerH + 15)
-    ctx.fillStyle = '#0f172a'
-    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(totalItems.toString(), kpiW * 0.5, headerH + 34)
-
-    // Divider 1
-    ctx.beginPath()
-    ctx.moveTo(kpiW, headerH + 6)
-    ctx.lineTo(kpiW, headerH + kpiH - 6)
-    ctx.stroke()
-
-    // KPI 2: Daily Run Rate
-    ctx.fillStyle = '#64748b'
-    ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText('DAILY RUN RATE', kpiW * 1.5, headerH + 15)
-    ctx.fillStyle = '#0284c7'
-    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(`${totalDailyAvg.toFixed(2)}/day`, kpiW * 1.5, headerH + 34)
-
-    // Divider 2
-    ctx.beginPath()
-    ctx.moveTo(kpiW * 2, headerH + 6)
-    ctx.lineTo(kpiW * 2, headerH + kpiH - 6)
-    ctx.stroke()
-
-    // KPI 3: Projected Finish
-    ctx.fillStyle = '#64748b'
-    ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText('PROJECTED FINISH', kpiW * 2.5, headerH + 15)
-    ctx.fillStyle = '#16a34a'
-    ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(totalOnPace.toString(), kpiW * 2.5, headerH + 34)
-
-    // 3. Table Header
-    let curY = headerH + kpiH
+    // 2. Table Header
+    let curY = headerH
     ctx.fillStyle = '#f1f5f9'
     ctx.fillRect(0, curY, totalW, tableHeaderH)
-    ctx.strokeStyle = '#e2e8f0'
+    ctx.strokeStyle = '#cbd5e1'
     ctx.strokeRect(0, curY, totalW, tableHeaderH)
 
     ctx.fillStyle = '#475569'
-    ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.font = 'bold 8.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     ctx.textBaseline = 'middle'
 
     // Col headers
     ctx.textAlign = 'left'
-    ctx.fillText('RANK & AGENT', 20, curY + tableHeaderH / 2)
+    ctx.fillText('RANK & AGENT', 16, curY + tableHeaderH / 2)
     ctx.textAlign = 'center'
-    ctx.fillText('ITEMS MTD', 320, curY + tableHeaderH / 2)
-    ctx.fillText('DAILY RUN RATE', 415, curY + tableHeaderH / 2)
+    ctx.fillText('ITEMS MTD', 300, curY + tableHeaderH / 2)
+    ctx.fillText('DAILY RUN RATE', 385, curY + tableHeaderH / 2)
     ctx.textAlign = 'right'
-    ctx.fillText('ON PACE MTD', totalW - 20, curY + tableHeaderH / 2)
+    ctx.fillText('ON PACE MTD', totalW - 16, curY + tableHeaderH / 2)
 
-    // 4. Data Rows
+    // 3. Data Rows
     curY += tableHeaderH
 
     sortedData.forEach((row, idx) => {
@@ -360,75 +296,75 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
 
       const midY = curY + rowH / 2
 
-      // Formal Rank Number (No Medals)
+      // Rank Number
       ctx.textAlign = 'left'
       ctx.fillStyle = '#64748b'
-      ctx.font = 'bold 10px "SFMono-Regular", Consolas, monospace'
-      ctx.fillText(`#${idx + 1}`, 20, midY)
+      ctx.font = 'bold 9.5px "SFMono-Regular", Consolas, monospace'
+      ctx.fillText(`#${idx + 1}`, 16, midY)
 
       // Agent Name
       ctx.fillStyle = '#0f172a'
-      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-      ctx.fillText(row.agentName, 48, midY)
+      ctx.font = 'bold 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      ctx.fillText(row.agentName, 42, midY)
 
       // Office Tag
       if (row.office) {
         const nameW = ctx.measureText(row.agentName).width
-        const tagX = 48 + nameW + 6
+        const tagX = 42 + nameW + 5
         ctx.fillStyle = '#e2e8f0'
         ctx.beginPath()
-        ctx.roundRect(tagX, midY - 7, 24, 14, 3)
+        ctx.roundRect(tagX, midY - 6, 22, 12, 2)
         ctx.fill()
         ctx.fillStyle = '#475569'
-        ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+        ctx.font = 'bold 7.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(row.office, tagX + 12, midY)
+        ctx.fillText(row.office, tagX + 11, midY)
       }
 
-      // Items MTD (No Stars)
+      // Items MTD
       ctx.textAlign = 'center'
       ctx.fillStyle = row.isGoalMet ? '#16a34a' : '#0f172a'
-      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-      ctx.fillText(row.mtd.toString(), 320, midY)
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      ctx.fillText(row.mtd.toString(), 300, midY)
 
       // Daily Run Rate
       ctx.fillStyle = '#475569'
-      ctx.font = '11px "SFMono-Regular", Consolas, monospace'
-      ctx.fillText(row.dailyAvg.toFixed(2), 415, midY)
+      ctx.font = '10px "SFMono-Regular", Consolas, monospace'
+      ctx.fillText(row.dailyAvg.toFixed(2), 385, midY)
 
       // On Pace MTD
       ctx.textAlign = 'right'
       ctx.fillStyle = row.onPace >= row.goal ? '#16a34a' : '#0f172a'
-      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-      ctx.fillText(row.onPace.toString(), totalW - 20, midY)
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      ctx.fillText(row.onPace.toString(), totalW - 16, midY)
 
       curY += rowH
     })
 
-    // 5. Grand Total Footer Banner
+    // 4. Grand Total Footer Banner
     ctx.fillStyle = '#0f172a'
     ctx.fillRect(0, curY, totalW, footerH)
 
     const footMidY = curY + footerH / 2
     ctx.textAlign = 'left'
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText('GRAND TOTAL (AGENCY)', 20, footMidY)
+    ctx.font = 'bold 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText('GRAND TOTAL (AGENCY)', 16, footMidY)
 
     ctx.textAlign = 'center'
-    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(totalItems.toString(), 320, footMidY)
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText(totalItems.toString(), 300, footMidY)
 
     ctx.fillStyle = '#38bdf8'
-    ctx.font = 'bold 12px "SFMono-Regular", Consolas, monospace'
-    ctx.fillText(`${totalDailyAvg.toFixed(2)}/day`, 415, footMidY)
+    ctx.font = 'bold 11px "SFMono-Regular", Consolas, monospace'
+    ctx.fillText(`${totalDailyAvg.toFixed(2)}/day`, 385, footMidY)
 
     ctx.fillStyle = '#4ade80'
     ctx.textAlign = 'right'
-    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(totalOnPace.toString(), totalW - 20, footMidY)
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.fillText(totalOnPace.toString(), totalW - 16, footMidY)
 
-    // 6. Sub-footer with Export Date (small font)
+    // 5. Sub-footer with Export Date
     curY += footerH
     ctx.fillStyle = '#f8fafc'
     ctx.fillRect(0, curY, totalW, subFooterH)
@@ -436,7 +372,7 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
     ctx.strokeRect(0, curY, totalW, subFooterH)
 
     ctx.fillStyle = '#94a3b8'
-    ctx.font = '8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.font = '7.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText(`Exported: ${exportTime} • Alsop Reports Dashboard`, totalW / 2, curY + subFooterH / 2)
 
@@ -505,71 +441,49 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-150"
       onPointerDown={handleBackdropClick}
     >
-      <div className="bg-white border border-slate-200 rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-150">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[94vh] overflow-hidden animate-in zoom-in-95 duration-150">
         
-        {/* Compressed Executive Header Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-3 text-white flex flex-col gap-2 relative shrink-0">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-extrabold uppercase tracking-widest text-sky-400 bg-sky-950/80 border border-sky-800/60 px-1.5 py-0.5 rounded">
-                  Allstate Performance
-                </span>
-                <span className="text-[10px] font-medium text-slate-300 flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-sky-400" />
-                  Day {elapsedBizDays} of {totalBizDays} ({pctElapsed}% Elapsed)
-                </span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white mt-0.5">
-                Auto Items MTD Pacing
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-slate-400 font-mono hidden sm:inline-block">
-                {currentExportTime}
+        {/* Streamlined Executive Header Banner (No duplicate KPI cards) */}
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-3.5 py-2.5 text-white flex items-center justify-between shrink-0">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[8.5px] font-extrabold uppercase tracking-wider text-sky-400 bg-sky-950/80 border border-sky-800/60 px-1.5 py-0.2 rounded">
+                Allstate Performance
               </span>
-              <button 
-                onClick={onClose} 
-                className="p-1 text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-lg transition-colors cursor-pointer"
-                title="Close modal"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <span className="text-[10px] font-medium text-slate-300">
+                Day {elapsedBizDays} of {totalBizDays} ({pctElapsed}%)
+              </span>
             </div>
+            <h2 className="text-base font-bold tracking-tight text-white mt-0.5">
+              Auto Items MTD Ranking
+            </h2>
           </div>
 
-          {/* Compressed Top 3 KPI Summary Cards */}
-          <div className="grid grid-cols-3 gap-2 bg-slate-950/60 rounded-lg p-2 border border-slate-700/50 backdrop-blur-sm">
-            <div className="text-center">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Items MTD</span>
-              <span className="text-lg sm:text-xl font-extrabold text-white">{totalItems}</span>
-            </div>
-            <div className="text-center border-x border-slate-800">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Daily Run Rate</span>
-              <span className="text-lg sm:text-xl font-extrabold text-sky-400 font-mono">
-                {totalDailyAvg.toFixed(2)}
-                <span className="text-[9px] font-normal text-slate-400 font-sans ml-0.5">/day</span>
-              </span>
-            </div>
-            <div className="text-center">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Projected Finish</span>
-              <span className="text-lg sm:text-xl font-extrabold text-emerald-400">{totalOnPace}</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-slate-400 font-mono hidden sm:inline-block">
+              {currentExportTime}
+            </span>
+            <button 
+              onClick={onClose} 
+              className="p-1 text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-lg transition-colors cursor-pointer"
+              title="Close modal"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
         {/* Action Toolbar & Search */}
-        <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap shrink-0">
+        <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap shrink-0">
           {/* Quick Search Filter */}
-          <div className="relative w-44 sm:w-52">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative w-40 sm:w-48">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input 
               type="text"
               placeholder="Filter agent or office..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-2.5 py-1 text-xs bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full pl-7 pr-2 py-0.8 text-xs bg-white border border-slate-200 rounded text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
             />
           </div>
 
@@ -579,18 +493,18 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
             <button
               onClick={handleCopyImage}
               disabled={isGeneratingImage}
-              className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-xs hover:shadow transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1 px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold shadow-xs hover:shadow transition-all active:scale-95 cursor-pointer disabled:opacity-50"
               title="Copy modern report image directly to clipboard"
             >
               {copyStatus === 'image' ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-300">Copied!</span>
+                  <span className="text-emerald-300 text-[11px]">Copied!</span>
                 </>
               ) : (
                 <>
                   <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Copy Image</span>
+                  <span className="text-[11px]">Copy Image</span>
                 </>
               )}
             </button>
@@ -598,18 +512,18 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
             {/* Copy Table for Email */}
             <button
               onClick={handleCopyHtml}
-              className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-md text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
               title="Copy formatted table for Outlook / Gmail"
             >
               {copyStatus === 'html' ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-600">Copied!</span>
+                  <span className="text-emerald-600 text-[11px]">Copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Copy Table</span>
+                  <span className="text-[11px]">Copy Table</span>
                 </>
               )}
             </button>
@@ -617,7 +531,7 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
             {/* Download PNG */}
             <button
               onClick={handleDownloadImage}
-              className="p-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded-md transition-all active:scale-95 cursor-pointer"
+              className="p-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded transition-all active:scale-95 cursor-pointer"
               title="Download high-resolution image"
             >
               <Download className="w-3.5 h-3.5" />
@@ -627,8 +541,8 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
 
         {/* Copy Notification Toast */}
         {copyStatus && (
-          <div className="bg-emerald-600 text-white text-[11px] font-medium px-3 py-1 flex items-center justify-center gap-1.5 animate-in slide-in-from-top-1 duration-150 shrink-0">
-            <Check className="w-3.5 h-3.5" />
+          <div className="bg-emerald-600 text-white text-[11px] font-medium px-3 py-0.5 flex items-center justify-center gap-1.5 animate-in slide-in-from-top-1 duration-150 shrink-0">
+            <Check className="w-3 h-3" />
             <span>
               {copyStatus === 'image' && "Report graphic copied to clipboard! Ready to paste into email or chat."}
               {copyStatus === 'html' && "Table copied! Ready to paste (Ctrl+V) into Outlook or Gmail."}
@@ -637,7 +551,7 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
           </div>
         )}
 
-        {/* Formal Compressed Table Body */}
+        {/* Single-View High-Density Table Body */}
         <div ref={tableRef} className="flex-1 overflow-y-auto">
           {filteredData.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-xs">
@@ -646,11 +560,11 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
           ) : (
             <table className="w-full text-left border-collapse select-text">
               <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-md z-10 border-b border-slate-200 shadow-2xs">
-                <tr className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-2 px-3.5 text-left">Rank &amp; Agent</th>
-                  <th className="py-2 px-3.5 text-center">Items MTD</th>
-                  <th className="py-2 px-3.5 text-center">Daily Run Rate</th>
-                  <th className="py-2 px-3.5 text-right">On Pace MTD</th>
+                <tr className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="py-1.5 px-3 text-left">Rank &amp; Agent</th>
+                  <th className="py-1.5 px-3 text-center w-24">Items MTD</th>
+                  <th className="py-1.5 px-3 text-center w-28">Daily Run Rate</th>
+                  <th className="py-1.5 px-3 text-right w-24">On Pace MTD</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -663,23 +577,23 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
                       }`}
                     >
                       {/* Rank & Agent Name */}
-                      <td className="py-1.5 px-3.5 flex items-center gap-2">
-                        <span className="w-5 text-[11px] font-bold text-slate-400 font-mono shrink-0">
+                      <td className="py-1 px-3 flex items-center gap-1.5">
+                        <span className="w-4 text-[10px] font-bold text-slate-400 font-mono shrink-0">
                           #{idx + 1}
                         </span>
 
-                        <div className="min-w-0 flex items-center gap-1.5">
-                          <span className="font-bold text-slate-800 truncate">{row.agentName}</span>
+                        <div className="min-w-0 flex items-center gap-1">
+                          <span className="font-semibold text-slate-800 truncate">{row.agentName}</span>
                           {row.office && (
-                            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded">
+                            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200 px-1 rounded">
                               {row.office}
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Items MTD (No Stars, Formal Number) */}
-                      <td className="py-1.5 px-3.5 text-center">
+                      {/* Items MTD */}
+                      <td className="py-1 px-3 text-center">
                         <span className={`text-xs font-bold font-mono ${
                           row.isGoalMet ? 'text-emerald-700' : 'text-slate-800'
                         }`}>
@@ -688,14 +602,14 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
                       </td>
 
                       {/* Daily Run Rate */}
-                      <td className="py-1.5 px-3.5 text-center">
-                        <span className="text-[11px] font-mono font-medium text-slate-600">
+                      <td className="py-1 px-3 text-center">
+                        <span className="text-[11px] font-mono text-slate-600">
                           {row.dailyAvg.toFixed(2)}
                         </span>
                       </td>
 
                       {/* On Pace MTD */}
-                      <td className="py-1.5 px-3.5 text-right">
+                      <td className="py-1 px-3 text-right">
                         <span className={`text-xs font-bold font-mono ${
                           row.onPace >= row.goal ? 'text-emerald-600' : 'text-slate-800'
                         }`}>
@@ -710,31 +624,31 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
           )}
         </div>
 
-        {/* Grand Total Sticky Footer */}
-        <div className="bg-slate-900 text-white px-4 py-2 border-t border-slate-800 flex items-center justify-between shrink-0 shadow-lg">
+        {/* Grand Total Row directly at Bottom */}
+        <div className="bg-slate-900 text-white px-3 py-1.5 border-t border-slate-800 flex items-center justify-between shrink-0 shadow-lg text-xs">
           <div className="flex items-center gap-1.5">
             <Award className="w-3.5 h-3.5 text-slate-300" />
-            <span className="text-xs font-bold uppercase tracking-wider">Grand Total (Agency)</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Grand Total (Agency)</span>
           </div>
 
-          <div className="flex items-center gap-5 sm:gap-7 font-mono">
-            <div className="text-center">
-              <span className="text-[8px] uppercase tracking-wider text-slate-400 block font-sans">Total MTD</span>
-              <span className="text-sm sm:text-base font-extrabold text-white">{totalItems}</span>
+          <div className="flex items-center gap-5 sm:gap-6 font-mono">
+            <div className="text-center w-12">
+              <span className="text-[7.5px] uppercase tracking-wider text-slate-400 block font-sans">Total</span>
+              <span className="text-xs sm:text-sm font-extrabold text-white">{totalItems}</span>
             </div>
-            <div className="text-center">
-              <span className="text-[8px] uppercase tracking-wider text-slate-400 block font-sans">Daily Run Rate</span>
-              <span className="text-sm sm:text-base font-extrabold text-sky-400">{totalDailyAvg.toFixed(2)}</span>
+            <div className="text-center w-16">
+              <span className="text-[7.5px] uppercase tracking-wider text-slate-400 block font-sans">Run Rate</span>
+              <span className="text-xs sm:text-sm font-extrabold text-sky-400">{totalDailyAvg.toFixed(2)}</span>
             </div>
-            <div className="text-right">
-              <span className="text-[8px] uppercase tracking-wider text-slate-400 block font-sans">Projected Finish</span>
-              <span className="text-sm sm:text-base font-extrabold text-emerald-400">{totalOnPace}</span>
+            <div className="text-right w-12">
+              <span className="text-[7.5px] uppercase tracking-wider text-slate-400 block font-sans">Projected</span>
+              <span className="text-xs sm:text-sm font-extrabold text-emerald-400">{totalOnPace}</span>
             </div>
           </div>
         </div>
 
         {/* Sub-footer Date of Export (Small font) */}
-        <div className="bg-slate-950 text-slate-400 text-[9px] px-3.5 py-1 text-center border-t border-slate-800/80 flex items-center justify-between">
+        <div className="bg-slate-950 text-slate-400 text-[8.5px] px-3 py-0.8 text-center border-t border-slate-800/80 flex items-center justify-between">
           <span>Alsop Reports &bull; Pacing excludes weekends &amp; holidays</span>
           <span className="font-mono text-slate-400">Exported: {currentExportTime}</span>
         </div>
@@ -743,5 +657,6 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
     </div>
   )
 }
+
 
 
