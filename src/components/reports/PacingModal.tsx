@@ -96,20 +96,22 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
   const getModernEmailHtml = useCallback(() => {
     const exportTime = getExportTimestamp()
     return `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-  <!-- Header Banner -->
-  <table style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
-    <tr>
-      <td style="padding: 10px 14px; text-align: left; vertical-align: middle;">
-        <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8;">Alsop Agency &bull; Auto Pacing</div>
-        <div style="font-size: 15px; font-weight: 800; color: #ffffff; margin-top: 1px;">Allstate Auto Items MTD Ranking</div>
-      </td>
-      <td style="padding: 10px 14px; text-align: right; vertical-align: middle;">
-        <div style="font-size: 11px; font-weight: 600; color: #e2e8f0;">Day ${elapsedBizDays} of ${totalBizDays} (${pctElapsed}%)</div>
-        <div style="font-size: 9px; color: #94a3b8; margin-top: 1px;">${exportTime}</div>
-      </td>
-    </tr>
-  </table>
+<table align="left" border="0" cellpadding="0" cellspacing="0" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; max-width: 520px; margin: 8px 0 16px 0; text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+  <tr>
+    <td>
+      <!-- Header Banner -->
+      <table style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
+        <tr>
+          <td style="padding: 10px 14px; text-align: left; vertical-align: middle;">
+            <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8;">Alsop Agency &bull; Auto Pacing</div>
+            <div style="font-size: 15px; font-weight: 800; color: #ffffff; margin-top: 1px;">Allstate Auto Items MTD Ranking</div>
+          </td>
+          <td style="padding: 10px 14px; text-align: right; vertical-align: middle;">
+            <div style="font-size: 11px; font-weight: 600; color: #e2e8f0;">Day ${elapsedBizDays} of ${totalBizDays} (${pctElapsed}%)</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 1px;">${exportTime}</div>
+          </td>
+        </tr>
+      </table>
 
   <!-- Main Table -->
   <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
@@ -157,7 +159,9 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
   <div style="padding: 5px 12px; background: #f8fafc; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0;">
     Exported: ${exportTime} &bull; Alsop Reports Dashboard &bull; Pacing excludes weekends &amp; holidays
   </div>
-</div>`
+    </td>
+  </tr>
+</table>`
   }, [sortedData, totalItems, totalDailyAvg, totalOnPace, elapsedBizDays, totalBizDays, pctElapsed, getExportTimestamp])
 
   /**
