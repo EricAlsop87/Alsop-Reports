@@ -118,8 +118,8 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
     <thead>
       <tr style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #cbd5e1;">
         <th style="padding: 6px 12px; text-align: left;">Rank &amp; Agent</th>
-        <th style="padding: 6px 12px; text-align: center; width: 85px;">Items MTD</th>
-        <th style="padding: 6px 12px; text-align: center; width: 100px;">Daily Run Rate</th>
+        <th style="padding: 6px 12px; text-align: center; width: 120px;">Sum of Item Count</th>
+        <th style="padding: 6px 12px; text-align: center; width: 80px;">Daily Avg</th>
         <th style="padding: 6px 12px; text-align: right; width: 95px;">On Pace MTD</th>
       </tr>
     </thead>
@@ -175,7 +175,7 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
         `Allstate Auto Items MTD Ranking (${exportTime})`,
         `Day ${elapsedBizDays} of ${totalBizDays} Business Days (${pctElapsed}% Elapsed)`,
         '',
-        ['Rank', 'Agent', 'Office', 'Items MTD', 'Daily Avg', 'On Pace MTD'].join('\t'),
+        ['Rank', 'Agent', 'Office', 'Sum of Item Count', 'Daily Avg', 'On Pace MTD'].join('\t'),
         ...sortedData.map((r, i) => [i + 1, r.agentName, r.office, r.mtd, r.dailyAvg.toFixed(2), r.onPace].join('\t')),
         ['Total', 'Grand Total', '', totalItems, totalDailyAvg.toFixed(2), totalOnPace].join('\t')
       ].join('\n')
@@ -202,7 +202,7 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
         `Allstate Auto Items MTD Ranking (${exportTime})`,
         `Day ${elapsedBizDays} of ${totalBizDays} Business Days (${pctElapsed}% Elapsed)`,
         '',
-        ['Rank', 'Agent', 'Office', 'Items MTD', 'Daily Avg', 'On Pace MTD'].join('\t'),
+        ['Rank', 'Agent', 'Office', 'Sum of Item Count', 'Daily Avg', 'On Pace MTD'].join('\t'),
         ...sortedData.map((r, i) => [i + 1, r.agentName, r.office, r.mtd, r.dailyAvg.toFixed(2), r.onPace].join('\t')),
         ['Total', 'Grand Total', '', totalItems, totalDailyAvg.toFixed(2), totalOnPace].join('\t')
       ].join('\n')
@@ -278,10 +278,10 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
     ctx.textAlign = 'left'
     ctx.fillText('RANK & AGENT', 16, curY + tableHeaderH / 2)
     ctx.textAlign = 'center'
-    ctx.fillText('ITEMS MTD', 300, curY + tableHeaderH / 2)
-    ctx.fillText('DAILY RUN RATE', 385, curY + tableHeaderH / 2)
+    ctx.fillText('Sum of Item Count', 290, curY + tableHeaderH / 2)
+    ctx.fillText('Daily Avg', 390, curY + tableHeaderH / 2)
     ctx.textAlign = 'right'
-    ctx.fillText('ON PACE MTD', totalW - 16, curY + tableHeaderH / 2)
+    ctx.fillText('On Pace MTD', totalW - 16, curY + tableHeaderH / 2)
 
     // 3. Data Rows
     curY += tableHeaderH
@@ -325,16 +325,16 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
         ctx.fillText(row.office, tagX + 11, midY)
       }
 
-      // Items MTD
+      // Sum of Item Count (MTD)
       ctx.textAlign = 'center'
       ctx.fillStyle = row.isGoalMet ? '#16a34a' : '#0f172a'
       ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-      ctx.fillText(row.mtd.toString(), 300, midY)
+      ctx.fillText(row.mtd.toString(), 290, midY)
 
-      // Daily Run Rate
+      // Daily Avg
       ctx.fillStyle = '#475569'
       ctx.font = '10px "SFMono-Regular", Consolas, monospace'
-      ctx.fillText(row.dailyAvg.toFixed(2), 385, midY)
+      ctx.fillText(row.dailyAvg.toFixed(2), 390, midY)
 
       // On Pace MTD
       ctx.textAlign = 'right'
@@ -357,11 +357,11 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
 
     ctx.textAlign = 'center'
     ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-    ctx.fillText(totalItems.toString(), 300, footMidY)
+    ctx.fillText(totalItems.toString(), 290, footMidY)
 
     ctx.fillStyle = '#38bdf8'
     ctx.font = 'bold 11px "SFMono-Regular", Consolas, monospace'
-    ctx.fillText(`${totalDailyAvg.toFixed(2)}/day`, 385, footMidY)
+    ctx.fillText(`${totalDailyAvg.toFixed(2)}/day`, 390, footMidY)
 
     ctx.fillStyle = '#4ade80'
     ctx.textAlign = 'right'
@@ -566,8 +566,8 @@ export function PacingModal({ isOpen, onClose, data, elapsedBizDays, totalBizDay
               <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-md z-10 border-b border-slate-200 shadow-2xs">
                 <tr className="text-[9.5px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-1.5 px-3 text-left">Rank &amp; Agent</th>
-                  <th className="py-1.5 px-3 text-center w-24">Items MTD</th>
-                  <th className="py-1.5 px-3 text-center w-28">Daily Run Rate</th>
+                  <th className="py-1.5 px-3 text-center w-32">Sum of Item Count</th>
+                  <th className="py-1.5 px-3 text-center w-24">Daily Avg</th>
                   <th className="py-1.5 px-3 text-right w-24">On Pace MTD</th>
                 </tr>
               </thead>
