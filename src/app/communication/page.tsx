@@ -119,6 +119,10 @@ export default function CommunicationHub() {
       // Default selection if none selected yet or previous is invalid
       setSelectedId(prev => {
         if (prev && convos.some(c => c.id === prev)) return prev
+        // On mobile devices (< 768px), start on the conversation/channel list (inbox) if no specific param was passed
+        if (typeof window !== "undefined" && window.innerWidth < 768) {
+          return null
+        }
         const allChannel = convos.find((c) => c.name === "All")
         return allChannel ? allChannel.id : (convos[0]?.id ?? null)
       })
@@ -504,7 +508,7 @@ export default function CommunicationHub() {
   const isMobileChatActive = (selectedId !== null || showHudPanel)
 
   return (
-    <div className="h-[calc(100dvh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col p-0 sm:p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto overflow-hidden">
+    <div className="h-[100dvh] sm:h-[calc(100dvh-4rem)] md:h-[calc(100vh-2rem)] flex flex-col p-0 sm:p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto overflow-hidden">
       <div className="flex flex-1 min-h-0 rounded-none sm:rounded-xl border-0 sm:border border-slate-200 bg-white shadow-none sm:shadow-sm overflow-hidden relative">
         {/* Left Sidebar */}
         <ConversationSidebar

@@ -17,6 +17,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isLoginPage = pathname === "/login"
   const isPopoutPage = pathname === "/communication/popout"
+  const isCommunicationPage = pathname?.startsWith("/communication")
 
   useEffect(() => {
     const applyTheme = () => {
@@ -73,7 +74,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </ErrorBoundary>
           </div>
         </div>
-        <FloatingChatWidget />
+        {!isCommunicationPage && <FloatingChatWidget />}
       </ToastProvider>
     </ChatProvider>
   )

@@ -19,7 +19,7 @@ const routeMap: Record<string, string> = {
 export function Breadcrumbs() {
   const pathname = usePathname()
   
-  if (pathname === "/login" || pathname === "/" || pathname.startsWith("/admin/docs")) {
+  if (pathname === "/login" || pathname === "/" || pathname.startsWith("/admin/docs") || pathname.startsWith("/communication")) {
     return null
   }
 
