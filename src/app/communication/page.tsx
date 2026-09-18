@@ -38,7 +38,7 @@ import PinnedMessagesPanel from "@/components/chat/PinnedMessagesPanel"
 import ConversationSettingsModal from "@/components/chat/ConversationSettingsModal"
 import AgentHudPanel from "@/components/chat/AgentHudPanel"
 import { updatePresence } from "@/lib/chat/realtime"
-import { MessageSquare, MonitorSmartphone, Paperclip } from "lucide-react"
+import { MessageSquare, MonitorSmartphone, Paperclip, ChevronLeft } from "lucide-react"
 import { useToast } from "@/components/ui/Toast"
 import { cn } from "@/lib/utils"
 
@@ -73,14 +73,18 @@ export default function CommunicationHub() {
 
   const hasHandledInitialUrlParamRef = useRef(false)
 
-  const handleSelectConversation = useCallback((id: string) => {
+  const handleSelectConversation = useCallback((id: string, pushHistory = true) => {
     setSelectedId(id)
     setShowHudPanel(false)
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete('channel')
       newUrl.searchParams.set('id', id)
-      window.history.replaceState({}, '', newUrl.toString())
+      if (pushHistory) {
+        window.history.pushState({ conversationId: id, view: 'chat' }, '', newUrl.toString())
+      } else {
+        window.history.replaceState({ conversationId: id, view: 'chat' }, '', newUrl.toString())
+      }
     }
   }, [])
 
@@ -112,7 +116,10 @@ export default function CommunicationHub() {
 
         if (targetId) {
           setSelectedId(targetId)
+          window.history.replaceState({ conversationId: targetId, view: 'chat' }, '', window.location.href)
           return
+        } else {
+          window.history.replaceState({ conversationId: null, view: 'list' }, '', window.location.href)
         }
       }
 
@@ -136,6 +143,37 @@ export default function CommunicationHub() {
   useEffect(() => {
     loadConversations()
   }, [loadConversations])
+
+  // Handle browser back/forward buttons (popstate) to smoothly switch back to channel list
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return
+      const searchParams = new URLSearchParams(window.location.search)
+      const paramId = searchParams.get('id')
+      const paramChannel = searchParams.get('channel')
+
+      if (paramId) {
+        setSelectedId(paramId)
+        setShowHudPanel(false)
+      } else if (paramChannel) {
+        const match = conversations.find((c) => c.name?.toLowerCase() === paramChannel.toLowerCase())
+        if (match) {
+          setSelectedId(match.id)
+          setShowHudPanel(false)
+        } else {
+          setSelectedId(null)
+          setShowHudPanel(false)
+        }
+      } else {
+        // No conversation ID in URL -> Return to conversation/channel list on mobile
+        setSelectedId(null)
+        setShowHudPanel(false)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [conversations])
 
   // Listen to select-conversation event to switch active conversation from hover cards or HUD
   useEffect(() => {
@@ -493,13 +531,24 @@ export default function CommunicationHub() {
   )
 
   const handleBackToSidebar = useCallback(() => {
-    setSelectedId(null)
     if (typeof window !== 'undefined') {
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('id')
-      newUrl.searchParams.delete('channel')
-      window.history.replaceState({}, '', newUrl.toString())
+      const searchParams = new URLSearchParams(window.location.search)
+      const hasParam = searchParams.has('id') || searchParams.has('channel')
+
+      if (window.history.state?.conversationId || window.history.state?.view === 'chat' || window.history.state?.view === 'hud') {
+        window.history.back()
+        return
+      }
+
+      if (hasParam) {
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('id')
+        newUrl.searchParams.delete('channel')
+        window.history.replaceState({ conversationId: null, view: 'list' }, '', newUrl.toString())
+      }
     }
+    setSelectedId(null)
+    setShowHudPanel(false)
   }, [])
 
   // ── Render ────────────────────────────────────────────────────
@@ -603,14 +652,20 @@ export default function CommunicationHub() {
             {showHudPanel && (
               <button
                 onClick={handleBackToSidebar}
-                className="md:hidden mr-1 p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors"
+                className="md:hidden mr-1 px-2 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 active:bg-slate-200 active:scale-95 transition-all flex items-center gap-1 shrink-0 cursor-pointer select-none border border-slate-200/80 shadow-2xs"
                 title="Back to conversations"
               >
-                <span className="text-xs font-semibold">← Channels</span>
+                <ChevronLeft className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+                <span className="text-xs font-semibold text-slate-700">Chats</span>
               </button>
             )}
             <button
-              onClick={() => setShowHudPanel(false)}
+              onClick={() => {
+                setShowHudPanel(false)
+                if (typeof window !== 'undefined' && window.innerWidth < 768 && selectedId) {
+                  window.history.replaceState({ conversationId: selectedId, view: 'chat' }, '', window.location.href)
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 !showHudPanel
                   ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
@@ -621,7 +676,12 @@ export default function CommunicationHub() {
               Chat
             </button>
             <button
-              onClick={() => setShowHudPanel(true)}
+              onClick={() => {
+                setShowHudPanel(true)
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  window.history.pushState({ view: 'hud' }, '', window.location.href)
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 showHudPanel
                   ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
@@ -715,7 +775,7 @@ export default function CommunicationHub() {
               setShowCreateModal(false)
               setShowHudPanel(false)
               await loadConversations()
-              setSelectedId(convo.id)
+              handleSelectConversation(convo.id)
             }
           } catch (err) {
             console.error('[CommunicationHub] Failed to create DM:', err)
@@ -734,7 +794,7 @@ export default function CommunicationHub() {
             setShowCreateModal(false)
             setShowHudPanel(false)
             await loadConversations()
-            setSelectedId(convo.id)
+            handleSelectConversation(convo.id)
           }
         }}
         onCreateChannel={async (name: string, description: string, _icon: string, _teams: string[]) => {
@@ -750,7 +810,7 @@ export default function CommunicationHub() {
             setShowCreateModal(false)
             setShowHudPanel(false)
             await loadConversations()
-            setSelectedId(convo.id)
+            handleSelectConversation(convo.id)
           }
         }}
       />

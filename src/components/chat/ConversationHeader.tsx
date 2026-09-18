@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Hash, Search, Pin, Settings, Users, X, ArrowLeft } from 'lucide-react'
+import { Hash, Search, Pin, Settings, Users, X, ArrowLeft, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
 import UserHoverCard from './UserHoverCard'
 import type { Conversation, Agent } from './types'
+import { useChat } from '@/lib/chat/chatContext'
 
 interface ConversationHeaderProps {
   conversation: Conversation
@@ -32,9 +33,17 @@ export default function ConversationHeader({
   onSettingsClick,
   onBackClick,
 }: ConversationHeaderProps) {
+  const { unreadCounts } = useChat()
   const [isMembersPinned, setIsMembersPinned] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
   const membersRef = useRef<HTMLDivElement>(null)
+
+  const otherUnreadCount = useMemo(() => {
+    if (!unreadCounts) return 0
+    return Object.entries(unreadCounts)
+      .filter(([convId]) => convId !== conversation.id)
+      .reduce((sum, [, count]) => sum + (count || 0), 0)
+  }, [unreadCounts, conversation.id])
 
   const isChannel = conversation.type === 'channel'
   const isDm = conversation.type === 'direct_dm'
@@ -91,11 +100,18 @@ export default function ConversationHeader({
         {onBackClick && (
           <button
             onClick={onBackClick}
-            className="md:hidden -ml-1 mr-0.5 p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-            title="Back to channels"
-            aria-label="Back to channels"
+            className="md:hidden -ml-1 mr-1 px-2 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 active:scale-95 transition-all flex items-center gap-1 shrink-0 cursor-pointer select-none border border-slate-200/80 shadow-2xs"
+            title="Back to conversations"
+            aria-label="Back to conversations"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5 text-blue-600 shrink-0 stroke-[2.5]" />
+            {otherUnreadCount > 0 ? (
+              <span className="text-[10px] font-bold bg-blue-600 text-white rounded-full px-1.5 py-0.2 min-w-[18px] text-center leading-tight">
+                {otherUnreadCount > 99 ? '99+' : otherUnreadCount}
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-slate-700">Chats</span>
+            )}
           </button>
         )}
 
