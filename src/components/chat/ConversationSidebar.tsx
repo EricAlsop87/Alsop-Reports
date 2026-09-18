@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import {
   Search,
   Hash,
   Plus,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Circle,
   Pin,
   Users,
@@ -139,6 +141,21 @@ export default function ConversationSidebar({
 
   return (
     <div className={cn("w-full md:w-[280px] md:min-w-[280px] flex flex-col bg-white border-b md:border-b-0 md:border-r border-slate-200 h-full shrink-0", className)}>
+      {/* Mobile Top Navigation back to Dashboard */}
+      <div className="md:hidden flex items-center justify-between px-3 py-2.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 active:scale-95 transition-all py-1 px-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs"
+          title="Back to Dashboard"
+        >
+          <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+          <span>Dashboard</span>
+        </Link>
+        <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+          Communication
+        </span>
+      </div>
+
       {/* Search */}
       <div className="p-3 border-b border-slate-100">
         <div className="relative">

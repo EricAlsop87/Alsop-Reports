@@ -647,18 +647,18 @@ export default function CommunicationHub() {
           )}
 
           {/* Chat / HUD Tab Toggle */}
-          <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200 bg-slate-50/80 shrink-0">
-            {/* Mobile back to channel list button when in HUD view */}
-            {showHudPanel && (
-              <button
-                onClick={handleBackToSidebar}
-                className="md:hidden mr-1 px-2 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 active:bg-slate-200 active:scale-95 transition-all flex items-center gap-1 shrink-0 cursor-pointer select-none border border-slate-200/80 shadow-2xs"
-                title="Back to conversations"
-              >
-                <ChevronLeft className="w-4 h-4 text-blue-600 stroke-[2.5]" />
-                <span className="text-xs font-semibold text-slate-700">Chats</span>
-              </button>
-            )}
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-200 bg-slate-50/80 shrink-0">
+            {/* Mobile back to channel list button - ALWAYS visible on mobile when inside chat or HUD */}
+            <button
+              onClick={handleBackToSidebar}
+              className="md:hidden mr-1 px-2.5 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 active:bg-slate-200 active:scale-95 transition-all flex items-center gap-1 shrink-0 cursor-pointer select-none border border-slate-200/80 shadow-2xs"
+              title="Back to conversations"
+              aria-label="Back to conversations"
+            >
+              <ChevronLeft className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+              <span className="text-xs font-semibold text-blue-600">Channels</span>
+            </button>
+
             <button
               onClick={() => {
                 setShowHudPanel(false)
@@ -736,7 +736,14 @@ export default function CommunicationHub() {
               />
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-slate-50/50">
+            <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 p-4">
+              <button
+                onClick={handleBackToSidebar}
+                className="md:hidden mb-4 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-blue-600 font-semibold text-xs flex items-center gap-1 shadow-sm cursor-pointer hover:bg-blue-50 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                <span>Back to Channels</span>
+              </button>
               <div className="text-center p-4">
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="w-8 h-8 text-slate-400" />
