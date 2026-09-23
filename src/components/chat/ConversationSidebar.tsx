@@ -112,17 +112,21 @@ export default function ConversationSidebar({
       if (isAllA && !isAllB) return -1
       if (!isAllA && isAllB) return 1
 
-      // 3. Otherwise sort by last message / activity time descending
+      // 3. Otherwise sort alphabetically A-Z
+      const nameA = (a.name || '').trim().toLowerCase()
+      const nameB = (b.name || '').trim().toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
+  }, [conversations])
+
+  const directMessages = useMemo(() => {
+    const dms = conversations.filter((c) => c.type === 'direct_dm' || c.type === 'group_dm')
+    return dms.sort((a, b) => {
       const aTime = a.last_message?.created_at ?? a.updated_at
       const bTime = b.last_message?.created_at ?? b.updated_at
       return new Date(bTime).getTime() - new Date(aTime).getTime()
     })
   }, [conversations])
-
-  const directMessages = useMemo(
-    () => conversations.filter((c) => c.type === 'direct_dm' || c.type === 'group_dm'),
-    [conversations]
-  )
 
   const filteredChannels = useMemo(() => {
     if (!search.trim()) return channels
@@ -196,54 +200,90 @@ export default function ConversationSidebar({
           </div>
         </div>
 
-        {channelsOpen && (
-          <div className="px-2 mb-4 space-y-0.5">
-            {filteredChannels.map((conv) => {
-              const unread = unreadCounts[conv.id] ?? 0
-              const isSelected = selectedId === conv.id
-              return (
-                <button
-                  key={conv.id}
-                  onClick={() => onSelect(conv.id)}
-                  className={cn(
-                    'group/item w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200',
-                    isSelected
-                      ? 'bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600/10'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
-                    unread > 0 && !isSelected && 'font-semibold text-slate-900'
-                  )}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Hash className={cn("w-4 h-4 shrink-0 transition-colors", isSelected ? "text-blue-600" : "text-slate-400 group-hover/item:text-slate-600")} />
-                    <span className="truncate">{conv.name}</span>
-                  </div>
+        {channelsOpen && (() => {
+          const TEAMS_LIST = ['all', 'csr', 'ea', 'sales', 'managers', 'leadership', 'admin', 'management', 'general']
+          const isTeamChannel = (name?: string) => {
+            if (!name) return false
+            const n = name.toLowerCase()
+            if (TEAMS_LIST.includes(n)) return true
+            if (n.includes('team') || n.includes('department')) return true
+            return false
+          }
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span
-                      role="button"
-                      onClick={(e) => { e.stopPropagation(); onTogglePin(conv.id, !!conv.is_pinned) }}
-                      className={cn(
-                        'w-5 h-5 flex items-center justify-center rounded transition-all',
-                        conv.is_pinned
-                          ? 'text-amber-500 hover:text-amber-600'
-                          : 'text-slate-300 opacity-0 group-hover/item:opacity-100 hover:text-amber-500'
-                      )}
-                      title={conv.is_pinned ? 'Unpin' : 'Pin'}
-                    >
-                      <Pin className={cn('w-3 h-3', conv.is_pinned && 'fill-current')} />
-                    </span>
+          const pinnedChannels = filteredChannels.filter(c => c.is_pinned)
+          const teamChannels = filteredChannels.filter(c => !c.is_pinned && isTeamChannel(c.name))
+          const locationChannels = filteredChannels.filter(c => !c.is_pinned && !isTeamChannel(c.name))
 
-                    {unread > 0 && (
-                      <span className="bg-blue-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shrink-0">
-                        {unread > 99 ? '99+' : unread}
-                      </span>
+          const renderChannel = (conv: any) => {
+            const unread = unreadCounts[conv.id] ?? 0
+            const isSelected = selectedId === conv.id
+            return (
+              <button
+                key={conv.id}
+                onClick={() => onSelect(conv.id)}
+                className={cn(
+                  'group/item w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200',
+                  isSelected
+                    ? 'bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600/10'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                  unread > 0 && !isSelected && 'font-semibold text-slate-900'
+                )}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Hash className={cn("w-4 h-4 shrink-0 transition-colors", isSelected ? "text-blue-600" : "text-slate-400 group-hover/item:text-slate-600")} />
+                  <span className="truncate">{conv.name}</span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <span
+                    role="button"
+                    onClick={(e) => { e.stopPropagation(); onTogglePin(conv.id, !!conv.is_pinned) }}
+                    className={cn(
+                      'w-5 h-5 flex items-center justify-center rounded transition-all',
+                      conv.is_pinned
+                        ? 'text-amber-500 hover:text-amber-600'
+                        : 'text-slate-300 opacity-0 group-hover/item:opacity-100 hover:text-amber-500'
                     )}
+                    title={conv.is_pinned ? 'Unpin' : 'Pin'}
+                  >
+                    <Pin className={cn('w-3 h-3', conv.is_pinned && 'fill-current')} />
+                  </span>
+
+                  {unread > 0 && (
+                    <span className="bg-blue-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shrink-0">
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          }
+
+          return (
+            <div className="px-2 mb-4 space-y-3">
+              {pinnedChannels.length > 0 && (
+                <div className="space-y-0.5">
+                  <div className="px-2 py-1 text-[10px] font-bold text-amber-600/80 uppercase tracking-wider flex items-center gap-1.5">
+                    <Pin className="w-3 h-3" /> Pinned
                   </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
+                  {pinnedChannels.map(renderChannel)}
+                </div>
+              )}
+              {teamChannels.length > 0 && (
+                <div className="space-y-0.5">
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Teams</div>
+                  {teamChannels.map(renderChannel)}
+                </div>
+              )}
+              {locationChannels.length > 0 && (
+                <div className="space-y-0.5">
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Offices</div>
+                  {locationChannels.map(renderChannel)}
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Direct Messages section */}
         <div className="px-3 mb-1">
