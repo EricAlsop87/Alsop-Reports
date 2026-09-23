@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/Button"
 import { AlertCircle, X, Save, RotateCcw, CalendarDays } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
@@ -13,8 +13,34 @@ interface LeadsModalProps {
 }
 
 // ── Compact Stepper Component (same as EAgentModal) ──
-function Stepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function Stepper({ 
+  value, 
+  onChange, 
+  rowIndex, 
+  colKey, 
+  isDirty 
+}: { 
+  value: number; 
+  onChange: (v: number) => void; 
+  rowIndex?: number; 
+  colKey?: string; 
+  isDirty?: boolean;
+}) {
   const set = (v: number) => onChange(Math.max(0, v))
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (colKey === undefined || rowIndex === undefined) return;
+    
+    if (e.key === "ArrowDown" || e.key === "Enter") {
+      e.preventDefault();
+      const nextRow = document.querySelector(`input[data-col="${colKey}"][data-row="${rowIndex + 1}"]`) as HTMLInputElement;
+      if (nextRow) nextRow.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevRow = document.querySelector(`input[data-col="${colKey}"][data-row="${rowIndex - 1}"]`) as HTMLInputElement;
+      if (prevRow) prevRow.focus();
+    }
+  }
 
   return (
     <div className="flex items-center gap-[2px]">
@@ -32,8 +58,16 @@ function Stepper({ value, onChange }: { value: number; onChange: (v: number) => 
         type="number"
         min={0}
         value={value}
+        data-col={colKey}
+        data-row={rowIndex}
+        onFocus={(e) => e.target.select()}
+        onKeyDown={handleKeyDown}
         onChange={(e) => set(parseInt(e.target.value) || 0)}
-        className="w-10 h-7 bg-white border-y border-x border-slate-200 text-center text-sm font-mono text-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className={`w-10 h-7 border-y border-x text-center text-sm font-mono outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${
+          isDirty 
+            ? "bg-blue-100 border-2 border-blue-500 text-blue-900 font-bold shadow-sm ring-1 ring-blue-500 focus:ring-2" 
+            : "bg-white border-slate-200 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        }`}
       />
       <button
         onClick={() => set(value + 1)}
@@ -65,6 +99,7 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
   
   // Form state: agent_id -> { contact, quoted, hot, xsale }
   const [formData, setFormData] = useState<Record<string, LeadEntry>>({})
+  const baselineRef = useRef<Record<string, LeadEntry>>({})
 
   // Reset selectedDate when the modal opens with a new dateStr
   useEffect(() => {
@@ -112,6 +147,7 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
           }
         }
         setFormData(initial)
+        baselineRef.current = JSON.parse(JSON.stringify(initial))
       } catch (err: any) {
         setError(err.message || "Failed to load data")
       } finally {
@@ -133,6 +169,7 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
   }, [])
 
   const resetAll = useCallback(() => {
+    if (!window.confirm("Are you sure you want to reset ALL agents to 0? This cannot be undone.")) return;
     setFormData(prev => {
       const reset: Record<string, LeadEntry> = {}
       for (const id of Object.keys(prev)) {
@@ -142,6 +179,27 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
     })
   }, [])
 
+  const checkUnsavedAndClose = () => {
+    let hasUnsaved = false;
+    for (const [agentId, currentRow] of Object.entries(formData)) {
+      const baselineRow = baselineRef.current[agentId]
+      if (!baselineRow) continue;
+      const keys: (keyof LeadEntry)[] = ["contact", "quoted", "hot", "xsale"];
+      for (const key of keys) {
+        if (currentRow[key] !== baselineRow[key]) {
+          hasUnsaved = true;
+          break;
+        }
+      }
+      if (hasUnsaved) break;
+    }
+    
+    if (hasUnsaved) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to close and discard them?")) return;
+    }
+    onClose();
+  }
+
   if (!isOpen) return null
 
   const handleSave = async () => {
@@ -149,8 +207,12 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
     setError(null)
 
     try {
-      // Build upsert payloads for leads_snapshot
-      const rows = Object.entries(formData).map(([agentId, data]) => ({
+      // Build upsert payloads only for rows that actually changed
+      const rows = Object.entries(formData).filter(([agentId, data]) => {
+        const base = baselineRef.current[agentId]
+        if (!base) return true
+        return base.contact !== data.contact || base.quoted !== data.quoted || base.hot !== data.hot || base.xsale !== data.xsale
+      }).map(([agentId, data]) => ({
         agent_id: agentId,
         report_date: selectedDate,
         contact: data.contact,
@@ -158,6 +220,13 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
         hot: data.hot,
         xsale: data.xsale,
       }))
+
+      if (rows.length === 0) {
+        setLoading(false)
+        onSuccess()
+        onClose()
+        return
+      }
 
       // Upsert to leads_snapshot (conflict on agent_id + report_date)
       const { error: upsertErr } = await supabase
@@ -175,65 +244,31 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
     }
   }
 
-  // Summary stats
-  const totalContact = Object.values(formData).reduce((s, v) => s + v.contact, 0)
-  const totalQuoted = Object.values(formData).reduce((s, v) => s + v.quoted, 0)
-  const totalHot = Object.values(formData).reduce((s, v) => s + v.hot, 0)
-  const totalXsale = Object.values(formData).reduce((s, v) => s + v.xsale, 0)
-  const agentsWithData = Object.values(formData).filter(v => 
-    v.contact > 0 || v.quoted > 0 || v.hot > 0 || v.xsale > 0
-  ).length
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white border border-slate-200 rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 gap-8">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Lead Pipeline Entry</h2>
-            <p className="text-xs text-slate-500">Enter DeerDama lead counts per agent</p>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              Lead Pipeline Entry
+              <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{selectedDate}</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Enter DeerDama lead counts per agent</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-slate-100 rounded-md px-2 py-1">
-              <CalendarDays className="w-3.5 h-3.5 text-slate-500" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-slate-900 outline-none cursor-pointer w-[110px]"
-              />
-            </div>
+          <div className="flex items-center gap-4">
             <button
               onClick={resetAll}
               title="Reset all to 0"
-              className="text-slate-500 hover:text-amber-400 transition-colors p-1"
+              className="text-slate-500 hover:text-amber-500 transition-colors p-1"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
-            <button onClick={onClose} className="text-slate-500 hover:text-slate-900 transition-colors p-1">
+            <button onClick={checkUnsavedAndClose} className="text-slate-500 hover:text-slate-900 transition-colors p-1">
               <X className="w-5 h-5" />
             </button>
           </div>
-        </div>
-
-        {/* Summary bar */}
-        <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 border-b border-slate-200 text-[11px] flex-wrap">
-          <span className="text-slate-600">
-            <span className="text-slate-900 font-semibold">{agentsWithData}</span> agents entered
-          </span>
-          <span className="text-slate-600">
-            Contacted: <span className="text-blue-600 font-semibold">{totalContact}</span>
-          </span>
-          <span className="text-slate-600">
-            Quoted: <span className="text-violet-600 font-semibold">{totalQuoted}</span>
-          </span>
-          <span className="text-slate-600">
-            Hot: <span className="text-orange-600 font-semibold">{totalHot}</span>
-          </span>
-          <span className="text-slate-600">
-            XDate: <span className="text-cyan-600 font-semibold">{totalXsale}</span>
-          </span>
         </div>
 
         {/* Error */}
@@ -280,6 +315,9 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
                           <Stepper 
                             value={d.contact}
                             onChange={(v) => updateField(agent.id, "contact", v)}
+                            rowIndex={index}
+                            colKey="contact"
+                            isDirty={baselineRef.current[agent.id]?.contact !== d.contact}
                           />
                         </div>
                       </td>
@@ -288,6 +326,9 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
                           <Stepper 
                             value={d.quoted}
                             onChange={(v) => updateField(agent.id, "quoted", v)}
+                            rowIndex={index}
+                            colKey="quoted"
+                            isDirty={baselineRef.current[agent.id]?.quoted !== d.quoted}
                           />
                         </div>
                       </td>
@@ -296,6 +337,9 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
                           <Stepper 
                             value={d.hot}
                             onChange={(v) => updateField(agent.id, "hot", v)}
+                            rowIndex={index}
+                            colKey="hot"
+                            isDirty={baselineRef.current[agent.id]?.hot !== d.hot}
                           />
                         </div>
                       </td>
@@ -304,6 +348,9 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
                           <Stepper 
                             value={d.xsale}
                             onChange={(v) => updateField(agent.id, "xsale", v)}
+                            rowIndex={index}
+                            colKey="xsale"
+                            isDirty={baselineRef.current[agent.id]?.xsale !== d.xsale}
                           />
                         </div>
                       </td>
@@ -317,7 +364,7 @@ export function LeadsModal({ isOpen, onClose, dateStr, onSuccess }: LeadsModalPr
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="text-slate-600 border-slate-300 hover:bg-slate-200 text-xs px-3 py-1.5">
+          <Button variant="outline" onClick={checkUnsavedAndClose} disabled={loading} className="text-slate-600 border-slate-300 hover:bg-slate-200 text-xs px-3 py-1.5">
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={loading || initialLoading} className="bg-orange-600 hover:bg-orange-500 text-white flex items-center gap-2 text-xs px-4 py-1.5">
