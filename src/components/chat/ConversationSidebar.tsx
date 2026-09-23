@@ -211,8 +211,8 @@ export default function ConversationSidebar({
           }
 
           const pinnedChannels = filteredChannels.filter(c => c.is_pinned)
-          const teamChannels = filteredChannels.filter(c => !c.is_pinned && isTeamChannel(c.name))
-          const locationChannels = filteredChannels.filter(c => !c.is_pinned && !isTeamChannel(c.name))
+          const teamChannels = filteredChannels.filter(c => !c.is_pinned && isTeamChannel(c.name ?? undefined))
+          const locationChannels = filteredChannels.filter(c => !c.is_pinned && !isTeamChannel(c.name ?? undefined))
 
           const renderChannel = (conv: any) => {
             const unread = unreadCounts[conv.id] ?? 0
