@@ -88,9 +88,6 @@ export default function MessageList({
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [userScrolledUp, setUserScrolledUp] = useState(false)
   const isInitialLoadRef = useRef(true)
-  const currentConvIdRef = useRef<string | null>(null)
-
-  const activeConversationId = messages.length > 0 ? messages[0].conversation_id : null
 
   const isDirectDM = conversationType === 'direct_dm' || conversationType === 'direct' || conversationType === 'dm'
 
@@ -121,13 +118,6 @@ export default function MessageList({
   useEffect(() => {
     if (isLoading) return
 
-    // If conversation changed, reset scroll state
-    if (activeConversationId && activeConversationId !== currentConvIdRef.current) {
-      currentConvIdRef.current = activeConversationId
-      setUserScrolledUp(false) // Reset user scrolled up state for the new channel
-      isInitialLoadRef.current = true // Treat as initial load for this channel
-    }
-
     if (isInitialLoadRef.current) {
       scrollToBottom(false)
       isInitialLoadRef.current = false
@@ -137,7 +127,7 @@ export default function MessageList({
     if (!userScrolledUp) {
       scrollToBottom(true)
     }
-  }, [activeConversationId, messages.length, isLoading, userScrolledUp, scrollToBottom])
+  }, [messages.length, isLoading, userScrolledUp, scrollToBottom])
 
   // Track scroll position
   const handleScroll = useCallback(() => {
