@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -104,8 +104,37 @@ export function Sidebar() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [recentStatuses, setRecentStatuses] = useState<{ emoji: string; text: string }[]>([])
   const [pagePerms, setPagePerms] = useState<Record<string, string[]>>({})
+  const emojiButtonRef = useRef<HTMLButtonElement>(null)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
 
   const isManagerOrAdmin = currentAgent?.role === 'admin' || currentAgent?.team === 'Managers'
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    if (!showEmojiPicker) return
+    function handleOutside(e: MouseEvent) {
+      if (
+        emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node) &&
+        emojiButtonRef.current && !emojiButtonRef.current.contains(e.target as Node)
+      ) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [showEmojiPicker])
+
+  // Categorized emoji data for the picker
+  const EMOJI_CATEGORIES = [
+    { label: 'Recent', emojis: [] as string[] }, // filled dynamically from recentStatuses
+    { label: 'People', emojis: ['😀','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'] },
+    { label: 'Work', emojis: ['💼','📋','📁','📂','🗂️','📊','📈','📉','📆','📅','🗓️','📌','📍','📎','🖇️','✂️','🖊️','✏️','🖋️','📝','🖥️','💻','⌨️','🖱️','📱','☎️','📞','📟','📠','📷','📸','🎥','📺','📻','⏱️','⏲️','⏰','💡','🔍','🔎','🔑','🗝️','🔒','🔓','📧','📨','📩','📤','📥','✉️'] },
+    { label: 'Travel', emojis: ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🛵','🏍️','🚲','🛴','🛺','🚁','✈️','🛫','🛬','🛩️','🚀','🛸','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚋','🚍','🚡','🚠','🚟','🚃','⛵','🛥️','🚤','🛳️','⛴️','🚢','🗺️','🌍','🌎','🌏','🌐','🗾','🧭','⛰️','🏔️','🌋','🗻','🏕️','🏖️','🏜️','🏝️','🏞️','🏟️','🏛️','🏗️','🧱'] },
+    { label: 'Food', emojis: ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🥑','🫒','🥦','🥬','🥒','🌶️','🫑','🥕','🧄','🧅','🥔','🌽','🥗','🍿','🧂','🥚','🍳','🧇','🥞','🧈','🍞','🥐','🥨','🧀','🍗','🍖','🌭','🍔','🍟','🍕','🥪','🥙','🧆','🌮','🌯','🫔','☕','🍵','🧃','🥤','🧋','🍺','🍻','🥂','🍷','🍸','🍹','🧉','🍾'] },
+    { label: 'Activities', emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤸','⛹️','🤺','🤼','🤾','🏇','🧘','🏄','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🎗️','🏵️','🎫','🎟️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️'] },
+    { label: 'Objects', emojis: ['💊','💉','🩺','🩹','🩻','🔬','🔭','🧬','🩱','👗','👘','🥻','🩲','🩳','👙','👚','👛','👜','👝','🎒','🧳','👒','🎩','🧢','⛑️','👑','💎','💍','💈','🪬','🧲','💣','🔫','🏺','🪆','🧸','🪅','🎎','🎏','🎀','🎁','🎊','🎉','🎋','🎍','🎐','🎑','🎃','🎆','🎇','🧨','✨','🎠','🎡','🎢','💫','⭐','🌟','✨','🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','💧','💦','☔','☂️','🌊'] },
+    { label: 'Symbols', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚡','🔱','📛','🔰','♻️','✅','❎','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔠','🔡','🔢','🔣','🔤','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📵','🚫','💯','❗','❓','‼️','⁉️','🔅','🔆'] },
+  ]
 
   // Dynamically tailor nav items (e.g. 'My Portal' for regular agents vs 'Agent Portal' for managers)
   const dynamicNavItems: NavItem[] = useMemo(() => {
@@ -649,6 +678,7 @@ export function Sidebar() {
             <div className="relative flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900 focus-within:border-blue-400 dark:focus-within:border-blue-600 transition-all">
               {/* Emoji Button */}
               <button
+                ref={emojiButtonRef}
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-lg transition-colors bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-600 shadow-sm shrink-0"
                 title="Select emoji"
@@ -675,27 +705,6 @@ export function Sidebar() {
                 >
                   <X className="w-3 h-3" />
                 </button>
-              )}
-
-              {/* Emoji Picker Popover */}
-              {showEmojiPicker && (
-                <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-2.5 grid grid-cols-6 gap-1.5 z-[110] min-w-[210px] ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-150">
-                  {['💻', '🚗', '💬', '🛌', '📅', '🍏', '🏠', '📞', '☕', '🧠', '✈️', '🎉', '💼', '💪', '🚨', '🧐', '💡', '🔥'].map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setModalEmoji(emoji)
-                        setShowEmojiPicker(false)
-                      }}
-                      className={cn(
-                        'w-8 h-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-lg',
-                        modalEmoji === emoji && 'bg-blue-50 ring-1 ring-blue-200'
-                      )}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
               )}
             </div>
 
@@ -802,6 +811,84 @@ export function Sidebar() {
           </div>
         </div>
       )}
+      {/* Emoji Picker — rendered outside modal so it's never clipped */}
+      {showEmojiPicker && emojiButtonRef.current && (() => {
+        const rect = emojiButtonRef.current!.getBoundingClientRect()
+        const spaceBelow = window.innerHeight - rect.bottom
+        const pickerH = 320
+        const top = spaceBelow >= pickerH ? rect.bottom + 6 : rect.top - pickerH - 6
+        const left = Math.min(rect.left, window.innerWidth - 260)
+        return (
+          <div
+            ref={emojiPickerRef}
+            style={{ top, left, width: Math.min(260, window.innerWidth - 16) }}
+            className="fixed z-[200] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl ring-1 ring-black/5 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          >
+            {/* Category tabs */}
+            <div className="flex gap-0.5 p-2 border-b border-slate-100 dark:border-slate-800 overflow-x-auto scrollbar-none">
+              {EMOJI_CATEGORIES.filter(c => c.label !== 'Recent' || recentStatuses.length > 0).map((cat) => (
+                <a
+                  key={cat.label}
+                  href={`#epcat-${cat.label}`}
+                  className="shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors whitespace-nowrap"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById(`epcat-${cat.label}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                  }}
+                >
+                  {cat.label}
+                </a>
+              ))}
+            </div>
+
+            {/* Scrollable emoji grid */}
+            <div className="overflow-y-auto p-2 space-y-3" style={{ maxHeight: pickerH - 44 }}>
+              {/* Recent emojis from recentStatuses */}
+              {recentStatuses.length > 0 && (
+                <div id="epcat-Recent">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">Recent</p>
+                  <div className="grid grid-cols-8 gap-0.5">
+                    {recentStatuses.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setModalEmoji(s.emoji); setShowEmojiPicker(false) }}
+                        title={s.text}
+                        className={cn(
+                          'w-8 h-8 flex items-center justify-center rounded-lg text-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
+                          modalEmoji === s.emoji && 'bg-blue-50 dark:bg-blue-950/40 ring-1 ring-blue-300'
+                        )}
+                      >
+                        {s.emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* All categories */}
+              {EMOJI_CATEGORIES.filter(c => c.label !== 'Recent').map((cat) => (
+                <div key={cat.label} id={`epcat-${cat.label}`}>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">{cat.label}</p>
+                  <div className="grid grid-cols-8 gap-0.5">
+                    {cat.emojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => { setModalEmoji(emoji); setShowEmojiPicker(false) }}
+                        className={cn(
+                          'w-8 h-8 flex items-center justify-center rounded-lg text-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
+                          modalEmoji === emoji && 'bg-blue-50 dark:bg-blue-950/40 ring-1 ring-blue-300'
+                        )}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </>
   )
 }
