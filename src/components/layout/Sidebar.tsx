@@ -92,10 +92,9 @@ const navGroups: NavGroup[] = [
     label: 'Workspace',
     items: [
       { name: 'Communication',    href: '/communication', icon: MessageSquare },
-      { name: 'Staff Directory',  href: '/staff',         icon: Users },
-      { name: 'Agent Portal',   href: '/reports/agent',   icon: UserCircle,  pageKey: 'agent_portal' },
+      { name: 'Agent Portal',     href: '/reports/agent', icon: UserCircle,  pageKey: 'agent_portal' },
       { name: 'Rebel Rewards',    href: '/rebel-rewards', icon: Trophy },
-      { name: 'My Settings',      href: '/settings',      icon: Settings },
+      { name: 'Staff Directory',  href: '/staff',         icon: Users },
     ],
   },
 ]
@@ -372,11 +371,11 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Mobile Pinned Bottom Link: Admin Panel for Admins, My Portal for Agents */}
-        {currentAgent?.role === 'admin' ? (() => {
-          const isActive = pathname === '/admin' || pathname.startsWith('/admin')
-          return (
-            <div className="px-3 mb-1">
+        {/* Mobile Pinned Bottom Links */}
+        <div className="px-3 mb-1 space-y-0.5">
+          {currentAgent?.role === 'admin' ? (() => {
+            const isActive = pathname === '/admin' || pathname.startsWith('/admin')
+            return (
               <Link
                 href="/admin"
                 onClick={() => setIsMobileOpen(false)}
@@ -393,13 +392,11 @@ export function Sidebar() {
                 )} />
                 <span>Admin Panel</span>
               </Link>
-            </div>
-          )
-        })() : currentAgent?.id ? (() => {
-          const portalHref = `/reports/agent/${currentAgent.id}`
-          const isActive = pathname === portalHref || pathname.startsWith(portalHref)
-          return (
-            <div className="px-3 mb-1">
+            )
+          })() : currentAgent?.id ? (() => {
+            const portalHref = `/reports/agent/${currentAgent.id}`
+            const isActive = pathname === portalHref || pathname.startsWith(portalHref)
+            return (
               <Link
                 href={portalHref}
                 onClick={() => setIsMobileOpen(false)}
@@ -416,9 +413,32 @@ export function Sidebar() {
                 )} />
                 <span className="font-semibold">My Portal</span>
               </Link>
-            </div>
-          )
-        })() : null}
+            )
+          })() : null}
+
+          {/* Settings Pinned Link */}
+          {(() => {
+            const isActive = pathname === '/settings' || pathname.startsWith('/settings')
+            return (
+              <Link
+                href="/settings"
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group",
+                  isActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                )}
+              >
+                <Settings className={cn(
+                  "shrink-0 transition-colors w-4 h-4",
+                  isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
+                )} />
+                <span>My Settings</span>
+              </Link>
+            )
+          })()}
+        </div>
 
         {/* Mobile User Profile Summary */}
         {currentAgent && (
@@ -574,11 +594,11 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Pinned Bottom Link: Admin Panel for Admins, My Portal for Agents */}
-        {currentAgent?.role === 'admin' ? (() => {
-          const isActive = pathname === '/admin' || pathname.startsWith('/admin')
-          return (
-            <div className="px-2 mb-1">
+        {/* Pinned Bottom Links */}
+        <div className="px-2 mb-1 space-y-0.5">
+          {currentAgent?.role === 'admin' ? (() => {
+            const isActive = pathname === '/admin' || pathname.startsWith('/admin')
+            return (
               <Link
                 href="/admin"
                 title={!isExpanded ? 'Admin Panel' : undefined}
@@ -597,13 +617,11 @@ export function Sidebar() {
                 )} />
                 {isExpanded && <span className="whitespace-nowrap font-medium">Admin Panel</span>}
               </Link>
-            </div>
-          )
-        })() : currentAgent?.id ? (() => {
-          const portalHref = `/reports/agent/${currentAgent.id}`
-          const isActive = pathname === portalHref || pathname.startsWith(portalHref)
-          return (
-            <div className="px-2 mb-1">
+            )
+          })() : currentAgent?.id ? (() => {
+            const portalHref = `/reports/agent/${currentAgent.id}`
+            const isActive = pathname === portalHref || pathname.startsWith(portalHref)
+            return (
               <Link
                 href={portalHref}
                 title={!isExpanded ? 'My Portal' : undefined}
@@ -622,9 +640,34 @@ export function Sidebar() {
                 )} />
                 {isExpanded && <span className="whitespace-nowrap font-semibold">My Portal</span>}
               </Link>
-            </div>
-          )
-        })() : null}
+            )
+          })() : null}
+
+          {/* Settings Pinned Link */}
+          {(() => {
+            const isActive = pathname === '/settings' || pathname.startsWith('/settings')
+            return (
+              <Link
+                href="/settings"
+                title={!isExpanded ? 'My Settings' : undefined}
+                className={cn(
+                  "flex items-center rounded-lg text-sm font-medium transition-all group overflow-hidden",
+                  !isExpanded ? "justify-center p-2" : "gap-3 px-3 py-2",
+                  isActive
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                )}
+              >
+                <Settings className={cn(
+                  "shrink-0 transition-colors",
+                  !isExpanded ? "w-5 h-5" : "w-4 h-4",
+                  isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
+                )} />
+                {isExpanded && <span className="whitespace-nowrap font-medium">My Settings</span>}
+              </Link>
+            )
+          })()}
+        </div>
 
         {/* User Profile Summary Component */}
         {currentAgent && (
