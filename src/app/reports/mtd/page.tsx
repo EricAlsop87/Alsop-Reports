@@ -16,6 +16,7 @@ import { FilterBar, FilterState } from "@/components/ui/FilterBar"
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Clock, DollarSign, Package, TrendingUp, Trophy, Calendar, Database, Phone, MessageSquare, FileText, ShieldCheck, Zap, Megaphone, Car, Edit } from "lucide-react"
 import Link from "next/link"
 import { MonthlyManualModal } from "@/components/reports/MonthlyManualModal"
+import { PacingModal } from "@/components/reports/PacingModal"
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -77,7 +78,7 @@ function getTop3Ties(data: any[], accessor: (m: any) => number) {
 
 function LeaderboardCard({ 
   title, icon, data, accessor, format, colorClass, className,
-  holidays, year, month, goals, agencyTotal
+  holidays, year, month, goals, agencyTotal, onViewAll
 }: { 
   title: string; icon: React.ReactNode; data: any[]; 
   accessor: (m: any) => number; format: (v: number) => string;
@@ -85,6 +86,7 @@ function LeaderboardCard({
   holidays?: { holiday_date: string }[]; year?: number; month?: number;
   goals?: any[];
   agencyTotal?: number;
+  onViewAll?: () => void;
 }) {
   const topGroups = getTop3Ties(data, accessor)
   if (topGroups.length === 0) return null
@@ -144,7 +146,11 @@ function LeaderboardCard({
                 <span className={colorClass}>{icon}</span> <span className="truncate">{title}</span>
               </p>
             </div>
-            
+            {onViewAll && (
+              <button onClick={onViewAll} className="text-[9px] px-2 py-1 font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-colors whitespace-nowrap cursor-pointer">
+                VIEW ALL
+              </button>
+            )}
           </div>
 
           {hasProj && (
@@ -254,10 +260,29 @@ export default function MTDReport() {
   const [filters, setFilters] = useState<FilterState>({ offices: [], teams: [], agents: [], meetings: [] })
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isPacingModalOpen, setIsPacingModalOpen] = useState(false)
   const [talkingPointsExpanded, setTalkingPointsExpanded] = useState(true)
   const [agencyItemsMTD, setAgencyItemsMTD] = useState(0)
   const [agencyOfficeBreakdown, setAgencyOfficeBreakdown] = useState<Record<string, number>>({})
   const [lastMonthItems, setLastMonthItems] = useState<number | undefined>(undefined)
+
+  const { elapsedBizDays, totalBizDays } = useMemo(() => {
+    const holidaySet = toHolidaySet(holidays)
+    const y = selectedYear
+    const m = selectedMonth
+    const total = getBusinessDaysInMonth(y, m, holidaySet)
+    const now = new Date()
+    const isCurrentMonth = now.getFullYear() === y && (now.getMonth() + 1) === m
+    let elapsed = total
+    if (isCurrentMonth && now.getDate() > 1) {
+      const yesterday = new Date(now)
+      yesterday.setDate(now.getDate() - 1)
+      elapsed = getElapsedBusinessDays(y, m, holidaySet, yesterday)
+    } else if (isCurrentMonth) {
+      elapsed = 0
+    }
+    return { elapsedBizDays: elapsed, totalBizDays: total }
+  }, [selectedYear, selectedMonth, holidays])
 
   const fetchData = async () => {
     setLoading(true)
@@ -442,6 +467,7 @@ export default function MTDReport() {
           month={selectedMonth}
           goals={goals}
           agencyTotal={agencyItemsMTD}
+          onViewAll={() => setIsPacingModalOpen(true)}
         />
 
         {/* Row 1 & 2, Col 3-12 (Desktop): Agency MTD Pacing */}
@@ -716,6 +742,15 @@ export default function MTDReport() {
         month={selectedMonth}
         metrics={metrics}
         onSuccess={fetchData}
+      />
+
+      <PacingModal
+        isOpen={isPacingModalOpen}
+        onClose={() => setIsPacingModalOpen(false)}
+        data={metrics}
+        elapsedBizDays={elapsedBizDays}
+        totalBizDays={totalBizDays}
+        goals={goals}
       />
     </div>
     </PageGuard>
