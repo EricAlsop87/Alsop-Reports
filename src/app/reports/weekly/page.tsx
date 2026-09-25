@@ -492,63 +492,38 @@ export default function WeeklyReport() {
   return (
     <PageGuard pageKey="weekly">
     <div className="p-4 md:p-6 max-w-[1800px] mx-auto space-y-4">
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Weekly Production</h1>
-            <div className="flex items-center gap-0.5 bg-white border border-slate-200 shadow-sm rounded-md p-0.5 h-9 w-fit">
-              <button 
-                onClick={() => setWeekStart(getPreviousWeekStart(weekStart))}
-                className="p-1 hover:bg-slate-100 rounded text-slate-500 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <div className="px-2 flex items-center gap-2 min-w-[140px] justify-center cursor-default">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-sm font-semibold text-slate-700">
-                  {formatWeekRange(weekStart)}
-                </span>
-              </div>
-              <button 
-                onClick={() => setWeekStart(getNextWeekStart(weekStart))}
-                className="p-1 hover:bg-slate-100 rounded text-slate-500 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <p className="text-slate-500 text-sm">Aggregated performance and manual inputs for the week.</p>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900">Weekly Production</h1>
+          <p className="text-slate-500">Aggregated performance and manual inputs for the week.</p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => setCoverageOpen(!coverageOpen)}
-            className={`flex items-center gap-2 h-9 shadow-sm transition-all ${
-              totalGaps > 0
-                ? "border-orange-300 bg-orange-50 text-orange-800 hover:bg-orange-100"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-            }`}
-          >
-            <Database className="w-4 h-4 opacity-70" />
-            <span className="font-semibold">Coverage</span>
-            {totalGaps > 0 && (
-              <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                {totalGaps} Gaps
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1 bg-white border border-slate-200 shadow-sm rounded-md p-1">
+            <button 
+              onClick={() => setWeekStart(getPreviousWeekStart(weekStart))}
+              className="p-1 hover:bg-slate-100 rounded text-slate-600"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="px-3 py-1 flex items-center gap-2 min-w-[160px] justify-center">
+              <Calendar className="w-4 h-4 text-slate-500" />
+              <span className="text-sm font-semibold text-slate-700">
+                {formatWeekRange(weekStart)}
               </span>
-            )}
-            {totalGaps === 0 && coverage.length > 0 && (
-              <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                <CheckCircle2 className="w-3 h-3" /> 100%
-              </span>
-            )}
-            {coverageOpen ? <ChevronUp className="w-3.5 h-3.5 opacity-50 ml-0.5" /> : <ChevronDown className="w-3.5 h-3.5 opacity-50 ml-0.5" />}
-          </Button>
+            </div>
+            <button 
+              onClick={() => setWeekStart(getNextWeekStart(weekStart))}
+              className="p-1 hover:bg-slate-100 rounded text-slate-600"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
 
           {!manualSubmitted ? (
             <Button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2 animate-pulse h-9 shadow-sm"
+              className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2 animate-pulse"
             >
               <AlertCircle className="w-4 h-4" /> Enter Weekly Data
             </Button>
@@ -556,37 +531,64 @@ export default function WeeklyReport() {
             <Button 
               onClick={() => setIsModalOpen(true)}
               variant="outline"
-              className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center gap-2 h-9 shadow-sm font-semibold"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-2"
             >
-              <span className="text-emerald-600"><CheckCircle2 className="w-4 h-4" /></span>
-              Weekly Data
-              <Edit className="w-3.5 h-3.5 text-slate-400 ml-1" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Weekly Data Submitted
+              <Edit className="w-3 h-3 ml-1" />
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => setCoverageOpen(!coverageOpen)}
+            className={`flex items-center gap-2 ${
+              totalGaps > 0
+                ? "border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            Data Coverage
+            {totalGaps > 0 && (
+              <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                {totalGaps}
+              </span>
+            )}
+            {totalGaps === 0 && coverage.length > 0 && (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            )}
+            {coverageOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </Button>
         </div>
       </header>
 
-      {/* ── Week Completeness Summary Banner (Only show if there are gaps) ── */}
-      {!loading && coverage.length > 0 && weekSummary.gapDays > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-orange-50 border border-orange-200 rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-orange-900">
-                ⚠️ {weekSummary.gapDays} of {weekSummary.totalBizDays} business day{weekSummary.totalBizDays !== 1 ? "s" : ""} ha{weekSummary.gapDays === 1 ? "s" : "ve"} gaps
-              </p>
-              <p className="text-xs text-orange-700 mt-0.5">
-                Days with missing data: {weekSummary.gapDayNames.join(", ")}. Open the coverage panel or upload files to resolve.
-              </p>
+      {/* ── Week Completeness Summary Banner ── */}
+      {!loading && coverage.length > 0 && (
+        weekSummary.gapDays > 0 ? (
+          <div className="flex items-center justify-between gap-4 p-3 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-900">
+                  ⚠️ {weekSummary.gapDays} of {weekSummary.totalBizDays} business day{weekSummary.totalBizDays !== 1 ? "s" : ""} ha{weekSummary.gapDays === 1 ? "s" : "ve"} gaps
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Days with missing data: {weekSummary.gapDayNames.join(", ")}. Open the coverage panel or upload files to resolve.
+                </p>
+              </div>
             </div>
+            <Link
+              href={`/admin/sync`}
+              className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-md border border-amber-300 bg-white text-amber-700 hover:bg-amber-100 transition-colors shadow-sm shrink-0"
+            >
+              Upload missing files →
+            </Link>
           </div>
-          <Link
-            href={`/admin/sync`}
-            className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-md border border-orange-300 bg-white text-orange-700 hover:bg-orange-100 transition-colors shadow-sm shrink-0"
-          >
-            Upload missing files →
-          </Link>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2 p-2.5 px-4 bg-emerald-50 border border-emerald-200 rounded-lg shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-700">✅ Week Complete — All {weekSummary.totalBizDays} business days have full data coverage</span>
+          </div>
+        )
       )}
 
       {/* ── Data Coverage Panel (collapsible) ── */}

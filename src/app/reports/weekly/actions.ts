@@ -378,55 +378,6 @@ export async function saveWeeklyManualData(
 }
 
 /**
- * Partial save — only updates the specific fields that were changed.
- * Used by the tab-split UI so VA saves don't overwrite Manager data and vice versa.
- * Each entry in `updates` contains agent_id + only the fields that differ from baseline.
- */
-export async function saveWeeklyPartialData(
-  weekStartStr: string,
-  updates: { agent_id: string; [field: string]: number | string }[]
-) {
-  try {
-    // Filter out updates that only have agent_id (no actual changes)
-    const meaningful = updates.filter(u =>
-      Object.keys(u).some(k => k !== "agent_id")
-    )
-
-    if (meaningful.length === 0) {
-      return { success: true, changed: 0 }
-    }
-
-    // Upsert each agent's changed fields individually
-    const rows = meaningful.map(u => ({
-      ...u,
-      week_start: weekStartStr,
-      updated_at: new Date().toISOString(),
-    }))
-
-    const { error } = await supabase
-      .from("weekly_manual_metrics")
-      .upsert(rows, { onConflict: "agent_id,week_start" })
-
-    if (error) throw error
-
-    // Mark as submitted
-    await supabase
-      .from("weekly_reports_meta")
-      .upsert({
-        week_start: weekStartStr,
-        manual_submitted: true,
-        submitted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "week_start" })
-
-    return { success: true, changed: meaningful.length }
-  } catch (error: any) {
-    console.error("Error saving weekly partial data:", error)
-    return { success: false, error: error.message }
-  }
-}
-
-/**
  * Calculate auto-sums from daily data to pre-populate the weekly manual entry modal.
  * Sums: unique_leads (leads contact), rico_hot (leads hot), pivot, dismissed_todos
  * Snapshot (NOT summed): past_due_todos, rico_past_due_tasks

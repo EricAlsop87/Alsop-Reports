@@ -89,7 +89,7 @@ function LeaderboardCard({
   onViewAll?: () => void;
 }) {
   const topGroups = getTop3Ties(data, accessor)
-  const isEmpty = topGroups.length === 0
+  if (topGroups.length === 0) return null
   const medals = ["🥇", "🥈", "🥉"]
   const isMTD = title.includes("MTD")
   
@@ -153,95 +153,87 @@ function LeaderboardCard({
             )}
           </div>
 
-          {isEmpty ? (
-            <div className="py-6 text-center text-xs text-slate-400">
-              No data available yet
-            </div>
-          ) : (
-            <>
-              {hasProj && (
-                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5 mb-2.5">
-                  <span>Agent</span>
-                  <div className="flex items-center gap-6 font-mono">
-                    <span className="w-12 text-right">MTD</span>
-                    <span className="w-16 text-center bg-slate-50 text-slate-500 rounded border border-slate-200/60 py-0.5">EoM Proj.</span>
-                  </div>
-                </div>
-              )}
-
-              <div className={isMTD ? "space-y-3" : "space-y-2"}>
-                {topGroups.map((group, i) => {
-                  const valueColors = ["text-emerald-600", "text-blue-600", "text-blue-400"]
-                  const valueColor = valueColors[i] || "text-slate-500"
-                  const projValue = hasProj && elapsed > 0 ? Math.round((group.score / elapsed) * totalBizDays) : 0;
-                  return (
-                    <div key={i} className="flex items-center justify-between gap-2 py-0.5">
-                      <span className={`flex items-start gap-1.5 ${isMTD ? "text-base" : "text-sm"} min-w-0 flex-1`}>
-                        <span className={`${isMTD ? "text-xl" : "text-base"} leading-none shrink-0 mt-[1px]`}>{medals[i]}</span>
-                        <span className={`text-slate-900 font-medium leading-tight ${isMTD ? "text-base" : "text-sm"} truncate mt-0.5`}>
-                          {group.agents.map((m, idx) => (
-                            <span key={m.agent_id}>
-                              <Link href={`/reports/agent/${m.agent_id}`} className="hover:text-blue-600 transition-colors">
-                                {m.agents?.name}
-                              </Link>
-                              {idx < group.agents.length - 1 ? <span className="text-slate-400">, </span> : ""}
-                            </span>
-                          ))}
-                        </span>
-                      </span>
-                      {hasProj ? (
-                        <div className="flex items-center gap-6 font-mono shrink-0">
-                          <span className={`${isMTD ? "text-base" : "text-sm"} font-bold ${valueColor} w-12 text-right`}>
-                            {group.score}
-                          </span>
-                          {(() => {
-                            const goalVal = getAgentMonthlyItemsGoal(group.agents[0]);
-                            const meetsGoal = projValue >= goalVal;
-                            const projColor = meetsGoal 
-                              ? "text-emerald-600 bg-emerald-50 border border-emerald-100" 
-                              : "text-rose-600 bg-rose-50 border border-rose-100";
-                            return (
-                              <span className={`text-xs font-extrabold w-16 text-center rounded py-0.5 ${projColor} shadow-sm`}>
-                                {projValue}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      ) : (
-                        <span className={`${isMTD ? "text-xl" : "text-base"} font-bold font-mono ${valueColor} shrink-0`}>
-                          {format(group.score)}
-                        </span>
-                      )}
-                    </div>
-                  )
-                })}
+          {hasProj && (
+            <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5 mb-2.5">
+              <span>Agent</span>
+              <div className="flex items-center gap-6 font-mono">
+                <span className="w-12 text-right">MTD</span>
+                <span className="w-16 text-center bg-slate-50 text-slate-500 rounded border border-slate-200/60 py-0.5">EoM Proj.</span>
               </div>
+            </div>
+          )}
 
-              {agencyTotal !== undefined && (
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span className="flex items-center gap-1.5 text-slate-500">
-                    🏢 Agency Total
-                  </span>
-                  <div className="flex items-center gap-6 font-mono shrink-0">
-                    <span className="w-12 text-right text-slate-600">
-                      {agencyTotal}
-                    </span>
-                    {hasProj && (() => {
-                      const projValue = elapsed > 0 ? Math.round((agencyTotal / elapsed) * totalBizDays) : 0;
-                      const meetsGoal = projValue >= 500;
-                      const projColor = meetsGoal 
-                        ? "text-emerald-600 bg-emerald-50 border border-emerald-100" 
-                        : "text-rose-600 bg-rose-50 border border-rose-100";
-                      return (
-                        <span className={`text-[10px] font-extrabold w-16 text-center rounded py-0.5 ${projColor} shadow-sm`}>
-                          {projValue}
+          <div className={isMTD ? "space-y-3" : "space-y-2"}>
+            {topGroups.map((group, i) => {
+              const valueColors = ["text-emerald-600", "text-blue-600", "text-blue-400"]
+              const valueColor = valueColors[i] || "text-slate-500"
+              const projValue = hasProj && elapsed > 0 ? Math.round((group.score / elapsed) * totalBizDays) : 0;
+              return (
+                <div key={i} className="flex items-center justify-between gap-2 py-0.5">
+                  <span className={`flex items-start gap-1.5 ${isMTD ? "text-base" : "text-sm"} min-w-0 flex-1`}>
+                    <span className={`${isMTD ? "text-xl" : "text-base"} leading-none shrink-0 mt-[1px]`}>{medals[i]}</span>
+                    <span className={`text-slate-900 font-medium leading-tight ${isMTD ? "text-base" : "text-sm"} truncate mt-0.5`}>
+                      {group.agents.map((m, idx) => (
+                        <span key={m.agent_id}>
+                          <Link href={`/reports/agent/${m.agent_id}`} className="hover:text-blue-600 transition-colors">
+                            {m.agents?.name}
+                          </Link>
+                          {idx < group.agents.length - 1 ? <span className="text-slate-400">, </span> : ""}
                         </span>
-                      );
-                    })()}
-                  </div>
+                      ))}
+                    </span>
+                  </span>
+                  {hasProj ? (
+                    <div className="flex items-center gap-6 font-mono shrink-0">
+                      <span className={`${isMTD ? "text-base" : "text-sm"} font-bold ${valueColor} w-12 text-right`}>
+                        {group.score}
+                      </span>
+                      {(() => {
+                        const goalVal = getAgentMonthlyItemsGoal(group.agents[0]);
+                        const meetsGoal = projValue >= goalVal;
+                        const projColor = meetsGoal 
+                          ? "text-emerald-600 bg-emerald-50 border border-emerald-100" 
+                          : "text-rose-600 bg-rose-50 border border-rose-100";
+                        return (
+                          <span className={`text-xs font-extrabold w-16 text-center rounded py-0.5 ${projColor} shadow-sm`}>
+                            {projValue}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <span className={`${isMTD ? "text-xl" : "text-base"} font-bold font-mono ${valueColor} shrink-0`}>
+                      {format(group.score)}
+                    </span>
+                  )}
                 </div>
-              )}
-            </>
+              )
+            })}
+          </div>
+
+          {agencyTotal !== undefined && (
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-700">
+              <span className="flex items-center gap-1.5 text-slate-500">
+                🏢 Agency Total
+              </span>
+              <div className="flex items-center gap-6 font-mono shrink-0">
+                <span className="w-12 text-right text-slate-600">
+                  {agencyTotal}
+                </span>
+                {hasProj && (() => {
+                  const projValue = elapsed > 0 ? Math.round((agencyTotal / elapsed) * totalBizDays) : 0;
+                  const meetsGoal = projValue >= 500;
+                  const projColor = meetsGoal 
+                    ? "text-emerald-600 bg-emerald-50 border border-emerald-100" 
+                    : "text-rose-600 bg-rose-50 border border-rose-100";
+                  return (
+                    <span className={`text-[10px] font-extrabold w-16 text-center rounded py-0.5 ${projColor} shadow-sm`}>
+                      {projValue}
+                    </span>
+                  );
+                })()}
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

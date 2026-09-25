@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useMemo, useRef, useEffect } from "react"
-import { createPortal } from "react-dom"
 import { Search, Sparkles, Smile, HandMetal, PartyPopper, Hash, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -243,23 +242,17 @@ export default function EmojiReactionPicker({
   const [searchQuery, setSearchQuery] = useState('')
   const [showExpanded, setShowExpanded] = useState(defaultExpanded)
   const containerRef = useRef<HTMLDivElement>(null)
-  const modalRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (showExpanded && searchInputRef.current) {
-      setTimeout(() => searchInputRef.current?.focus(), 100)
+      searchInputRef.current.focus()
     }
   }, [showExpanded])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-      // Check both the inline quick-reactions container and the portal modal
-      const clickedInside =
-        (containerRef.current && containerRef.current.contains(target)) ||
-        (modalRef.current && modalRef.current.contains(target))
-      if (!clickedInside) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         onClose()
       }
     }
@@ -302,88 +295,138 @@ export default function EmojiReactionPicker({
     return EMOJI_CATEGORIES.find((c) => c.id === activeTab) || EMOJI_CATEGORIES[0]
   }, [activeTab])
 
-  // Expanded modal content (rendered via portal)
-  const expandedModal = showExpanded && typeof document !== 'undefined' ? createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 animate-in fade-in duration-100"
-      onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+      ref={containerRef}
+      className={cn(
+        'absolute z-40 select-none animate-in fade-in zoom-in-95 duration-150',
+        placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-1.5',
+        align === 'right' ? 'right-0' : 'left-0'
+      )}
     >
-      <div
-        ref={modalRef}
-        className="w-full max-w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 flex flex-col gap-3 animate-in zoom-in-95 fade-in duration-150"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800">Reactions</h3>
+      {!showExpanded ? (
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full shadow-lg p-1.5 px-2 max-w-[calc(100vw-32px)] overflow-x-auto">
+          {QUICK_REACTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => {
+                onSelect(emoji)
+                onClose()
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 hover:scale-125 transition-all text-base cursor-pointer"
+            >
+              {emoji}
+            </button>
+          ))}
+
+          <div className="w-px h-4 bg-slate-200 mx-0.5" />
+
           <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            onClick={() => setShowExpanded(true)}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
+            title="More reactions..."
           >
-            <X className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search emojis..."
-            className="w-full pl-8 pr-7 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
-          />
-          {searchQuery && (
+      ) : (
+        <div className="w-[min(320px,calc(100vw-32px))] bg-white border border-slate-200 rounded-xl shadow-2xl p-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search emojis..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
             <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              onClick={onClose}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
-          )}
-        </div>
-
-        {/* Category tabs */}
-        {!searchQuery && (
-          <div className="flex items-center gap-1 border-b border-slate-100 pb-2 overflow-x-auto no-scrollbar">
-            {EMOJI_CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveTab(cat.id)}
-                title={cat.name}
-                className={cn(
-                  'flex items-center justify-center p-2 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0',
-                  activeTab === cat.id
-                    ? 'bg-blue-50 text-blue-600 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
-                )}
-              >
-                {cat.icon}
-              </button>
-            ))}
           </div>
-        )}
 
-        {/* Emoji grid */}
-        <div className="h-[240px] overflow-y-auto pr-1">
-          {searchQuery ? (
-            searchResults.length > 0 ? (
+          {!searchQuery && (
+            <div className="flex items-center gap-1 border-b border-slate-100 pb-1.5 overflow-x-auto no-scrollbar">
+              {EMOJI_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveTab(cat.id)}
+                  title={cat.name}
+                  className={cn(
+                    'flex items-center justify-center p-1.5 rounded-md text-xs font-medium transition-all cursor-pointer',
+                    activeTab === cat.id
+                      ? 'bg-blue-50 text-blue-600 shadow-xs'
+                      : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                  )}
+                >
+                  {cat.icon}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="h-[200px] overflow-y-auto pr-1">
+            {searchQuery ? (
+              searchResults.length > 0 ? (
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Results ({searchResults.length})
+                  </p>
+                  <div className="grid grid-cols-7 gap-1">
+                    {searchResults.map((item) => (
+                      <button
+                        key={item.emoji}
+                        onClick={() => {
+                          onSelect(item.emoji)
+                          onClose()
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 hover:scale-125 transition-all text-lg cursor-pointer select-none"
+                        title={item.keywords.join(', ')}
+                      >
+                        {item.emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs">
+                  <p>No matching emojis</p>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-blue-600 text-[11px] hover:underline mt-1 cursor-pointer"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )
+            ) : (
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Results ({searchResults.length})
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  {currentCategory.name}
                 </p>
-                <div className="grid grid-cols-8 gap-0.5">
-                  {searchResults.map((item) => (
+                <div className="grid grid-cols-7 gap-1">
+                  {currentCategory.emojis.map((item) => (
                     <button
                       key={item.emoji}
                       onClick={() => {
                         onSelect(item.emoji)
                         onClose()
                       }}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-blue-50 hover:scale-110 transition-all text-xl cursor-pointer select-none"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-50 hover:scale-125 transition-all text-lg cursor-pointer select-none"
                       title={item.keywords.join(', ')}
                     >
                       {item.emoji}
@@ -391,83 +434,10 @@ export default function EmojiReactionPicker({
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm">
-                <p>No matching emojis</p>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-blue-600 text-xs hover:underline mt-1 cursor-pointer"
-                >
-                  Clear search
-                </button>
-              </div>
-            )
-          ) : (
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                {currentCategory.name}
-              </p>
-              <div className="grid grid-cols-8 gap-0.5">
-                {currentCategory.emojis.map((item) => (
-                  <button
-                    key={item.emoji}
-                    onClick={() => {
-                      onSelect(item.emoji)
-                      onClose()
-                    }}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-blue-50 hover:scale-110 transition-all text-xl cursor-pointer select-none"
-                    title={item.keywords.join(', ')}
-                  >
-                    {item.emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
-  ) : null
-
-  return (
-    <>
-      <div
-        ref={containerRef}
-        className={cn(
-          'absolute z-40 select-none animate-in fade-in zoom-in-95 duration-150',
-          placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-1.5',
-          align === 'right' ? 'right-0' : 'left-0'
-        )}
-      >
-        {!showExpanded && (
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full shadow-lg p-1.5 px-2 max-w-[calc(100vw-32px)] overflow-x-auto">
-            {QUICK_REACTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => {
-                  onSelect(emoji)
-                  onClose()
-                }}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 hover:scale-125 transition-all text-base cursor-pointer"
-              >
-                {emoji}
-              </button>
-            ))}
-
-            <div className="w-px h-4 bg-slate-200 mx-0.5" />
-
-            <button
-              onClick={() => setShowExpanded(true)}
-              className="w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
-              title="More reactions..."
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            )}
           </div>
-        )}
-      </div>
-      {expandedModal}
-    </>
+        </div>
+      )}
+    </div>
   )
 }

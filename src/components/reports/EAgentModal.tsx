@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { saveEAgentData } from "@/app/reports/daily/actions"
 import { Button } from "@/components/ui/Button"
 import { AlertCircle, X, Save, RotateCcw } from "lucide-react"
@@ -14,34 +14,8 @@ interface EAgentModalProps {
 }
 
 // ── Compact Stepper Component ──
-function Stepper({ 
-  value, 
-  onChange, 
-  rowIndex, 
-  colKey, 
-  isDirty 
-}: { 
-  value: number; 
-  onChange: (v: number) => void; 
-  rowIndex?: number; 
-  colKey?: string; 
-  isDirty?: boolean;
-}) {
+function Stepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const set = (v: number) => onChange(Math.max(0, v))
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (colKey === undefined || rowIndex === undefined) return;
-    
-    if (e.key === "ArrowDown" || e.key === "Enter") {
-      e.preventDefault();
-      const nextRow = document.querySelector(`input[data-col="${colKey}"][data-row="${rowIndex + 1}"]`) as HTMLInputElement;
-      if (nextRow) nextRow.focus();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const prevRow = document.querySelector(`input[data-col="${colKey}"][data-row="${rowIndex - 1}"]`) as HTMLInputElement;
-      if (prevRow) prevRow.focus();
-    }
-  }
 
   return (
     <div className="flex items-center">
@@ -49,16 +23,8 @@ function Stepper({
         type="number"
         min={0}
         value={value}
-        data-col={colKey}
-        data-row={rowIndex}
-        onFocus={(e) => e.target.select()}
-        onKeyDown={handleKeyDown}
         onChange={(e) => set(parseInt(e.target.value) || 0)}
-        className={`w-12 h-5 rounded-md text-center text-sm font-mono outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all ${
-          isDirty 
-            ? "bg-blue-100 border-2 border-blue-500 text-blue-900 font-bold shadow-sm ring-1 ring-blue-500 focus:ring-2" 
-            : "bg-white border border-slate-200 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-        }`}
+        className="w-12 h-5 rounded-md bg-white border border-slate-200 text-center text-sm font-mono text-slate-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
     </div>
   )
@@ -70,7 +36,6 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
   
   // Form state: agent_id -> { pivots }
   const [formData, setFormData] = useState<Record<string, { pivots: number }>>({})
-  const baselineRef = useRef<Record<string, { pivots: number }>>({})
 
   const [showSales, setShowSales] = useState(false)
 
@@ -92,7 +57,6 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
         }
       })
       setFormData(initial)
-      baselineRef.current = JSON.parse(JSON.stringify(initial))
       setError(null)
       setShowSales(false) // Reset to default on open
     }
@@ -109,7 +73,6 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
   }, [])
 
   const resetAll = useCallback(() => {
-    if (!window.confirm("Are you sure you want to reset ALL agents to 0? This cannot be undone.")) return;
     const reset: Record<string, { pivots: number }> = {}
     agents.forEach(a => {
       reset[a.agent_id] = { pivots: 0 }
@@ -117,46 +80,18 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
     setFormData(reset)
   }, [agents])
 
-  const checkUnsavedAndClose = () => {
-    let hasUnsaved = false;
-    for (const [agentId, currentRow] of Object.entries(formData)) {
-      const baselineRow = baselineRef.current[agentId]
-      if (!baselineRow) continue;
-      if (currentRow.pivots !== baselineRow.pivots) {
-        hasUnsaved = true;
-        break;
-      }
-    }
-    
-    if (hasUnsaved) {
-      if (!window.confirm("You have unsaved changes. Are you sure you want to close and discard them?")) return;
-    }
-    onClose();
-  }
-
   if (!isOpen) return null
 
   const handleSave = async () => {
     setLoading(true)
     setError(null)
 
-    // Only send rows that were changed
-    const updates = Object.keys(formData)
-      .filter(agentId => {
-        const base = baselineRef.current[agentId]
-        return !base || base.pivots !== formData[agentId].pivots
-      })
-      .map(agentId => ({
-        agent_id: agentId,
-        pivots: formData[agentId].pivots
-      }))
-
-    if (updates.length === 0) {
-      setLoading(false)
-      onSuccess()
-      onClose()
-      return
-    }
+    const updates = Object.keys(formData).map(agentId => ({
+      agent_id: agentId,
+      dismissed: 0,
+      pastDue: 0,
+      pivots: formData[agentId].pivots
+    }))
 
     const result = await saveEAgentData(dateStr, updates)
     
@@ -169,39 +104,51 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
     }
   }
 
+  // Summary stats
+  const totalPivots = Object.values(formData).reduce((s, v) => s + v.pivots, 0)
+  const agentsWithData = Object.values(formData).filter(v => v.pivots > 0).length
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white border border-slate-200 rounded-xl shadow-2xl w-max max-w-[95vw] flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 gap-8">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              eAgent Entry
-              <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{dateStr}</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">Use steppers or type directly</p>
+            <h2 className="text-base font-bold text-slate-900">eAgent Entry</h2>
+            <p className="text-xs text-slate-500">{dateStr} • Use steppers or type directly</p>
           </div>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <span className="text-[11px] text-slate-500 font-medium group-hover:text-slate-900 transition-colors uppercase tracking-wide">Show Sales</span>
-              <div className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={showSales} onChange={(e) => setShowSales(e.target.checked)} />
-                <div className="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-              </div>
-            </label>
-            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+          <div className="flex items-center gap-2">
             <button
               onClick={resetAll}
               title="Reset all to 0"
-              className="text-slate-500 hover:text-amber-500 transition-colors p-1"
+              className="text-slate-500 hover:text-amber-400 transition-colors p-1"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
-            <button onClick={checkUnsavedAndClose} className="text-slate-500 hover:text-slate-900 transition-colors p-1">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-900 transition-colors p-1">
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
+
+        {/* Summary bar */}
+        <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200 text-[11px]">
+          <div className="flex items-center gap-4">
+            <span className="text-slate-600">
+              <span className="text-slate-900 font-semibold">{agentsWithData}</span> agents entered
+            </span>
+            <span className="text-slate-600">
+              Pivots: <span className="text-cyan-600 font-semibold">{totalPivots}</span>
+            </span>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <span className="text-slate-600 font-medium group-hover:text-slate-900 transition-colors">Show Sales Agents</span>
+            <div className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" checked={showSales} onChange={(e) => setShowSales(e.target.checked)} />
+              <div className="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+            </div>
+          </label>
         </div>
 
         {/* Error */}
@@ -212,7 +159,7 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
         )}
 
         {/* Body — compact table */}
-        <div className="flex-grow overflow-y-auto px-2 py-2">
+        <div className="flex-grow overflow-y-auto px-2 py-1">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b-2 border-slate-300 bg-slate-50/50">
@@ -244,9 +191,6 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
                         <Stepper 
                           value={d.pivots}
                           onChange={(v) => updateField(agent.agent_id, "pivots", v)}
-                          rowIndex={index}
-                          colKey="pivots"
-                          isDirty={baselineRef.current[agent.agent_id]?.pivots !== d.pivots}
                         />
                       </div>
                     </td>
@@ -259,7 +203,7 @@ export function EAgentModal({ isOpen, onClose, dateStr, agents, onSuccess }: EAg
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
-          <Button variant="outline" onClick={checkUnsavedAndClose} disabled={loading} className="text-slate-600 border-slate-300 hover:bg-slate-200 text-xs px-3 py-1.5">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="text-slate-600 border-slate-300 hover:bg-slate-200 text-xs px-3 py-1.5">
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-2 text-xs px-4 py-1.5">
