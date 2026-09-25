@@ -299,13 +299,22 @@ export default function ConversationSidebar({
               )}
               <span>Direct Messages</span>
             </button>
-            <button
-              onClick={() => onCreateNew('dm')}
-              className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
-              title="New conversation"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onCreateNew('group')}
+                className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-600 transition-colors"
+                title="New private group chat"
+              >
+                <Users className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onCreateNew('dm')}
+                className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-600 transition-colors"
+                title="New direct message"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
