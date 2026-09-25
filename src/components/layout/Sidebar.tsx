@@ -86,15 +86,15 @@ const navGroups: NavGroup[] = [
       { name: 'MTD Report',     href: '/reports/mtd',     isLetter: true, letter: 'M' },
       { name: 'Quotes Report',  href: '/reports/quotes',  icon: Percent },
       { name: 'Agent Heatmap',  href: '/reports/heatmap', icon: Flame,       pageKey: 'heatmap' },
-      { name: 'Agent Portal',   href: '/reports/agent',   icon: UserCircle,  pageKey: 'agent_portal' },
     ],
   },
   {
     label: 'Workspace',
     items: [
-      { name: 'Rebel Rewards',    href: '/rebel-rewards', icon: Trophy },
-      { name: 'Staff Directory',  href: '/staff',         icon: Users },
       { name: 'Communication',    href: '/communication', icon: MessageSquare },
+      { name: 'Staff Directory',  href: '/staff',         icon: Users },
+      { name: 'Agent Portal',   href: '/reports/agent',   icon: UserCircle,  pageKey: 'agent_portal' },
+      { name: 'Rebel Rewards',    href: '/rebel-rewards', icon: Trophy },
       { name: 'My Settings',      href: '/settings',      icon: Settings },
     ],
   },
