@@ -36,6 +36,7 @@ import MessageComposer, { type MessageComposerHandle } from "@/components/chat/M
 import CreateConversationModal from "@/components/chat/CreateConversationModal"
 import PinnedMessagesPanel from "@/components/chat/PinnedMessagesPanel"
 import ConversationSettingsModal from "@/components/chat/ConversationSettingsModal"
+import AddGroupMembersModal from "@/components/chat/AddGroupMembersModal"
 import AgentHudPanel from "@/components/chat/AgentHudPanel"
 import { updatePresence } from "@/lib/chat/realtime"
 import { MessageSquare, MonitorSmartphone, Paperclip, ChevronLeft } from "lucide-react"
@@ -58,6 +59,7 @@ export default function CommunicationHub() {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showAddMembersModal, setShowAddMembersModal] = useState(false)
   const [createModalDefaultTab, setCreateModalDefaultTab] = useState<'dm' | 'group' | 'channel'>('dm')
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [editingMessage, setEditingMessage] = useState<string | null>(null)
@@ -707,6 +709,7 @@ export default function CommunicationHub() {
                 onPinnedClick={() => setShowPinnedPanel(prev => !prev)}
                 onSettingsClick={() => setShowSettingsModal(true)}
                 onBackClick={handleBackToSidebar}
+                onAddMembersClick={() => setShowAddMembersModal(true)}
               />
 
               <MessageList
@@ -842,6 +845,28 @@ export default function CommunicationHub() {
                 .map((m) => m.agent as Agent)
               setMembers(agentMembers)
               setMemberCount(memberData.length)
+            }
+          }}
+        />
+      )}
+
+      {/* Add Group Members Modal */}
+      {showAddMembersModal && selectedConversation && (
+        <AddGroupMembersModal
+          conversation={selectedConversation}
+          currentAgent={currentAgent}
+          existingMembers={members}
+          isOpen={showAddMembersModal}
+          onClose={() => setShowAddMembersModal(false)}
+          onMembersAdded={async () => {
+            if (selectedId) {
+              const memberData = await getConversationMembers(selectedId)
+              const agentMembers = memberData
+                .filter((m) => m.agent)
+                .map((m) => m.agent as Agent)
+              setMembers(agentMembers)
+              setMemberCount(memberData.length)
+              await loadConversations()
             }
           }}
         />

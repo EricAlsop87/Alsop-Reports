@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { Hash, Search, Pin, Settings, Users, X, ArrowLeft, ChevronLeft } from 'lucide-react'
+import { Hash, Search, Pin, Settings, Users, X, ArrowLeft, ChevronLeft, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserPresenceBadge from './UserPresenceBadge'
 import UserHoverCard from './UserHoverCard'
@@ -18,6 +18,7 @@ interface ConversationHeaderProps {
   onPinnedClick: () => void
   onSettingsClick: () => void
   onBackClick?: () => void
+  onAddMembersClick?: () => void
 }
 
 import { Avatar } from "@/components/ui/Avatar"
@@ -32,6 +33,7 @@ export default function ConversationHeader({
   onPinnedClick,
   onSettingsClick,
   onBackClick,
+  onAddMembersClick,
 }: ConversationHeaderProps) {
   const { unreadCounts } = useChat()
   const [isMembersPinned, setIsMembersPinned] = useState(false)
@@ -45,9 +47,21 @@ export default function ConversationHeader({
       .reduce((sum, [, count]) => sum + (count || 0), 0)
   }, [unreadCounts, conversation.id])
 
-  const isChannel = conversation.type === 'channel'
+  const isChannel = conversation.type === 'channel' || (conversation.type as string) === 'private_channel'
   const isDm = conversation.type === 'direct_dm'
   const isGroup = conversation.type === 'group_dm'
+
+  const isCreator = useMemo(() => {
+    return Boolean(currentAgentId && conversation.created_by === currentAgentId)
+  }, [currentAgentId, conversation.created_by])
+
+  const canAddMembers = useMemo(() => {
+    if (isGroup) {
+      return isCreator
+    }
+    const currentAgent = members.find((m) => m.id === currentAgentId)
+    return isCreator || currentAgent?.role === 'admin' || currentAgent?.team === 'Managers'
+  }, [isGroup, isCreator, members, currentAgentId])
 
   // Close when clicking outside
   useEffect(() => {
@@ -221,13 +235,28 @@ export default function ConversationHeader({
                     {isMembersPinned && (
                       <button
                         onClick={() => setIsMembersPinned(false)}
-                        className="text-slate-400 hover:text-white p-0.5 rounded"
+                        className="text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
+
+                {/* Add People Button (Creator Only for Group DMs) */}
+                {canAddMembers && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsMembersPinned(false)
+                      onAddMembersClick?.()
+                    }}
+                    className="w-full mb-2.5 py-1.5 px-2.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer select-none"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Add People to Group</span>
+                  </button>
+                )}
 
                 {/* Quick Search if more than 6 members */}
                 {sortedMembers.length > 6 && (
@@ -247,40 +276,50 @@ export default function ConversationHeader({
                   {filteredMembers.length === 0 ? (
                     <p className="text-[11px] text-slate-500 text-center py-2">No matching members</p>
                   ) : (
-                    filteredMembers.map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex items-center gap-2 py-1 px-1.5 rounded-md hover:bg-slate-800/70 transition-colors text-slate-200"
-                      >
-                        {/* Mini Avatar / Presence */}
-                        <div className="relative shrink-0">
-                          <Avatar name={m.name || ''} url={m.avatar_url} className="w-5 h-5 text-[10px] shadow-none" fallbackClassName="w-5 h-5 text-[10px] shadow-none" />
-                          <span className={cn(
-                            "w-2 h-2 rounded-full absolute -bottom-0.5 -right-0.5 ring-1 ring-slate-900",
-                            m.presence === 'online' ? 'bg-emerald-400' :
-                            m.presence === 'away' ? 'bg-amber-400' :
-                            m.presence === 'busy' ? 'bg-rose-400' : 'bg-slate-500'
-                          )} />
-                        </div>
+                    filteredMembers.map((m) => {
+                      const isGroupOwner = conversation.created_by === m.id
+                      return (
+                        <div
+                          key={m.id}
+                          className="flex items-center gap-2 py-1 px-1.5 rounded-md hover:bg-slate-800/70 transition-colors text-slate-200"
+                        >
+                          {/* Mini Avatar / Presence */}
+                          <div className="relative shrink-0">
+                            <Avatar name={m.name || ''} url={m.avatar_url} className="w-5 h-5 text-[10px] shadow-none" fallbackClassName="w-5 h-5 text-[10px] shadow-none" />
+                            <span className={cn(
+                              "w-2 h-2 rounded-full absolute -bottom-0.5 -right-0.5 ring-1 ring-slate-900",
+                              m.presence === 'online' ? 'bg-emerald-400' :
+                              m.presence === 'away' ? 'bg-amber-400' :
+                              m.presence === 'busy' ? 'bg-rose-400' : 'bg-slate-500'
+                            )} />
+                          </div>
 
-                        {/* Name */}
-                        <span className="truncate font-medium text-[12px]">{m.name}</span>
+                          {/* Name */}
+                          <span className="truncate font-medium text-[12px]">{m.name}</span>
 
-                        {/* Team / Office Tag */}
-                        <div className="ml-auto flex items-center gap-1 shrink-0">
-                          {m.team && (
-                            <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
-                              {m.team}
+                          {/* Creator Badge */}
+                          {isGroupOwner && (
+                            <span className="text-[9px] bg-blue-900/60 text-blue-300 border border-blue-700/50 px-1 py-0.2 rounded font-semibold shrink-0">
+                              Creator
                             </span>
                           )}
-                          {m.office && (
-                            <span className="text-[9px] bg-slate-800/60 text-slate-500 px-1 py-0.5 rounded">
-                              {m.office}
-                            </span>
-                          )}
+
+                          {/* Team / Office Tag */}
+                          <div className="ml-auto flex items-center gap-1 shrink-0">
+                            {m.team && (
+                              <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
+                                {m.team}
+                              </span>
+                            )}
+                            {m.office && (
+                              <span className="text-[9px] bg-slate-800/60 text-slate-500 px-1 py-0.5 rounded">
+                                {m.office}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>

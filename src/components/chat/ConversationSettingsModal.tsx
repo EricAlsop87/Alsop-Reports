@@ -89,6 +89,9 @@ export default function ConversationSettingsModal({
   const [inviteSuccess, setInviteSuccess] = useState(false)
 
   const canManage = useMemo(() => {
+    if (conversation.type === 'group_dm') {
+      return conversation.created_by === currentAgent.id
+    }
     return (
       currentAgent.role === 'admin' ||
       currentAgent.team === 'Managers' ||
