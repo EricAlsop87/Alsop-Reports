@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { X, Search, UserPlus, Check, Loader2, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabaseClient'
-import { addMembers } from '@/lib/chat/conversations'
+import { addMembers, sendSystemMessage } from '@/lib/chat'
 import UserPresenceBadge from './UserPresenceBadge'
 import type { Conversation, Agent } from './types'
 
@@ -135,7 +135,26 @@ export default function AddGroupMembersModal({
     setIsSubmitting(true)
     setErrorMsg(null)
     try {
+      const selectedAgents = unjoinedAgents.filter((a) => selectedIds.has(a.id))
       await addMembers(conversation.id, Array.from(selectedIds))
+
+      if (selectedAgents.length > 0) {
+        const actorFirstName = currentAgent.name.split(' ')[0]
+        const names = selectedAgents.map((a) => a.name)
+        let namesText = ''
+        if (names.length === 1) {
+          namesText = names[0]
+        } else if (names.length === 2) {
+          namesText = `${names[0]} and ${names[1]}`
+        } else {
+          namesText = `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+        }
+
+        const verb = selectedAgents.length === 1 ? 'was' : 'were'
+        const systemText = `${actorFirstName} added ${namesText} to the group`
+        await sendSystemMessage(conversation.id, currentAgent.id, systemText)
+      }
+
       onMembersAdded()
       onClose()
     } catch (err: any) {

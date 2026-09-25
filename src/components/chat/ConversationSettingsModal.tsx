@@ -26,6 +26,7 @@ import {
   removeMember,
   getConversationMembers,
 } from '@/lib/chat/conversations'
+import { sendSystemMessage } from '@/lib/chat/messages'
 import UserPresenceBadge from './UserPresenceBadge'
 import type { Conversation, Agent } from './types'
 
@@ -246,7 +247,25 @@ export default function ConversationSettingsModal({
     if (!canManage || selectedInviteIds.size === 0) return
     setIsInviting(true)
     try {
+      const selectedAgents = allAvailableAgents.filter((a) => selectedInviteIds.has(a.id))
       await addMembers(conversation.id, Array.from(selectedInviteIds))
+
+      if (selectedAgents.length > 0) {
+        const actorFirstName = currentAgent.name.split(' ')[0]
+        const names = selectedAgents.map((a) => a.name)
+        let namesText = ''
+        if (names.length === 1) {
+          namesText = names[0]
+        } else if (names.length === 2) {
+          namesText = `${names[0]} and ${names[1]}`
+        } else {
+          namesText = `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+        }
+
+        const systemText = `${actorFirstName} added ${namesText} to the group`
+        await sendSystemMessage(conversation.id, currentAgent.id, systemText)
+      }
+
       setSelectedInviteIds(new Set())
       setInviteSuccess(true)
       await fetchMembers()

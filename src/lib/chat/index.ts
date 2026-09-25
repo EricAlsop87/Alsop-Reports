@@ -32,6 +32,7 @@ export {
 export {
   fetchMessages,
   sendMessage,
+  sendSystemMessage,
   editMessage,
   deleteMessage,
   pinMessage,

@@ -157,6 +157,44 @@ export async function sendMessage(data: SendMessageInput): Promise<Message> {
   return { ...msg, reactions: [] } as unknown as Message
 }
 
+/**
+ * Insert a system event message (e.g. member added/removed)
+ */
+export async function sendSystemMessage(
+  conversationId: string,
+  senderId: string,
+  content: string,
+): Promise<Message> {
+  const { data: msg, error } = await supabase
+    .from('chat_messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      content,
+      is_system: true,
+    })
+    .select(
+      `
+      *,
+      sender:agents!chat_messages_sender_id_fkey(id, name, office, avatar_url, role, team, status_message, presence)
+    `,
+    )
+    .single()
+
+  if (error || !msg) {
+    console.error('[messages] Failed to send system message:', error)
+    throw error
+  }
+
+  // Update conversation timestamp so it bubbles to top
+  await supabase
+    .from('chat_conversations')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', conversationId)
+
+  return { ...msg, reactions: [] } as unknown as Message
+}
+
 // ---------------------------------------------------------------------------
 // Edit message
 // ---------------------------------------------------------------------------
