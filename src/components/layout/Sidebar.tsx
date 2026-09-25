@@ -71,20 +71,37 @@ interface NavItem {
   pageKey?: string
 }
 
-const navItems: NavItem[] = [
-  { name: 'Overview', href: '/', icon: BarChart3, pageKey: 'overview' },
-  { name: 'Daily Report', href: '/reports/daily', isLetter: true, letter: 'D' },
-  { name: 'Weekly Report', href: '/reports/weekly', isLetter: true, letter: 'W' },
-  { name: 'MTD Report', href: '/reports/mtd', isLetter: true, letter: 'M' },
-  { name: 'Quotes Report', href: '/reports/quotes', icon: Percent },
-  { name: 'Agent Heatmap', href: '/reports/heatmap', icon: Flame, pageKey: 'heatmap' },
-  { name: 'Rebel Rewards', href: '/rebel-rewards', icon: Trophy },
-  { name: 'Staff Directory', href: '/staff', icon: Users },
-  { name: 'Agent Portal', href: '/reports/agent', icon: UserCircle, pageKey: 'agent_portal' },
-  { name: 'Communication', href: '/communication', icon: MessageSquare },
-  { name: 'My Settings', href: '/settings', icon: Settings },
-  { name: 'Admin Panel', href: '/admin', icon: Shield },
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Reports',
+    items: [
+      { name: 'Overview',       href: '/',                icon: BarChart3,   pageKey: 'overview' },
+      { name: 'Daily Report',   href: '/reports/daily',   isLetter: true, letter: 'D' },
+      { name: 'Weekly Report',  href: '/reports/weekly',  isLetter: true, letter: 'W' },
+      { name: 'MTD Report',     href: '/reports/mtd',     isLetter: true, letter: 'M' },
+      { name: 'Quotes Report',  href: '/reports/quotes',  icon: Percent },
+      { name: 'Agent Heatmap',  href: '/reports/heatmap', icon: Flame,       pageKey: 'heatmap' },
+      { name: 'Agent Portal',   href: '/reports/agent',   icon: UserCircle,  pageKey: 'agent_portal' },
+    ],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { name: 'Rebel Rewards',    href: '/rebel-rewards', icon: Trophy },
+      { name: 'Staff Directory',  href: '/staff',         icon: Users },
+      { name: 'Communication',    href: '/communication', icon: MessageSquare },
+      { name: 'My Settings',      href: '/settings',      icon: Settings },
+    ],
+  },
 ]
+
+// Flat list kept for convenience (used by existing filter/render logic)
+const navItems: NavItem[] = navGroups.flatMap(g => g.items)
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -296,57 +313,61 @@ export function Sidebar() {
           </button>
         </div>
 
-        <nav className="flex-1 px-3 space-y-1 mt-4 overflow-y-auto">
-          {navItems.filter(item => {
-            // Admin Panel is rendered separately below the nav
-            if (item.href === '/admin') return false
-            // Agent Portal is only shown in the reports list for Managers and Admins
-            if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
-            // Heatmap is strictly Admin-only
-            if (item.pageKey === 'heatmap') {
-              return currentAgent?.role === 'admin'
-            }
-            // Admins and Managers bypass page-level restrictions
-            if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') {
-              return true
-            }
-            // Items without a pageKey (Settings) are always visible
-            if (!item.pageKey) return true
-            // If page permissions haven't loaded yet, show everything
-            if (Object.keys(pagePerms).length === 0) return true
-            // Check if the agent's team is allowed
-            const allowed = pagePerms[item.pageKey]
-            if (!allowed || allowed.length === 0) return true // page not in permissions table or empty = visible
-            return allowed.includes(currentAgent?.team || '')
-          }).map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+        <nav className="flex-1 px-3 mt-4 overflow-y-auto space-y-4">
+          {navGroups.map((group) => {
+            const visibleItems = group.items.filter(item => {
+              if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
+              if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
+              if (!item.pageKey) return true
+              if (Object.keys(pagePerms).length === 0) return true
+              const allowed = pagePerms[item.pageKey]
+              if (!allowed || allowed.length === 0) return true
+              return allowed.includes(currentAgent?.team || '')
+            }).map(item => {
+              if (item.pageKey === 'agent_portal' && !isManagerOrAdmin && currentAgent?.id) {
+                return { ...item, name: 'My Portal', href: `/reports/agent/${currentAgent.id}` }
+              }
+              return item
+            })
+            if (visibleItems.length === 0) return null
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group",
-                  isActive 
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" 
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                )}
-              >
-                {item.letter ? (
-                  <LetterIcon letter={item.letter} isActive={isActive} compact={false} />
-                ) : item.icon ? (
-                  <item.icon className={cn(
-                    "shrink-0 transition-colors w-4 h-4", 
-                    isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
-                  )} />
-                ) : null}
-                <span className="flex-1">{item.name}</span>
-                {item.name === 'Communication' && totalUnread > 0 && (
-                  <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                    {totalUnread}
-                  </span>
-                )}
-              </Link>
+              <div key={group.label}>
+                <p className="px-3 mb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.label}</p>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setIsMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group",
+                          isActive
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        )}
+                      >
+                        {item.letter ? (
+                          <LetterIcon letter={item.letter} isActive={isActive} compact={false} />
+                        ) : item.icon ? (
+                          <item.icon className={cn(
+                            "shrink-0 transition-colors w-4 h-4",
+                            isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
+                          )} />
+                        ) : null}
+                        <span className="flex-1">{item.name}</span>
+                        {item.name === 'Communication' && totalUnread > 0 && (
+                          <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                            {totalUnread}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
             )
           })}
         </nav>
@@ -485,62 +506,70 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className="flex-1 px-2 space-y-1 mt-4">
-          {navItems.filter(item => {
-            // Admin Panel is rendered separately below the nav
-            if (item.href === '/admin') return false
-            // Agent Portal is only shown in the reports list for Managers and Admins
-            if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
-            // Heatmap is strictly Admin-only
-            if (item.pageKey === 'heatmap') {
-              return currentAgent?.role === 'admin'
-            }
-            // Admins and Managers bypass page-level restrictions
-            if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') {
-              return true
-            }
-            // Items without a pageKey (Settings) are always visible
-            if (!item.pageKey) return true
-            // If page permissions haven't loaded yet, show everything
-            if (Object.keys(pagePerms).length === 0) return true
-            // Check if the agent's team is allowed
-            const allowed = pagePerms[item.pageKey]
-            if (!allowed || allowed.length === 0) return true // page not in permissions table or empty = visible
-            return allowed.includes(currentAgent?.team || '')
-          }).map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+        <nav className="flex-1 px-2 mt-4 space-y-4 overflow-y-auto">
+          {navGroups.map((group) => {
+            const visibleItems = group.items.filter(item => {
+              if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
+              if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
+              if (!item.pageKey) return true
+              if (Object.keys(pagePerms).length === 0) return true
+              const allowed = pagePerms[item.pageKey]
+              if (!allowed || allowed.length === 0) return true
+              return allowed.includes(currentAgent?.team || '')
+            }).map(item => {
+              if (item.pageKey === 'agent_portal' && !isManagerOrAdmin && currentAgent?.id) {
+                return { ...item, name: 'My Portal', href: `/reports/agent/${currentAgent.id}` }
+              }
+              return item
+            })
+            if (visibleItems.length === 0) return null
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                title={!isExpanded ? item.name : undefined}
-                className={cn(
-                  "flex items-center rounded-lg text-sm font-medium transition-all group overflow-hidden relative",
-                  !isExpanded ? "justify-center p-2" : "gap-3 px-3 py-2",
-                  isActive 
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" 
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              <div key={group.label}>
+                {isExpanded ? (
+                  <p className="px-3 mb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{group.label}</p>
+                ) : (
+                  <div className="mx-2 mb-2 border-t border-slate-200 dark:border-slate-700" />
                 )}
-              >
-                {item.letter ? (
-                  <LetterIcon letter={item.letter} isActive={isActive} compact={!isExpanded} />
-                ) : item.icon ? (
-                  <item.icon className={cn(
-                    "shrink-0 transition-colors", 
-                    !isExpanded ? "w-5 h-5" : "w-4 h-4",
-                    isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
-                  )} />
-                ) : null}
-                {isExpanded && <span className="whitespace-nowrap flex-1">{item.name}</span>}
-                {isExpanded && item.name === 'Communication' && totalUnread > 0 && (
-                  <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                    {totalUnread}
-                  </span>
-                )}
-                {!isExpanded && item.name === 'Communication' && totalUnread > 0 && (
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full border border-white shrink-0 shadow-sm" />
-                )}
-              </Link>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        title={!isExpanded ? item.name : undefined}
+                        className={cn(
+                          "flex items-center rounded-lg text-sm font-medium transition-all group overflow-hidden relative",
+                          !isExpanded ? "justify-center p-2" : "gap-3 px-3 py-2",
+                          isActive
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        )}
+                      >
+                        {item.letter ? (
+                          <LetterIcon letter={item.letter} isActive={isActive} compact={!isExpanded} />
+                        ) : item.icon ? (
+                          <item.icon className={cn(
+                            "shrink-0 transition-colors",
+                            !isExpanded ? "w-5 h-5" : "w-4 h-4",
+                            isActive ? "text-blue-600" : "text-slate-500 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300"
+                          )} />
+                        ) : null}
+                        {isExpanded && <span className="whitespace-nowrap flex-1">{item.name}</span>}
+                        {isExpanded && item.name === 'Communication' && totalUnread > 0 && (
+                          <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                            {totalUnread}
+                          </span>
+                        )}
+                        {!isExpanded && item.name === 'Communication' && totalUnread > 0 && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full border border-white shrink-0 shadow-sm" />
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
             )
           })}
         </nav>
