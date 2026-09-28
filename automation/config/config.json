@@ -53,14 +53,14 @@
     "reports_url": "https://admin-allstate-mt3.ricochet.me/alsop/reports",
     "org": "Alsop",
     "username": "ericalsop@allstate.com",
-    "password": "Allstate1!",
+    "password": "",
     "profile_dir": "data/playwright_profile"
   },
   "ricochet_ch": {
     "login_url": "https://alsop.ricochet.me/login",
     "dashboard_url": "https://alsop.ricochet.me/dashboard/",
     "username": "ericalsop@allstate.com",
-    "password": "Allstate1!",
+    "password": "",
     "org": "Alsop",
     "profile_dir": "data/rico_ch_playwright_profile",
     "mfa_sender_filter": "ricochet",
