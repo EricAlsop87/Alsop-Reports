@@ -1038,7 +1038,7 @@ export default function MessageBubble({
 
       {/* Modern Hover Action Bar with 1-Click Quick Emojis */}
       {showActions && (
-        <div className="absolute right-2 sm:right-4 -top-3.5 flex items-center gap-0.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-700/80 rounded-full shadow-md px-1.5 py-0.5 z-20 animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)] overflow-x-auto">
+        <div className="absolute right-2 sm:right-4 -top-3.5 flex items-center gap-0.5 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-700/80 rounded-full shadow-md px-1.5 py-0.5 z-20 animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-32px)] overflow-visible">
           {/* 1-Click Popular Quick Reactions */}
           <div className="flex items-center gap-0.5 mr-1 pr-1 border-r border-slate-200 dark:border-slate-700">
             {['👍', '❤️', '😂', '🔥', '🎉', '🚀'].map((emoji) => (
@@ -1070,6 +1070,7 @@ export default function MessageBubble({
               <EmojiReactionPicker
                 align="right"
                 placement="bottom"
+                defaultExpanded={true}
                 onSelect={(emoji) => {
                   if (['🎉', '🚀', '🥳', '🏆', '💯', '✨'].includes(emoji)) {
                     triggerConfetti()
