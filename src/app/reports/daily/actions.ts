@@ -154,7 +154,7 @@ export async function getDailyData(dateStr: string) {
   }
 }
 
-export async function saveEAgentData(dateStr: string, updates: { agent_id: string, dismissed: number, pastDue: number, pivots: number }[]) {
+export async function saveEAgentData(dateStr: string, updates: { agent_id: string, pivots?: number, dismissed?: number, pastDue?: number }[]) {
   try {
     // For each agent, try to update the existing row first.
     // If no row exists (new agent with no metrics yet), insert one.
@@ -167,27 +167,27 @@ export async function saveEAgentData(dateStr: string, updates: { agent_id: strin
         .maybeSingle()
 
       if (existing) {
-        // Row exists — update only the eAgent fields
+        // Row exists — update only the provided fields
+        const updatePayload: any = { updated_at: new Date().toISOString() }
+        if (update.pivots !== undefined) updatePayload.pivots = update.pivots
+        if (update.dismissed !== undefined) updatePayload.dismissed_todos = update.dismissed
+        if (update.pastDue !== undefined) updatePayload.past_due_todos = update.pastDue
+
         await supabase
           .from("daily_metrics")
-          .update({
-            dismissed_todos: update.dismissed,
-            past_due_todos: update.pastDue,
-            pivots: update.pivots,
-            updated_at: new Date().toISOString()
-          })
+          .update(updatePayload)
           .eq("report_date", dateStr)
           .eq("agent_id", update.agent_id)
       } else {
-        // No row yet — insert a new one with eAgent data (all other fields default to 0)
+        // No row yet — insert a new one
         await supabase
           .from("daily_metrics")
           .insert({
             agent_id: update.agent_id,
             report_date: dateStr,
-            dismissed_todos: update.dismissed,
-            past_due_todos: update.pastDue,
-            pivots: update.pivots,
+            dismissed_todos: update.dismissed ?? 0,
+            past_due_todos: update.pastDue ?? 0,
+            pivots: update.pivots ?? 0,
             updated_at: new Date().toISOString()
           })
       }
