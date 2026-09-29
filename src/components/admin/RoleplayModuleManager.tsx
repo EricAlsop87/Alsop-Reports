@@ -123,7 +123,7 @@ export function RoleplayModuleManager() {
         <div className="flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-indigo-600 shrink-0" />
           <div>
-            <h3 className="text-sm font-bold text-slate-800">AI Roleplay Modules</h3>
+            <h3 className="text-sm font-bold text-slate-800">Agency Coach AI Roleplays</h3>
             <p className="text-[11px] text-slate-500">
               {modules.length} module{modules.length !== 1 ? "s" : ""} · Drag ▲▼ to set training order
             </p>

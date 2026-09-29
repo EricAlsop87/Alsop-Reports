@@ -345,7 +345,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
             <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-slate-800">AI Roleplay Training</h3>
+            <h3 className="text-sm font-bold text-slate-800">Agency Coach AI Roleplays</h3>
             {totalCount > 0 && (
               <p className="text-[11px] text-slate-500 leading-tight">
                 {completedCount === totalCount ? (
