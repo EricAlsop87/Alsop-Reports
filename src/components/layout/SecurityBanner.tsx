@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ShieldAlert, X, ArrowRight } from "lucide-react"
+import { ShieldAlert, ArrowRight } from "lucide-react"
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 
-const STORAGE_KEY = "dsr_security_banner_dismissed_v1"
-
 export function SecurityBanner() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [hasMfa, setHasMfa] = useState(true) // assume true until we know
+  const [status, setStatus] = useState<{ needsPasswordReset: boolean; needsMFA: boolean } | null>(null)
   const [mounted, setMounted] = useState(false)
   const supabase = createSupabaseBrowserClient()
 
@@ -17,36 +14,34 @@ export function SecurityBanner() {
     setMounted(true)
     
     async function checkSecurityStatus() {
-      const isDismissed = localStorage.getItem(STORAGE_KEY)
-      if (isDismissed) return // Don't show if dismissed
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Has the user updated their password since we enabled the strict policy?
+      const needsPasswordReset = !user.user_metadata?.security_upgraded
+
+      // Has the user enrolled in MFA?
       const { data, error } = await supabase.auth.mfa.listFactors()
       const userHasMfa = data?.totp && data.totp.length > 0
+      const needsMFA = !error && !userHasMfa
 
-      if (!error) {
-        setHasMfa(!!userHasMfa)
+      if (needsPasswordReset || needsMFA) {
+        setStatus({ needsPasswordReset, needsMFA })
       }
-
-      // Always show if not dismissed, so they know about the password requirement too
-      setIsVisible(true)
     }
 
     checkSecurityStatus()
   }, [])
 
-  const handleDismiss = () => {
-    setIsVisible(false)
-    try {
-      localStorage.setItem(STORAGE_KEY, "true")
-    } catch {
-      // ignore storage errors
-    }
-  }
+  // Don't show if they are compliant or we are still checking
+  if (!mounted || !status) return null
 
-  if (!mounted || !isVisible) return null
+  const actionText = 
+    status.needsPasswordReset && status.needsMFA 
+      ? "update your password and enroll in Two-Factor Authentication"
+      : status.needsPasswordReset 
+      ? "update your password"
+      : "enroll in Two-Factor Authentication"
 
   return (
     <div className="bg-rose-50 border-b border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30">
@@ -61,7 +56,7 @@ export function SecurityBanner() {
                 Action Required: Account Security Update
               </p>
               <p className="text-xs text-rose-700 mt-0.5 dark:text-rose-300">
-                Please visit your settings to update your password and {!hasMfa && "enroll in"} Two-Factor Authentication.
+                To protect data privacy, it is highly urged that you visit your settings to {actionText}.
               </p>
             </div>
           </div>
@@ -70,17 +65,9 @@ export function SecurityBanner() {
             <Link 
               href="/settings"
               className="text-xs font-semibold bg-rose-600 text-white px-3 py-1.5 rounded-md hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-sm"
-              onClick={() => setIsVisible(false)} // visually hide when clicking
             >
               Go to Settings <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-            <button
-              onClick={handleDismiss}
-              className="p-1.5 text-rose-500 hover:bg-rose-100 hover:text-rose-700 rounded-md transition-colors dark:hover:bg-rose-900/50"
-              title="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

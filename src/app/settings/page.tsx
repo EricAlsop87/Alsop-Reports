@@ -380,13 +380,9 @@ export default function PersonalSettingsPage() {
       // Update to new password. Supabase's 'Secure Password Change' requires the current password.
       const payload: any = {
         password: sanitized,
-        nonce: currentPassword // Wait, some versions actually use nonce for old password if it's the security requirement
+        current_password: currentPassword,
+        data: { security_upgraded: true } // Mark user as having completed the required password update
       }
-      // Actually, wait, no. We pass `password: new_password` AND `nonce`? No, wait! I found it! 
-      // Supabase recently added `nonce` parameter for Reauthentication. But `updateUser` with password change requires `nonce`? No!
-      // I will just use fetch and bypass `supabase.auth.updateUser`? NO.
-      payload.nonce = undefined
-      payload.current_password = currentPassword // THIS IS IT! We saw it in UserAttributes!
       
       const { error: updateError } = await supabase.auth.updateUser(payload)
 
