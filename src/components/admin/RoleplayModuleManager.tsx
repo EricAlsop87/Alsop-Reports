@@ -1,24 +1,34 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   getRoleplayModules,
   createRoleplayModule,
   updateModule,
   updateModuleOrder,
   deleteRoleplayModule,
+  getAllAgents,
+  upsertRoleplayScore,
   type RoleplayModule,
 } from "@/app/reports/agent/roleplay-actions"
 import {
   BookOpen, Plus, Pencil, Trash2, ChevronUp, ChevronDown,
-  GripVertical, Save, X, Loader2, CheckCircle2, AlertCircle,
+  Save, X, Loader2, CheckCircle2, AlertCircle, Upload, Eye
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = ["Auto", "Life", "Home", "Renters", "General"]
+const TIERS = ["Beginner", "Intermediate", "Advanced"] as const
+
+type OcrRow = {
+  rowIndex: number
+  scores: { tier: typeof TIERS[number]; score: number; completedAt: string }[]
+  rawLine: string
+}
 
 export function RoleplayModuleManager() {
   const [modules, setModules] = useState<RoleplayModule[]>([])
+  const [agents, setAgents] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
@@ -41,6 +51,13 @@ export function RoleplayModuleManager() {
   // Reorder
   const [reordering, setReordering] = useState(false)
 
+  // OCR Upload
+  const [ocrUploading, setOcrUploading] = useState(false)
+  const [ocrPreview, setOcrPreview] = useState<OcrRow[] | null>(null)
+  const [ocrImporting, setOcrImporting] = useState(false)
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const showToast = (msg: string, type: "ok" | "err") => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3500)
@@ -48,9 +65,14 @@ export function RoleplayModuleManager() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await getRoleplayModules()
-    if (res.success) setModules(res.data ?? [])
-    else setError(res.error ?? "Failed to load")
+    const [modRes, agentRes] = await Promise.all([
+      getRoleplayModules(),
+      getAllAgents(),
+    ])
+    if (modRes.success) setModules(modRes.data ?? [])
+    else setError(modRes.error ?? "Failed to load modules")
+    
+    if (agentRes.success) setAgents(agentRes.data ?? [])
     setLoading(false)
   }, [])
 
@@ -115,6 +137,55 @@ export function RoleplayModuleManager() {
     setReordering(false)
   }
 
+  // ── OCR ─────────────────────────────────────────────────────────────────────
+  const handleFileSelect = async (file: File) => {
+    setOcrPreview(null)
+    setOcrUploading(true)
+
+    const form = new FormData()
+    form.append("image", file)
+
+    try {
+      const res = await fetch("/api/roleplay/parse-screenshot", { method: "POST", body: form })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error ?? "OCR failed")
+      setOcrPreview(data.rows ?? [])
+    } catch (e: any) {
+      alert(`Screenshot parsing failed: ${e.message}`)
+    } finally {
+      setOcrUploading(false)
+    }
+  }
+
+  const handleOcrImport = async () => {
+    if (!ocrPreview || !selectedAgentId) {
+      alert("Please select an agent to import scores for.")
+      return
+    }
+    setOcrImporting(true)
+    let imported = 0
+
+    for (const row of ocrPreview) {
+      const mod = modules[row.rowIndex]
+      if (!mod) continue
+      for (const s of row.scores) {
+        const res = await upsertRoleplayScore({
+          moduleId: mod.id, 
+          agentId: selectedAgentId, 
+          tier: s.tier,
+          score: s.score, 
+          completedAt: s.completedAt
+        })
+        if (res.success && res.updated) imported++
+      }
+    }
+
+    setOcrImporting(false)
+    setOcrPreview(null)
+    setSelectedAgentId("")
+    alert(`✅ Imported ${imported} score${imported !== 1 ? "s" : ""} successfully for the selected agent.`)
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="rounded-xl border border-indigo-200 bg-white shadow-sm overflow-hidden">
@@ -129,13 +200,107 @@ export function RoleplayModuleManager() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => { setShowAdd(true); setAddName(""); setAddCategory("Auto") }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors cursor-pointer shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Module
-        </button>
+        
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f) }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={ocrUploading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-60 transition-colors cursor-pointer shrink-0"
+          >
+            {ocrUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+            {ocrUploading ? "Reading..." : "Upload Screenshot"}
+          </button>
+          <button
+            onClick={() => { setShowAdd(true); setAddName(""); setAddCategory("Auto") }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors cursor-pointer shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Module
+          </button>
+        </div>
       </div>
+
+      {/* OCR Preview Panel */}
+      {ocrPreview && (
+        <div className="border-b border-amber-200 bg-amber-50/50 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-amber-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Screenshot Read Successfully ({ocrPreview.reduce((a, r) => a + r.scores.length, 0)} scores found)
+              </p>
+              <p className="text-xs text-amber-700 mt-1">Select which agent these scores belong to, then import them.</p>
+            </div>
+            <button onClick={() => setOcrPreview(null)} className="p-1 rounded text-amber-600 hover:bg-amber-100 cursor-pointer">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 bg-white border border-amber-200 rounded-lg">
+            <span className="text-sm font-semibold text-slate-700 shrink-0">Assign to Agent:</span>
+            <select
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+              className="flex-1 max-w-sm px-3 py-2 text-sm border border-slate-300 rounded outline-none focus:border-indigo-500"
+            >
+              <option value="">-- Select an Agent --</option>
+              {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+            <button
+              onClick={handleOcrImport}
+              disabled={ocrImporting || !selectedAgentId}
+              className="flex items-center gap-1.5 px-4 py-2 rounded text-sm font-bold bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 cursor-pointer ml-auto"
+            >
+              {ocrImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Import Scores
+            </button>
+          </div>
+
+          <div className="overflow-x-auto border border-amber-200 rounded-lg bg-white">
+            <table className="text-xs w-full border-collapse">
+              <thead>
+                <tr className="border-b border-amber-100 bg-amber-50/50">
+                  <th className="text-left py-2 px-3 font-semibold text-amber-800">Detected Module Row</th>
+                  {TIERS.map(t => <th key={t} className="px-3 py-2 font-semibold text-amber-800 text-center">{t}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {ocrPreview.map(row => {
+                  const mod = modules[row.rowIndex]
+                  return (
+                    <tr key={row.rowIndex} className="border-b border-amber-50">
+                      <td className="py-2 px-3 text-slate-700 font-medium">
+                        {mod ? `${row.rowIndex + 1}. ${mod.name}` : <span className="text-rose-500">⚠ Unmapped (Row {row.rowIndex + 1})</span>}
+                      </td>
+                      {TIERS.map(tier => {
+                        const s = row.scores.find(x => x.tier === tier)
+                        return (
+                          <td key={tier} className="px-3 py-2 text-center border-l border-amber-50">
+                            {s ? (
+                              <div className="flex flex-col items-center">
+                                <span className={cn("font-bold", s.score >= 80 ? "text-emerald-600" : s.score >= 70 ? "text-amber-600" : "text-rose-600")}>
+                                  {s.score}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">{s.completedAt}</span>
+                              </div>
+                            ) : <span className="text-slate-300">—</span>}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (

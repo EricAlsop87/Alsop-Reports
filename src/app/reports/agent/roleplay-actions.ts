@@ -26,6 +26,23 @@ export interface RoleplayScore {
 
 // ── Read ─────────────────────────────────────────────────────────────────────
 
+export async function getAllAgents() {
+  noStore()
+  try {
+    const supabase = createSupabaseAdmin()
+    const { data, error } = await supabase
+      .from("agents")
+      .select("id, name, is_active")
+      .eq("is_active", true)
+      .order("name")
+    
+    if (error) return { success: false, error: error.message }
+    return { success: true, data }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
 /**
  * Fetch all active modules in display order.
  */
