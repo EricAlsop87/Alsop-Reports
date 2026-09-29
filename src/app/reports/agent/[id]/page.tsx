@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/Badge"
 import { useChat } from "@/lib/chat/chatContext"
 import { Button } from "@/components/ui/Button"
 import { REBEL_REWARDS_2026_SEED } from "@/lib/rebelRewardsSeed"
+import { RoleplayTracker } from "@/components/reports/RoleplayTracker"
 import { calculateAgentRebelStatus, matchesContestAgent, REBEL_TIERS } from "@/lib/rebelRewards"
 import {
   ArrowLeft, CalendarDays, Phone, MessageSquare,
@@ -1260,6 +1261,13 @@ export default function AgentDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── AI Roleplay Training Tracker ────────────────────────────────────── */}
+      <RoleplayTracker
+        agentId={agentId}
+        currentAgent={currentAgent}
+        isManagerOrAdmin={isAuthorizedManager}
+      />
 
       {/* ── Private Manager Notes (Visible only to Managers & Admins) ─────────── */}
       {isAuthorizedManager && (
