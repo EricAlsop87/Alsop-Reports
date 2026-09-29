@@ -17,6 +17,8 @@ import { getDailyCoverage, toggleSourceUnavailable } from "@/app/reports/daily/a
 import Link from "next/link"
 import { processUploadedFiles, type UploadFile } from "@/lib/pipeline"
 import { LeadsModal } from "@/components/reports/LeadsModal"
+import { RoleplayModuleManager } from "@/components/admin/RoleplayModuleManager"
+
 
 // ─── Source Configuration ─────────────────────────────────────────────────────
 
@@ -777,6 +779,14 @@ export default function DataSyncPage() {
             onGapClick={handleGapClick}
           />
         </div>
+      </div>
+
+      {/* ═══ AI Roleplay Module Management ═══ */}
+      <div>
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 ml-1">
+          Training Modules
+        </h2>
+        <RoleplayModuleManager />
       </div>
 
       {/* ═══ Sticky Upload Action Bar ═══ */}
