@@ -137,25 +137,33 @@ export default function LoginPage() {
     setSuccessMessage(null)
     setLoading(true)
 
-    if (newPassword.length < 12) {
+    // Sanitize — strip any control characters
+    const sanitized = newPassword.replace(/[\x00-\x1F\x7F]/g, '')
+    if (sanitized !== newPassword) {
+      setError("Password contains invalid characters.")
+      setLoading(false)
+      return
+    }
+
+    if (sanitized.length < 12) {
       setError("Password must be at least 12 characters long.")
       setLoading(false)
       return
     }
 
-    if (!/[A-Z]/.test(newPassword)) {
+    if (!/[A-Z]/.test(sanitized)) {
       setError("Password must contain at least one uppercase letter.")
       setLoading(false)
       return
     }
 
-    if (!/\d/.test(newPassword)) {
+    if (!/\d/.test(sanitized)) {
       setError("Password must contain at least one number.")
       setLoading(false)
       return
     }
 
-    if (newPassword !== confirmPassword) {
+    if (sanitized !== confirmPassword) {
       setError("Passwords do not match.")
       setLoading(false)
       return
@@ -163,7 +171,7 @@ export default function LoginPage() {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: sanitized
       })
 
       if (error) throw error
@@ -385,22 +393,69 @@ export default function LoginPage() {
                 Choose a strong new password for your reports account.
               </p>
 
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <form onSubmit={handleUpdatePassword} className="space-y-4" autoComplete="off">
                 {/* New Password */}
                 <div>
                   <label htmlFor="new-password" className="block text-sm font-medium text-slate-700 dark:text-slate-350 mb-1.5">
                     New Password
                   </label>
-                  <input
-                    id="new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoFocus
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200"
-                  />
+                  <div className="relative">
+                    <input
+                      id="new-password"
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter a strong password"
+                      required
+                      autoFocus
+                      autoComplete="new-password"
+                      spellCheck={false}
+                      maxLength={128}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all pr-10 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Strength bar + checklist */}
+                  {newPassword.length > 0 && (() => {
+                    const strength = (newPassword.length >= 12 ? 1 : 0) + (/[A-Z]/.test(newPassword) ? 1 : 0) + (/\d/.test(newPassword) ? 1 : 0) + (/[^A-Za-z0-9]/.test(newPassword) ? 1 : 0)
+                    const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-emerald-500']
+                    const labels = ['Weak', 'Fair', 'Good', 'Strong']
+                    return (
+                      <div className="mt-2.5 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1 flex-1">
+                            {[1, 2, 3, 4].map(level => (
+                              <div key={level} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${level <= strength ? colors[strength - 1] : 'bg-slate-200 dark:bg-slate-700'}`} />
+                            ))}
+                          </div>
+                          <span className={`text-xs font-medium ${strength <= 1 ? 'text-red-500' : strength === 2 ? 'text-orange-500' : strength === 3 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                            {labels[strength - 1] || ''}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                          {[
+                            { met: newPassword.length >= 12, label: '12+ characters' },
+                            { met: /[A-Z]/.test(newPassword), label: 'Uppercase letter' },
+                            { met: /\d/.test(newPassword), label: 'Number' },
+                            { met: newPassword === confirmPassword && confirmPassword.length > 0, label: 'Passwords match' },
+                          ].map(req => (
+                            <div key={req.label} className={`flex items-center gap-1.5 text-xs transition-colors ${req.met ? 'text-emerald-600' : 'text-slate-400'}`}>
+                              {req.met ? <CheckCircle className="w-3.5 h-3.5" /> : <div className="w-3 h-3 rounded-full border border-current opacity-50" />}
+                              {req.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {/* Confirm Password */}
@@ -410,13 +465,27 @@ export default function LoginPage() {
                   </label>
                   <input
                     id="confirm-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Re-enter your password"
                     required
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200"
+                    autoComplete="new-password"
+                    spellCheck={false}
+                    maxLength={128}
+                    className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200 ${
+                      confirmPassword.length > 0 && newPassword !== confirmPassword
+                        ? 'border-red-300 bg-red-50/50 dark:bg-red-950/20'
+                        : confirmPassword.length > 0 && newPassword === confirmPassword
+                        ? 'border-emerald-300 bg-emerald-50/30 dark:bg-emerald-950/20'
+                        : 'border-slate-200 dark:border-slate-800'
+                    }`}
                   />
+                  {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Passwords don&apos;t match
+                    </p>
+                  )}
                 </div>
 
                 {/* Messages */}
@@ -436,7 +505,15 @@ export default function LoginPage() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading || !newPassword || !confirmPassword}
+                  disabled={
+                    loading ||
+                    !newPassword ||
+                    !confirmPassword ||
+                    newPassword.length < 12 ||
+                    !/[A-Z]/.test(newPassword) ||
+                    !/\d/.test(newPassword) ||
+                    newPassword !== confirmPassword
+                  }
                   className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (

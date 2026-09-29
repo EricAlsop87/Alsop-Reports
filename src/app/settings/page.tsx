@@ -8,7 +8,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 import {
   User, Bell, Shield, KeyRound, Loader2, Check, AlertCircle, X,
   Mail, Building, Users, ShieldCheck, UserCog, Moon,
-  Monitor, MessageSquare, ShieldAlert, Send, Camera
+  Monitor, MessageSquare, ShieldAlert, Send, Camera, Eye, EyeOff
 } from "lucide-react"
 import { sendDesktopNotification, requestDesktopPermission } from "@/lib/chat/notifications"
 import { useToast } from "@/components/ui/Toast"
@@ -74,6 +74,7 @@ export default function PersonalSettingsPage() {
 
   // Feedback states
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const [passwordFeedback, setPasswordFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
   // Avatar Editor States
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -322,25 +323,32 @@ export default function PersonalSettingsPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setFeedback(null)
+    setPasswordFeedback(null)
 
-    if (newPassword.length < 12) {
-      setFeedback({ type: "error", message: "Password must be at least 12 characters long." })
+    // Sanitize — strip any control characters (security hardening)
+    const sanitized = newPassword.replace(/[\x00-\x1F\x7F]/g, '')
+    if (sanitized !== newPassword) {
+      setPasswordFeedback({ type: "error", message: "Password contains invalid characters." })
       return
     }
 
-    if (!/[A-Z]/.test(newPassword)) {
-      setFeedback({ type: "error", message: "Password must contain at least one uppercase letter." })
+    if (sanitized.length < 12) {
+      setPasswordFeedback({ type: "error", message: "Password must be at least 12 characters long." })
       return
     }
 
-    if (!/\d/.test(newPassword)) {
-      setFeedback({ type: "error", message: "Password must contain at least one number." })
+    if (!/[A-Z]/.test(sanitized)) {
+      setPasswordFeedback({ type: "error", message: "Password must contain at least one uppercase letter." })
       return
     }
 
-    if (newPassword !== confirmPassword) {
-      setFeedback({ type: "error", message: "Passwords do not match." })
+    if (!/\d/.test(sanitized)) {
+      setPasswordFeedback({ type: "error", message: "Password must contain at least one number." })
+      return
+    }
+
+    if (sanitized !== confirmPassword) {
+      setPasswordFeedback({ type: "error", message: "Passwords do not match." })
       return
     }
 
@@ -348,17 +356,17 @@ export default function PersonalSettingsPage() {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: sanitized
       })
 
       if (error) throw error
 
       setNewPassword("")
       setConfirmPassword("")
-      setFeedback({ type: "success", message: "Password updated successfully." })
+      setPasswordFeedback({ type: "success", message: "Password updated successfully! Use your new password next time you sign in." })
     } catch (err: any) {
       console.error(err)
-      setFeedback({ type: "error", message: err.message || "Failed to update password." })
+      setPasswordFeedback({ type: "error", message: err.message || "Failed to update password." })
     } finally {
       setUpdatingPassword(false)
     }
@@ -650,51 +658,125 @@ export default function PersonalSettingsPage() {
               <CardDescription>Update your portal password to keep your account secure.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md" autoComplete="off">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                  <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
+                      onChange={(e) => { setNewPassword(e.target.value); setPasswordFeedback(null) }}
+                      placeholder="Enter a strong password"
                       required
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                      autoComplete="new-password"
+                      spellCheck={false}
+                      maxLength={128}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 pr-10"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
-                    />
-                  </div>
+
+                  {/* Password Strength Bar + Requirements */}
+                  {newPassword.length > 0 && (() => {
+                    const strength = (newPassword.length >= 12 ? 1 : 0) + (/[A-Z]/.test(newPassword) ? 1 : 0) + (/\d/.test(newPassword) ? 1 : 0) + (/[^A-Za-z0-9]/.test(newPassword) ? 1 : 0)
+                    const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-emerald-500']
+                    const labels = ['Weak', 'Fair', 'Good', 'Strong']
+                    return (
+                      <div className="mt-2.5 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1 flex-1">
+                            {[1, 2, 3, 4].map(level => (
+                              <div
+                                key={level}
+                                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${level <= strength ? colors[strength - 1] : 'bg-slate-200'}`}
+                              />
+                            ))}
+                          </div>
+                          <span className={`text-xs font-medium ${strength <= 1 ? 'text-red-500' : strength === 2 ? 'text-orange-500' : strength === 3 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                            {labels[strength - 1] || ''}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          {[
+                            { met: newPassword.length >= 12, label: '12+ characters' },
+                            { met: /[A-Z]/.test(newPassword), label: 'Uppercase letter' },
+                            { met: /\d/.test(newPassword), label: 'Number' },
+                            { met: newPassword === confirmPassword && confirmPassword.length > 0, label: 'Passwords match' },
+                          ].map(req => (
+                            <div key={req.label} className={`flex items-center gap-1.5 text-xs transition-colors ${req.met ? 'text-emerald-600' : 'text-slate-400'}`}>
+                              {req.met ? <Check className="w-3.5 h-3.5" /> : <div className="w-3 h-3 rounded-full border border-current opacity-50" />}
+                              {req.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={showPassword}
-                      onChange={(e) => setShowPassword(e.target.checked)}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                    />
-                    Show passwords
-                  </label>
-                  
-                  <Button type="submit" disabled={updatingPassword || !newPassword || !confirmPassword}>
-                    {updatingPassword ? (
-                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Updating...</>
-                    ) : (
-                      "Change Password"
-                    )}
-                  </Button>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordFeedback(null) }}
+                    placeholder="Re-enter your password"
+                    required
+                    autoComplete="new-password"
+                    spellCheck={false}
+                    maxLength={128}
+                    className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-colors ${
+                      confirmPassword.length > 0 && newPassword !== confirmPassword
+                        ? 'border-red-300 bg-red-50/50'
+                        : confirmPassword.length > 0 && newPassword === confirmPassword
+                        ? 'border-emerald-300 bg-emerald-50/30'
+                        : 'border-slate-200'
+                    }`}
+                  />
+                  {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Passwords don&apos;t match
+                    </p>
+                  )}
                 </div>
+
+                {/* Inline Feedback */}
+                {passwordFeedback && (
+                  <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2.5 border ${
+                    passwordFeedback.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-red-50 text-red-700 border-red-200'
+                  }`}>
+                    {passwordFeedback.type === 'success' ? <Check className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    {passwordFeedback.message}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={
+                    updatingPassword ||
+                    !newPassword ||
+                    !confirmPassword ||
+                    newPassword.length < 12 ||
+                    !/[A-Z]/.test(newPassword) ||
+                    !/\d/.test(newPassword) ||
+                    newPassword !== confirmPassword
+                  }
+                >
+                  {updatingPassword ? (
+                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Updating...</>
+                  ) : (
+                    "Change Password"
+                  )}
+                </Button>
               </form>
             </CardContent>
           </Card>
