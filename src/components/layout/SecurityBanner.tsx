@@ -18,12 +18,14 @@ export function SecurityBanner() {
       if (!user) return
 
       // Has the user updated their password since we enabled the strict policy?
-      const needsPasswordReset = !user.user_metadata?.security_upgraded
+      // Temporarily hardcoded to true for design preview
+      const needsPasswordReset = true // !user.user_metadata?.security_upgraded
 
       // Has the user enrolled in MFA?
       const { data, error } = await supabase.auth.mfa.listFactors()
       const userHasMfa = data?.totp && data.totp.length > 0
-      const needsMFA = !error && !userHasMfa
+      // Temporarily hardcoded to true for design preview
+      const needsMFA = true // !error && !userHasMfa
 
       if (needsPasswordReset || needsMFA) {
         setStatus({ needsPasswordReset, needsMFA })
