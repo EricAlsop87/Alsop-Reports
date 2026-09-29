@@ -366,11 +366,18 @@ export default function PersonalSettingsPage() {
     setUpdatingPassword(true)
 
     try {
-      // Step 1: Verify current password by re-authenticating
+      // Step 1: Verify current password using a separate non-persistent client
+      // (so we don't overwrite the user's AAL2 session)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user?.email) throw new Error("Could not verify your identity. Please refresh and try again.")
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { createClient } = await import("@supabase/supabase-js")
+      const verifyClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { persistSession: false } }
+      )
+      const { error: signInError } = await verifyClient.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
       })
