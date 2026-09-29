@@ -531,22 +531,22 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
                       )}
                     >
                       {/* Module name */}
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-mono text-slate-400 shrink-0 w-5 text-right">
-                              {modIndex + 1}.
-                            </span>
+                      <td className="px-4 py-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[11px] font-mono text-slate-400 shrink-0 w-4 text-right">
+                            {modIndex + 1}.
+                          </span>
+                          <div className="min-w-0 flex items-center gap-2">
                             <span className={cn(
-                              "text-sm font-semibold leading-tight",
+                              "text-sm font-semibold truncate",
                               !modUnlocked ? "text-slate-400" : "text-slate-800"
                             )}>
                               {mod.name}
                             </span>
+                            <span className="shrink-0 text-[9px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                              {mod.category}
+                            </span>
                           </div>
-                          <span className="ml-7 text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full w-fit">
-                            {mod.category}
-                          </span>
                         </div>
                       </td>
 
@@ -559,7 +559,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
                         const isSavingThisCell = savingCell === cellKey
 
                         return (
-                          <td key={tier} className="px-4 py-3 text-center align-middle">
+                          <td key={tier} className="px-4 py-1.5 text-center align-middle">
                             {isEditingCell ? (
                               <ScoreForm
                                 onSave={(score, date) => handleSaveScore(mod.id, tier, score, date)}
@@ -579,7 +579,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
                       })}
 
                       {/* Status badge */}
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-1.5 text-center">
                         {complete ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3" /> Done
