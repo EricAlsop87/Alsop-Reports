@@ -148,35 +148,36 @@ function ScoreForm({ onSave, onCancel, saving }: ScoreFormProps) {
 
   const handleSave = async () => {
     const n = parseInt(score, 10)
-    if (isNaN(n) || n < 0 || n > 100) { setErr("Score must be 0–100"); return }
-    if (!date) { setErr("Date is required"); return }
+    if (isNaN(n) || n < 0 || n > 100) { setErr("Invalid score"); return }
+    if (!date) { setErr("Date required"); return }
     setErr("")
     await onSave(n, date)
   }
 
   return (
-    <div className="flex flex-col gap-1.5 min-w-[155px]">
-      <div className="flex items-center gap-1">
+    <div className="flex flex-col items-center justify-center gap-1.5 w-full">
+      <div className="flex items-center gap-0 border border-slate-300 rounded overflow-hidden shadow-sm bg-white">
         <input ref={ref} type="number" min={0} max={100} value={score}
-          onChange={e => setScore(e.target.value)} placeholder="Score"
-          className="w-14 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-slate-500"
+          onChange={e => setScore(e.target.value)} placeholder="%"
+          className="w-12 py-1 text-center text-xs outline-none bg-slate-50 font-semibold text-slate-800"
           onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onCancel() }}
         />
+        <div className="w-px h-4 bg-slate-200" />
         <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          className="w-32 px-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-slate-500"
+          className="w-28 px-1.5 py-1 text-xs outline-none text-slate-600"
         />
       </div>
-      {err && <p className="text-[10px] text-rose-500">{err}</p>}
-      <div className="flex gap-1">
+      {err && <p className="text-[10px] text-rose-500 leading-tight m-0">{err}</p>}
+      <div className="flex gap-1 w-full max-w-[160px]">
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center justify-center w-8 h-6 rounded bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-60 cursor-pointer"
+          className="flex-1 flex items-center justify-center py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 cursor-pointer text-[10px] font-bold tracking-wide"
         >
-          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "SAVE"}
         </button>
         <button onClick={onCancel}
-          className="flex items-center justify-center w-8 h-6 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer"
+          className="flex-1 flex items-center justify-center py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer text-[10px] font-bold tracking-wide"
         >
-          <X className="w-3 h-3" />
+          CANCEL
         </button>
       </div>
     </div>
@@ -234,19 +235,24 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
     ? modules
     : modules.filter((_, i) => i === activeModuleIndex || i === activeModuleIndex + 1)
 
-  const handleSaveScore = async (moduleId: string, tier: Tier, score: number, date: string) => {
+  const handleSaveScore = async (moduleId: string, tier: Tier, score: number, date: string, forceOverride = false) => {
     const key = `${moduleId}::${tier}`
     setSavingCell(key)
     const res = await upsertRoleplayScore({
-      moduleId, agentId, tier, score, completedAt: date, enteredBy: currentAgent?.id,
+      moduleId, agentId, tier, score, completedAt: date, enteredBy: currentAgent?.id, override: forceOverride
     })
     setSavingCell(null)
-    setEditingCell(null)
 
     if (res.success) {
-      if (!res.updated) {
-        alert("A higher score already exists for this tier — your entry was not saved.")
+      if (!res.updated && !forceOverride) {
+        if (confirm(`A higher score (${res.existingScore}) already exists for this tier.\n\nDo you want to OVERRIDE it with your new score (${score})?`)) {
+          await handleSaveScore(moduleId, tier, score, date, true)
+          return
+        } else {
+          setEditingCell(null)
+        }
       } else {
+        setEditingCell(null)
         setScores(prev => {
           const filtered = prev.filter(s => !(s.module_id === moduleId && s.agent_id === agentId && s.tier === tier))
           return [...filtered, {
@@ -257,6 +263,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
         })
       }
     } else {
+      setEditingCell(null)
       alert(`Failed to save score: ${res.error}`)
     }
   }

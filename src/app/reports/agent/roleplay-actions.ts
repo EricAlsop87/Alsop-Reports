@@ -106,7 +106,8 @@ export async function upsertRoleplayScore(input: {
   score: number
   completedAt: string // YYYY-MM-DD
   enteredBy?: string
-}): Promise<{ success: boolean; updated: boolean; error?: string }> {
+  override?: boolean
+}): Promise<{ success: boolean; updated: boolean; existingScore?: number; error?: string }> {
   try {
     const supabase = createSupabaseAdmin()
 
@@ -119,9 +120,9 @@ export async function upsertRoleplayScore(input: {
       .eq("tier", input.tier)
       .maybeSingle()
 
-    // Best-score rule: skip if existing is already higher or equal
-    if (existing && existing.score >= input.score) {
-      return { success: true, updated: false }
+    // Best-score rule: skip if existing is higher or equal, UNLESS override is true
+    if (existing && existing.score >= input.score && !input.override) {
+      return { success: true, updated: false, existingScore: existing.score }
     }
 
     const { error } = await supabase
