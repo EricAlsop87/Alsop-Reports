@@ -707,7 +707,7 @@ export default function PersonalSettingsPage() {
                 Two-Factor Authentication
               </CardTitle>
               <CardDescription>
-                Add an extra layer of security with an authenticator app like Microsoft Authenticator or Google Authenticator.
+                Add an extra layer of security with an authenticator app. We recommend <strong>Microsoft Authenticator</strong> since you already use it for Allstate. Google Authenticator also works.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -747,7 +747,7 @@ export default function PersonalSettingsPage() {
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
                     <p className="text-sm font-semibold text-blue-800">Step 1: Scan this QR code</p>
                     <p className="text-xs text-blue-700">
-                      Open your authenticator app and scan the QR code below. If you can&apos;t scan it, you can enter the secret key manually.
+                      Open <strong>Microsoft Authenticator</strong> (or Google Authenticator) and scan the QR code below. If you can&apos;t scan it, you can enter the secret key manually.
                     </p>
                     <div className="flex justify-center py-2">
                       <img src={mfaQrCode} alt="MFA QR Code" className="w-48 h-48 rounded-lg border border-slate-200 bg-white p-2" />

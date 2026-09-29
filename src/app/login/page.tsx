@@ -462,7 +462,7 @@ export default function LoginPage() {
                   Two-Factor Authentication
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Open your authenticator app and enter the 6-digit code.
+                  Open Microsoft Authenticator and enter the 6-digit code.
                 </p>
               </div>
 
