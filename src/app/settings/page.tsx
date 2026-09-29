@@ -61,6 +61,7 @@ export default function PersonalSettingsPage() {
   })
 
   // Password fields
+  const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -325,6 +326,11 @@ export default function PersonalSettingsPage() {
     e.preventDefault()
     setPasswordFeedback(null)
 
+    if (!currentPassword) {
+      setPasswordFeedback({ type: "error", message: "Please enter your current password." })
+      return
+    }
+
     // Sanitize — strip any control characters (security hardening)
     const sanitized = newPassword.replace(/[\x00-\x1F\x7F]/g, '')
     if (sanitized !== newPassword) {
@@ -352,15 +358,37 @@ export default function PersonalSettingsPage() {
       return
     }
 
+    if (sanitized === currentPassword) {
+      setPasswordFeedback({ type: "error", message: "New password must be different from your current password." })
+      return
+    }
+
     setUpdatingPassword(true)
 
     try {
+      // Step 1: Verify current password by re-authenticating
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error("Could not verify your identity. Please refresh and try again.")
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        setPasswordFeedback({ type: "error", message: "Current password is incorrect." })
+        setUpdatingPassword(false)
+        return
+      }
+
+      // Step 2: Update to new password
       const { error } = await supabase.auth.updateUser({
         password: sanitized
       })
 
       if (error) throw error
 
+      setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
       setPasswordFeedback({ type: "success", message: "Password updated successfully! Use your new password next time you sign in." })
@@ -659,6 +687,37 @@ export default function PersonalSettingsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4 max-w-md" autoComplete="off">
+                {/* Current Password */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => { setCurrentPassword(e.target.value); setPasswordFeedback(null) }}
+                      placeholder="Enter your current password"
+                      required
+                      autoComplete="current-password"
+                      spellCheck={false}
+                      maxLength={128}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <p className="text-xs text-slate-500 mb-3">Enter a new password that meets the requirements below.</p>
+                </div>
+
+                {/* New Password */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
                   <div className="relative">
@@ -763,6 +822,7 @@ export default function PersonalSettingsPage() {
                   type="submit"
                   disabled={
                     updatingPassword ||
+                    !currentPassword ||
                     !newPassword ||
                     !confirmPassword ||
                     newPassword.length < 12 ||

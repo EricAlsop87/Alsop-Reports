@@ -267,7 +267,10 @@ export default function UserManagementPage() {
                     type={showPassword ? "text" : "password"}
                     value={tempPassword}
                     onChange={(e) => setTempPassword(e.target.value)}
-                    placeholder="Min 6 characters"
+                    placeholder="Min 12 chars, 1 uppercase, 1 number"
+                    autoComplete="new-password"
+                    spellCheck={false}
+                    maxLength={128}
                     className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 font-mono"
                   />
                   <button
@@ -278,6 +281,21 @@ export default function UserManagementPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {/* Inline requirements */}
+                {tempPassword.length > 0 && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                    {[
+                      { met: tempPassword.length >= 12, label: '12+ chars' },
+                      { met: /[A-Z]/.test(tempPassword), label: 'Uppercase' },
+                      { met: /\d/.test(tempPassword), label: 'Number' },
+                    ].map(req => (
+                      <span key={req.label} className={`text-xs flex items-center gap-1 ${req.met ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {req.met ? <Check className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-current opacity-50 inline-block" />}
+                        {req.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -285,7 +303,16 @@ export default function UserManagementPage() {
           <div className="mt-6 flex justify-end">
             <Button
               onClick={handleInvite}
-              disabled={inviting || !email || !tempPassword || (mode === "existing" && !selectedAgentId) || (mode === "new" && !newName)}
+              disabled={
+                inviting ||
+                !email ||
+                !tempPassword ||
+                tempPassword.length < 12 ||
+                !/[A-Z]/.test(tempPassword) ||
+                !/\d/.test(tempPassword) ||
+                (mode === "existing" && !selectedAgentId) ||
+                (mode === "new" && !newName)
+              }
               className="bg-blue-600 hover:bg-blue-500 text-white w-full sm:w-auto"
             >
               {inviting ? (
@@ -356,16 +383,25 @@ export default function UserManagementPage() {
                     {resetAgentId === agent.id ? (
                       <div className="flex items-center gap-1">
                         <input
-                          type="text"
+                          type="password"
                           value={resetPassword}
                           onChange={(e) => setResetPassword(e.target.value)}
-                          placeholder="New password"
-                          className="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-md w-32 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                          placeholder="12+ chars, A-Z, 0-9"
+                          autoComplete="new-password"
+                          spellCheck={false}
+                          maxLength={128}
+                          className="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-md w-36 focus:outline-none focus:ring-1 focus:ring-blue-300 font-mono"
                           autoFocus
                         />
                         <button
                           onClick={handleResetPassword}
-                          disabled={resetting || !resetPassword}
+                          disabled={
+                            resetting ||
+                            !resetPassword ||
+                            resetPassword.length < 12 ||
+                            !/[A-Z]/.test(resetPassword) ||
+                            !/\d/.test(resetPassword)
+                          }
                           className="p-1 rounded text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
                           title="Confirm reset"
                         >
