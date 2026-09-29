@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createSupabaseServerClient, createSupabaseAdmin } from "@/lib/supabaseServer"
 import { recalculateSummaries } from "@/lib/pipeline/recalculate-summaries"
 
 /**
@@ -9,27 +9,51 @@ import { recalculateSummaries } from "@/lib/pipeline/recalculate-summaries"
  * Accepts optional `months` array to limit scope.
  *
  * Body: { year: number, months?: number[] }
+ *
+ * 🔒 Requires: Authenticated admin user
  */
 export async function POST(request: NextRequest) {
+  // ── Auth check: require logged-in admin ──
+  try {
+    const supabaseSession = await createSupabaseServerClient()
+    const { data: { user } } = await supabaseSession.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized — please log in" },
+        { status: 401 }
+      )
+    }
+
+    // Verify the user is an admin
+    const supabaseAdmin = createSupabaseAdmin()
+    const { data: agent } = await supabaseAdmin
+      .from("agents")
+      .select("role, team")
+      .eq("auth_user_id", user.id)
+      .single()
+
+    const isAdmin = agent?.role === "admin" || agent?.team === "Managers"
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden — admin access required" },
+        { status: 403 }
+      )
+    }
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Authentication failed" },
+      { status: 401 }
+    )
+  }
+
+  // ── Perform recalculation ──
   try {
     const body = await request.json()
     const year = body.year || new Date().getFullYear()
     const months = body.months as number[] | undefined
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      ""
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { success: false, error: "Supabase credentials not configured" },
-        { status: 500 },
-      )
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = createSupabaseAdmin()
 
     const logs = await recalculateSummaries(supabase, year, {
       months,

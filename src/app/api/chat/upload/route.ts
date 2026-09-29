@@ -1,7 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdmin } from '@/lib/supabaseServer'
+import { createSupabaseServerClient, createSupabaseAdmin } from '@/lib/supabaseServer'
 
+// ── Security limits ──
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20 MB
+
+const ALLOWED_MIME_TYPES = new Set([
+  // Images
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml',
+  // Documents
+  'application/pdf', 'text/plain', 'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+])
+
+/**
+ * POST /api/chat/upload
+ *
+ * Uploads a file to Supabase Storage (chat-media bucket).
+ *
+ * 🔒 Requires: Authenticated user
+ * 🛡️ Limits: 20MB max, allowlisted MIME types only
+ */
 export async function POST(req: NextRequest) {
+  // ── Auth check: require logged-in user ──
+  try {
+    const supabaseSession = await createSupabaseServerClient()
+    const { data: { user } } = await supabaseSession.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized — please log in' }, { status: 401 })
+    }
+  } catch {
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
+  }
+
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -10,10 +44,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    // ── File size validation ──
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 20MB.' },
+        { status: 413 }
+      )
+    }
+
+    // ── MIME type validation ──
+    const mime = file.type || 'application/octet-stream'
+    if (!ALLOWED_MIME_TYPES.has(mime)) {
+      return NextResponse.json(
+        { error: `File type "${mime}" is not allowed.` },
+        { status: 415 }
+      )
+    }
+
     const supabase = createSupabaseAdmin()
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    const mime = file.type || 'application/octet-stream'
     const originalName = file.name || 'attachment'
     let ext = 'bin'
 

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const GIPHY_API_KEY = process.env.GIPHY_API_KEY || 'sXpGFDGZs0Dv1mmNFvYaGUvYwKX0PWIh'
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY
 
 export async function GET(req: NextRequest) {
+  if (!GIPHY_API_KEY) {
+    return NextResponse.json({ gifs: [], error: 'GIF service not configured' }, { status: 503 })
+  }
+
   try {
     const { searchParams } = new URL(req.url)
     const query = searchParams.get('q')?.trim()
