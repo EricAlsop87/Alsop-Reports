@@ -371,6 +371,18 @@ export default function PersonalSettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user?.email) throw new Error("Could not verify your identity. Please refresh and try again.")
 
+      // Check if session is AAL1 but user has MFA enabled (needs AAL2 to change password)
+      const { data: { authenticatorAssuranceLevel, currentLevel, nextLevel } } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      // Note: getAuthenticatorAssuranceLevel returns { currentLevel, nextLevel, currentAuthenticationMethods }
+      if (currentLevel === 'aal1' && nextLevel === 'aal2') {
+        setPasswordFeedback({ 
+          type: "error", 
+          message: "Security requirement: Because you have MFA enabled, you must sign out and sign back in (with your MFA code) to change your password." 
+        })
+        setUpdatingPassword(false)
+        return
+      }
+
       const { createClient } = await import("@supabase/supabase-js")
       const verifyClient = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
