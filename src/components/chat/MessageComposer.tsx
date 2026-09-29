@@ -634,7 +634,7 @@ const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerP
 
                 {/* Emoji Picker Dropdown */}
                 {showEmojiPicker && (
-                  <div className="absolute z-50 bottom-full right-0 sm:left-0 mb-2">
+                  <div className="absolute z-50 bottom-full right-0 mb-2">
                     <EmojiReactionPicker
                       align="right"
                       placement="top"
@@ -668,7 +668,7 @@ const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerP
 
                 {/* GIF Picker Dropdown */}
                 {showGifPicker && (
-                  <div className="absolute z-50 bottom-full right-0 sm:left-0 mb-2">
+                  <div className="absolute z-50 bottom-full right-0 mb-2">
                     <GifPicker
                       onSelect={handleGifSelect}
                       onClose={() => setShowGifPicker(false)}
