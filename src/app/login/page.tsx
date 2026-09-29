@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
-import { Loader2, AlertCircle, Eye, EyeOff, CheckCircle, BarChart3, ShieldCheck } from "lucide-react"
+import { Loader2, AlertCircle, Eye, EyeOff, CheckCircle, BarChart3, ShieldCheck, Shield } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
@@ -16,10 +16,14 @@ export default function LoginPage() {
   const supabase = createSupabaseBrowserClient()
 
   // Password reset states
-  const [view, setView] = useState<"login" | "forgot" | "recovery">("login")
+  const [view, setView] = useState<"login" | "forgot" | "recovery" | "mfa">("login")
   const [resetEmail, setResetEmail] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+
+  // MFA states
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null)
+  const [mfaCode, setMfaCode] = useState("")
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -53,11 +57,53 @@ export default function LoginPage() {
         return
       }
 
-      // Successful login — redirect to dashboard
+      // Check if MFA is required
+      const { data: assuranceLevel } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (assuranceLevel?.nextLevel === 'aal2' && assuranceLevel?.currentLevel === 'aal1') {
+        // User has MFA enrolled — need to verify
+        const { data: factors } = await supabase.auth.mfa.listFactors()
+        const totpFactor = factors?.totp?.find((f: any) => f.status === 'verified')
+        if (totpFactor) {
+          setMfaFactorId(totpFactor.id)
+          setView("mfa")
+          return
+        }
+      }
+
+      // No MFA required — redirect to dashboard
       router.push("/")
       router.refresh()
     } catch {
       setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!mfaFactorId || mfaCode.length !== 6) return
+    setError(null)
+    setLoading(true)
+
+    try {
+      const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactorId,
+      })
+      if (challengeErr) throw challengeErr
+
+      const { error: verifyErr } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challenge.id,
+        code: mfaCode,
+      })
+      if (verifyErr) throw verifyErr
+
+      router.push("/")
+      router.refresh()
+    } catch (err: any) {
+      setMfaCode("")
+      setError(err.message?.includes("Invalid") ? "Invalid code. Please try again." : err.message || "Verification failed.")
     } finally {
       setLoading(false)
     }
@@ -91,8 +137,20 @@ export default function LoginPage() {
     setSuccessMessage(null)
     setLoading(true)
 
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.")
+    if (newPassword.length < 12) {
+      setError("Password must be at least 12 characters long.")
+      setLoading(false)
+      return
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      setError("Password must contain at least one uppercase letter.")
+      setLoading(false)
+      return
+    }
+
+    if (!/\d/.test(newPassword)) {
+      setError("Password must contain at least one number.")
       setLoading(false)
       return
     }
@@ -389,6 +447,74 @@ export default function LoginPage() {
                   ) : (
                     "Update Password"
                   )}
+                </button>
+              </form>
+            </>
+          )}
+
+          {view === "mfa" && (
+            <>
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 mx-auto rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+                  <Shield className="w-6 h-6 text-blue-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-1">
+                  Two-Factor Authentication
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Open your authenticator app and enter the 6-digit code.
+                </p>
+              </div>
+
+              <form onSubmit={handleMfaVerify} className="space-y-4">
+                <div className="flex justify-center">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    autoFocus
+                    className="w-44 px-4 py-3 text-center text-2xl font-mono font-bold tracking-[0.4em] bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || mfaCode.length !== 6}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify & Sign In"
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("login")
+                    setMfaCode("")
+                    setMfaFactorId(null)
+                    setError(null)
+                    supabase.auth.signOut()
+                  }}
+                  className="w-full text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1 cursor-pointer"
+                >
+                  ← Back to login
                 </button>
               </form>
             </>

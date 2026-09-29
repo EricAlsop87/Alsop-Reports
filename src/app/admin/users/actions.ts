@@ -75,8 +75,8 @@ export async function inviteExistingAgent(
   if (!agentId || !email || !tempPassword) {
     return { success: false, message: "Agent, email, and temporary password are required." }
   }
-  if (tempPassword.length < 6) {
-    return { success: false, message: "Password must be at least 6 characters." }
+  if (tempPassword.length < 12 || !/[A-Z]/.test(tempPassword) || !/\d/.test(tempPassword)) {
+    return { success: false, message: "Password must be at least 12 characters with at least one uppercase letter and one number." }
   }
 
   // Verify agent exists and doesn't already have auth
@@ -146,8 +146,8 @@ export async function inviteNewUser(
   if (!name || !email || !tempPassword) {
     return { success: false, message: "Name, email, and temporary password are required." }
   }
-  if (tempPassword.length < 6) {
-    return { success: false, message: "Password must be at least 6 characters." }
+  if (tempPassword.length < 12 || !/[A-Z]/.test(tempPassword) || !/\d/.test(tempPassword)) {
+    return { success: false, message: "Password must be at least 12 characters with at least one uppercase letter and one number." }
   }
 
   // Create Supabase Auth user
