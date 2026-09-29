@@ -22,16 +22,25 @@ import {
 } from "lucide-react"
 
 // Month options (past 12 months)
-const monthOptions = Array.from({ length: 12 }).map((_, i) => {
-  const d = new Date()
-  d.setMonth(d.getMonth() - i)
-  return {
-    label: d.toLocaleString('default', { month: 'long', year: 'numeric' }),
-    value: `${d.getFullYear()}-${d.getMonth() + 1}`,
-    year: d.getFullYear(),
-    month: d.getMonth() + 1
+const monthOptions = (() => {
+  const now = new Date()
+  const seen = new Set<string>()
+  const opts: { label: string; value: string; year: number; month: number }[] = []
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      opts.push({
+        label: d.toLocaleString('default', { month: 'long', year: 'numeric' }),
+        value: key,
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+      })
+    }
   }
-})
+  return opts
+})()
 
 // YTD options (current year + previous year)
 const ytdOptions = (() => {
