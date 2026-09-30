@@ -51,6 +51,8 @@ export default function LoginPage() {
           setError("Incorrect email or password. Please try again.")
         } else if (error.message.includes("Email not confirmed")) {
           setError("Your account hasn't been activated yet. Contact your admin.")
+        } else if (error.message.toLowerCase().includes("rate limit") || error.message.includes("request this after")) {
+          setError("Too many login attempts. Please wait a few minutes and try again.")
         } else {
           setError(error.message)
         }
@@ -125,7 +127,12 @@ export default function LoginPage() {
       setSuccessMessage("Password reset link sent! Please check your email.")
       setResetEmail("")
     } catch (err: any) {
-      setError(err.message || "Failed to send reset link. Please try again.")
+      const msg = err.message || ""
+      if (msg.toLowerCase().includes("rate limit") || msg.includes("request this after") || msg.includes("security purposes")) {
+        setError("You've already requested a reset link recently. Please check your email (including spam) or wait a few minutes before trying again.")
+      } else {
+        setError(msg || "Failed to send reset link. Please try again.")
+      }
     } finally {
       setLoading(false)
     }
@@ -182,7 +189,15 @@ export default function LoginPage() {
         router.refresh()
       }, 2000)
     } catch (err: any) {
-      setError(err.message || "Failed to update password. Please try again.")
+      const msg = err.message || ""
+      if (msg.toLowerCase().includes("session") || msg.toLowerCase().includes("not authenticated")) {
+        setError("Your password reset link has expired. Please request a new one.")
+        setTimeout(() => setView("forgot"), 3000)
+      } else if (msg.toLowerCase().includes("rate limit") || msg.includes("request this after")) {
+        setError("Too many attempts. Please wait a few minutes and try again.")
+      } else {
+        setError(msg || "Failed to update password. Please try again.")
+      }
     } finally {
       setLoading(false)
     }

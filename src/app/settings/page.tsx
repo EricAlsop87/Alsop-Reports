@@ -393,7 +393,12 @@ export default function PersonalSettingsPage() {
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
-      setPasswordFeedback({ type: "success", message: "Password updated successfully! Use your new password next time you sign in." })
+      setPasswordFeedback({ type: "success", message: "Password updated successfully! Signing you out so you can log in with your new password..." })
+      // Auto-sign out after 3 seconds — Supabase invalidates the old session after a password change
+      setTimeout(async () => {
+        await supabase.auth.signOut()
+        window.location.href = "/login"
+      }, 3000)
     } catch (err: any) {
       console.error(err)
       const msg = err.message || "Failed to update password."
@@ -403,6 +408,10 @@ export default function PersonalSettingsPage() {
           type: "error", 
           message: "SESSION_EXPIRED" 
         })
+      } else if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("incorrect")) {
+        setPasswordFeedback({ type: "error", message: "Your current password is incorrect. Please try again." })
+      } else if (msg.toLowerCase().includes("rate limit") || msg.includes("request this after")) {
+        setPasswordFeedback({ type: "error", message: "Too many attempts. Please wait a few minutes and try again." })
       } else {
         setPasswordFeedback({ type: "error", message: msg })
       }
@@ -465,7 +474,7 @@ export default function PersonalSettingsPage() {
       })
       if (verifyErr) throw verifyErr
 
-      setFeedback({ type: "success", message: "Two-factor authentication is now enabled! 🔒" })
+      setFeedback({ type: "success", message: "Two-factor authentication is now enabled! 🔒 Sign out and sign back in to fully activate MFA protection." })
       setMfaQrCode(null)
       setMfaSecret(null)
       setMfaFactorId(null)

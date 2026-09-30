@@ -14,23 +14,27 @@ export function SecurityBanner() {
     setMounted(true)
     
     async function checkSecurityStatus() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
 
-      // SSO users (Google/Azure) manage their own security and passwords via their provider
-      const isEmailUser = user.app_metadata?.providers?.includes("email")
-      if (!isEmailUser) return
+        // SSO users (Google/Azure) manage their own security and passwords via their provider
+        const isEmailUser = user.app_metadata?.providers?.includes("email")
+        if (!isEmailUser) return
 
-      // Has the user updated their password since we enabled the strict policy?
-      const needsPasswordReset = !user.user_metadata?.security_upgraded
+        // Has the user updated their password since we enabled the strict policy?
+        const needsPasswordReset = !user.user_metadata?.security_upgraded
 
-      // Has the user enrolled in MFA?
-      const { data, error } = await supabase.auth.mfa.listFactors()
-      const userHasMfa = data?.totp && data.totp.length > 0
-      const needsMFA = !error && !userHasMfa
+        // Has the user enrolled in MFA?
+        const { data, error } = await supabase.auth.mfa.listFactors()
+        const userHasMfa = data?.totp && data.totp.length > 0
+        const needsMFA = !error && !userHasMfa
 
-      if (needsPasswordReset || needsMFA) {
-        setStatus({ needsPasswordReset, needsMFA })
+        if (needsPasswordReset || needsMFA) {
+          setStatus({ needsPasswordReset, needsMFA })
+        }
+      } catch {
+        // Session may be expired or missing — silently skip
       }
     }
 

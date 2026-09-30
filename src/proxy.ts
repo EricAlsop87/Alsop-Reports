@@ -100,7 +100,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // If user is logged in and tries to access login page, redirect to home
-  if (user && pathname.startsWith('/login')) {
+  // (but allow through if they're accessing the recovery flow from a password reset email)
+  const hasRecoveryParam = request.nextUrl.searchParams.get('type') === 'recovery'
+  if (user && pathname.startsWith('/login') && !hasRecoveryParam) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
