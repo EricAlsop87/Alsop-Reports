@@ -20,6 +20,8 @@ import {
   updateUserRole,
   getPagePermissions,
   updatePagePermission,
+  getUserMfaStatus,
+  resetUserMfa,
   type UnlinkedAgent,
   type PagePermission,
 } from "./actions"
@@ -54,6 +56,9 @@ export default function UserManagementPage() {
   const [pagePerms, setPagePerms] = useState<PagePermission[]>([])
   const [permSaving, setPermSaving] = useState<string | null>(null)
 
+  // MFA
+  const [mfaStatus, setMfaStatus] = useState<Record<string, boolean>>({})
+
   const fetchData = async () => {
     setLoading(true)
     const [unlinked, linked, perms] = await Promise.all([
@@ -64,6 +69,15 @@ export default function UserManagementPage() {
     setUnlinkedAgents(unlinked)
     setLinkedAgents(linked)
     setPagePerms(perms)
+
+    const authUserIds = linked.map(a => a.auth_user_id).filter(Boolean) as string[]
+    if (authUserIds.length > 0) {
+      const mfa = await getUserMfaStatus(authUserIds)
+      setMfaStatus(mfa)
+    } else {
+      setMfaStatus({})
+    }
+    
     setLoading(false)
   }
 
@@ -371,6 +385,11 @@ export default function UserManagementPage() {
                             Admin
                           </Badge>
                         )}
+                        {agent.auth_user_id && mfaStatus[agent.auth_user_id] ? (
+                          <span title="MFA Enabled"><ShieldCheck className="w-4 h-4 text-emerald-500" /></span>
+                        ) : (
+                          <span title="No MFA"><Shield className="w-4 h-4 text-slate-300" /></span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500">
                         {agent.email} · {agent.team || "No team"} · {agent.office || "No office"}
@@ -435,6 +454,22 @@ export default function UserManagementPage() {
                         >
                           <KeyRound className="w-3.5 h-3.5" />
                         </button>
+                        {agent.auth_user_id && mfaStatus[agent.auth_user_id] && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Are you sure you want to reset MFA for ${agent.name}?`)) return
+                              setLoading(true)
+                              const res = await resetUserMfa(agent.id)
+                              setFeedback({ type: res.success ? "success" : "error", message: res.message })
+                              if (res.success) await fetchData()
+                              setLoading(false)
+                            }}
+                            className="px-2 py-1 text-xs text-red-600 border border-red-200 hover:bg-red-50 rounded-md transition-colors"
+                            title="Reset MFA"
+                          >
+                            Reset MFA
+                          </button>
+                        )}
                         <button
                           onClick={() => handleRevoke(agent.id, agent.name)}
                           className="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-md transition-colors"

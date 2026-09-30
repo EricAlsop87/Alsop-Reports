@@ -246,6 +246,90 @@ export async function revokeAccess(agentId: string): Promise<InviteResult> {
 }
 
 /**
+ * Archive an agent (revoke access and set to inactive).
+ */
+export async function archiveAgent(agentId: string): Promise<InviteResult> {
+  await requireAdmin()
+  const supabase = createSupabaseAdmin()
+
+  const { data: agent, error: fetchError } = await supabase
+    .from("agents")
+    .select("auth_user_id, name")
+    .eq("id", agentId)
+    .single()
+
+  if (fetchError || !agent) {
+    return { success: false, message: "Agent not found." }
+  }
+
+  if (agent.auth_user_id) {
+    await supabase.auth.admin.deleteUser(agent.auth_user_id)
+  }
+
+  const { error: updateErr } = await supabase
+    .from("agents")
+    .update({ 
+      auth_user_id: null, 
+      email: null,
+      active: false,
+      report_visible: false
+    })
+    .eq("id", agentId)
+
+  if (updateErr) {
+    return { success: false, message: `Failed to archive agent: ${updateErr.message}` }
+  }
+
+  return { success: true, message: `${agent.name} has been archived and login access revoked.` }
+}
+
+/**
+ * Get MFA status for a list of auth user IDs.
+ */
+export async function getUserMfaStatus(authUserIds: string[]): Promise<Record<string, boolean>> {
+  await requireAdmin()
+  const supabase = createSupabaseAdmin()
+  const result: Record<string, boolean> = {}
+  
+  for (const uid of authUserIds) {
+    const { data } = await supabase.auth.admin.mfa.listFactors({ userId: uid })
+    const hasVerifiedTotp = data?.factors?.some((f: any) => f.factor_type === 'totp' && f.status === 'verified') ?? false
+    result[uid] = hasVerifiedTotp
+  }
+  
+  return result
+}
+
+/**
+ * Reset a user's MFA factors.
+ */
+export async function resetUserMfa(agentId: string): Promise<InviteResult> {
+  await requireAdmin()
+  const supabase = createSupabaseAdmin()
+  
+  const { data: agent } = await supabase
+    .from('agents')
+    .select('auth_user_id, name')
+    .eq('id', agentId)
+    .single()
+  
+  if (!agent?.auth_user_id) {
+    return { success: false, message: 'Agent not found or no login account linked.' }
+  }
+  
+  const { data } = await supabase.auth.admin.mfa.listFactors({ userId: agent.auth_user_id })
+  if (!data?.factors?.length) {
+    return { success: false, message: `${agent.name} does not have MFA enabled.` }
+  }
+  
+  for (const factor of data.factors) {
+    await supabase.auth.admin.mfa.deleteFactor({ id: factor.id, userId: agent.auth_user_id })
+  }
+  
+  return { success: true, message: `MFA has been reset for ${agent.name}. They will need to re-enroll.` }
+}
+
+/**
  * Update a user's role (admin action).
  */
 export async function updateUserRole(agentId: string, role: string): Promise<InviteResult> {

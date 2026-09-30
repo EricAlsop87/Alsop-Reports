@@ -38,6 +38,18 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains; preload",
           },
+          {
+            key: "Content-Security-Policy",
+            value: `
+              default-src 'self';
+              script-src 'self' 'unsafe-eval';
+              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+              connect-src 'self' https://xejmpdfqaghamemjrhxa.supabase.co https://*.supabase.co https://api.giphy.com https://media*.giphy.com;
+              img-src 'self' data: blob: https://media*.giphy.com https://api.giphy.com;
+              font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;
+              frame-ancestors 'none';
+            `.replace(/\s{2,}/g, ' ').trim(),
+          },
         ],
       },
     ];

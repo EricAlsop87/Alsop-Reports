@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import { syncAgentChannels } from "@/app/admin/users/actions"
+import { syncAgentChannels, archiveAgent } from "@/app/admin/users/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
@@ -242,13 +242,34 @@ export default function AgentManagement() {
   }
 
   const handleStatusChange = async (agentId: string, newStatus: AgentStatus) => {
+    if (newStatus === "archived") {
+      const agent = agents.find(a => a.id === agentId)
+      if (!confirm(`Are you sure you want to archive ${agent?.name}? This will permanently revoke their login access.`)) return
+      
+      try {
+        const result = await archiveAgent(agentId)
+        if (result.success) {
+          setAgents((prev) =>
+            prev.map((a) =>
+              a.id === agentId
+                ? { ...a, active: false, report_visible: false }
+                : a
+            )
+          )
+        } else {
+          console.error(result.message)
+          alert(result.message)
+        }
+      } catch (e) {
+        console.error("Failed to archive agent:", e)
+      }
+      return
+    }
+
     let newActive = true
     let newReportVisible = true
     if (newStatus === "on_leave") {
       newActive = true
-      newReportVisible = false
-    } else if (newStatus === "archived") {
-      newActive = false
       newReportVisible = false
     }
 
