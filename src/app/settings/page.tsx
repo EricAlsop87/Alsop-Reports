@@ -369,10 +369,7 @@ export default function PersonalSettingsPage() {
       // Check if session is AAL1 but user has MFA enabled (needs AAL2 to change password)
       const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
       if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
-        setPasswordFeedback({ 
-          type: "error", 
-          message: "Security requirement: Because you have MFA enabled, you must sign out and sign back in (with your MFA code) to change your password." 
-        })
+        setPasswordFeedback({ type: "error", message: "SESSION_EXPIRED" })
         setUpdatingPassword(false)
         return
       }
@@ -396,7 +393,16 @@ export default function PersonalSettingsPage() {
       setPasswordFeedback({ type: "success", message: "Password updated successfully! Use your new password next time you sign in." })
     } catch (err: any) {
       console.error(err)
-      setPasswordFeedback({ type: "error", message: err.message || "Failed to update password." })
+      const msg = err.message || "Failed to update password."
+      // Catch the cryptic Supabase reauthentication error and translate it
+      if (msg.toLowerCase().includes("reauthentication") || msg.toLowerCase().includes("current password required")) {
+        setPasswordFeedback({ 
+          type: "error", 
+          message: "SESSION_EXPIRED" 
+        })
+      } else {
+        setPasswordFeedback({ type: "error", message: msg })
+      }
     } finally {
       setUpdatingPassword(false)
     }
@@ -819,7 +825,30 @@ export default function PersonalSettingsPage() {
                 </div>
 
                 {/* Inline Feedback */}
-                {passwordFeedback && (
+                {passwordFeedback && passwordFeedback.message === "SESSION_EXPIRED" ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">Your session needs to be refreshed</p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          For security purposes, you need to sign out and sign back in before changing your password. 
+                          This verifies your identity and only takes a moment.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await supabase.auth.signOut()
+                        window.location.href = "/login"
+                      }}
+                      className="w-full text-sm font-semibold bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 transition-colors"
+                    >
+                      Sign Out &amp; Sign Back In
+                    </button>
+                  </div>
+                ) : passwordFeedback && (
                   <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2.5 border ${
                     passwordFeedback.type === 'success'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
