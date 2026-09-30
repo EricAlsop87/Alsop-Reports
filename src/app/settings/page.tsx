@@ -65,6 +65,7 @@ export default function PersonalSettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isEmailUser, setIsEmailUser] = useState(true)
 
   // Display & theme preferences
   const [theme, setTheme] = useState("light")
@@ -146,6 +147,8 @@ export default function PersonalSettingsPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
+
+        setIsEmailUser(user.app_metadata?.providers?.includes("email") ?? true)
 
         // 1. Fetch agent record
         const { data: agentData, error: agentErr } = await supabase
@@ -678,6 +681,8 @@ export default function PersonalSettingsPage() {
             </CardContent>
           </Card>
 
+          {isEmailUser && (
+            <>
           {/* Password Update Card */}
           <Card>
             <CardHeader>
@@ -990,6 +995,8 @@ export default function PersonalSettingsPage() {
               )}
             </CardContent>
           </Card>
+            </>
+          )}
         </div>
 
         {/* Right Column (1/3 width on LG) */}

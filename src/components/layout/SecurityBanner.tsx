@@ -17,6 +17,10 @@ export function SecurityBanner() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // SSO users (Google/Azure) manage their own security and passwords via their provider
+      const isEmailUser = user.app_metadata?.providers?.includes("email")
+      if (!isEmailUser) return
+
       // Has the user updated their password since we enabled the strict policy?
       const needsPasswordReset = !user.user_metadata?.security_upgraded
 
