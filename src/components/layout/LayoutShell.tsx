@@ -66,11 +66,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <TabBadge />
         <NotificationBridge />
         <Sidebar />
-        <div className="flex-1 overflow-x-hidden flex flex-col min-h-screen">
+        <div className={`flex-1 overflow-x-hidden flex flex-col ${isCommunicationPage ? "h-[100dvh] overflow-hidden overscroll-none" : "min-h-screen"}`}>
           <WelcomeBanner />
           <SecurityBanner />
           <Breadcrumbs />
-          <div className="flex-1">
+          <div className={`flex-1 ${isCommunicationPage ? "min-h-0" : ""}`}>
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
