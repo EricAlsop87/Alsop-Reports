@@ -58,6 +58,7 @@ export default function UserManagementPage() {
 
   // MFA
   const [mfaStatus, setMfaStatus] = useState<Record<string, boolean>>({})
+  const [mfaFilter, setMfaFilter] = useState<"all" | "compliant" | "non_compliant">("all")
 
   const fetchData = async () => {
     setLoading(true)
@@ -135,23 +136,41 @@ export default function UserManagementPage() {
     setLoading(false)
   }
 
-  const filteredLinked = linkedAgents.filter(a =>
-    a.name.toLowerCase().includes(searchLinked.toLowerCase()) ||
-    (a.email || "").toLowerCase().includes(searchLinked.toLowerCase())
-  )
+  const mfaCounts = {
+    total: linkedAgents.length,
+    compliant: linkedAgents.filter(a => a.auth_user_id && mfaStatus[a.auth_user_id]).length,
+    non_compliant: linkedAgents.filter(a => !a.auth_user_id || !mfaStatus[a.auth_user_id]).length,
+  }
+
+  const mfaComplianceRate = mfaCounts.total > 0 
+    ? Math.round((mfaCounts.compliant / mfaCounts.total) * 100) 
+    : 0
+
+  const filteredLinked = linkedAgents.filter(a => {
+    const matchesSearch = 
+      a.name.toLowerCase().includes(searchLinked.toLowerCase()) ||
+      (a.email || "").toLowerCase().includes(searchLinked.toLowerCase())
+    
+    if (!matchesSearch) return false
+
+    const isCompliant = !!(a.auth_user_id && mfaStatus[a.auth_user_id])
+    if (mfaFilter === "compliant") return isCompliant
+    if (mfaFilter === "non_compliant") return !isCompliant
+    return true
+  })
 
   const selectedAgent = unlinkedAgents.find(a => a.id === selectedAgentId)
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin" className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
           <ArrowLeft className="w-5 h-5 text-slate-500" />
         </Link>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">User Access Management</h1>
-          <p className="text-xs sm:text-sm text-slate-500">Invite agents to the dashboard and manage their login credentials.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">User Access & Security Management</h1>
+          <p className="text-xs sm:text-sm text-slate-500">Invite agents to the dashboard, manage login credentials, and monitor MFA compliance.</p>
         </div>
       </div>
 
@@ -169,6 +188,60 @@ export default function UserManagementPage() {
           </button>
         </div>
       )}
+
+      {/* Security & MFA Compliance Overview Banner */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="border-slate-200 shadow-xs">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">MFA Compliance Rate</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-black text-slate-900">{mfaComplianceRate}%</span>
+                <span className="text-xs font-medium text-slate-500">({mfaCounts.compliant}/{mfaCounts.total} users)</span>
+              </div>
+            </div>
+            <div className={`p-2.5 rounded-xl ${mfaComplianceRate === 100 ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}>
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className={`border-emerald-100 bg-emerald-50/30 shadow-xs cursor-pointer transition-all ${mfaFilter === "compliant" ? "ring-2 ring-emerald-500 bg-emerald-50/70" : "hover:border-emerald-300"}`}
+          onClick={() => setMfaFilter(prev => prev === "compliant" ? "all" : "compliant")}
+        >
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">MFA Enabled</p>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-black text-emerald-800">{mfaCounts.compliant}</span>
+                <span className="text-xs font-medium text-emerald-600">users compliant</span>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-100/80 text-emerald-700">
+              <Check className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className={`border-amber-100 bg-amber-50/30 shadow-xs cursor-pointer transition-all ${mfaFilter === "non_compliant" ? "ring-2 ring-amber-500 bg-amber-50/70" : "hover:border-amber-300"}`}
+          onClick={() => setMfaFilter(prev => prev === "non_compliant" ? "all" : "non_compliant")}
+        >
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">Pending MFA Setup</p>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-2xl font-black text-amber-800">{mfaCounts.non_compliant}</span>
+                <span className="text-xs font-medium text-amber-600">users need setup</span>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-amber-100/80 text-amber-700">
+              <Shield className="w-5 h-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Invite Card */}
       <Card>
@@ -341,147 +414,266 @@ export default function UserManagementPage() {
 
       {/* Active Users */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              Active Users ({linkedAgents.length})
-            </CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchLinked}
-                onChange={(e) => setSearchLinked(e.target.value)}
-                placeholder="Search users..."
-                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
-              />
+        <CardHeader className="pb-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                Active Users & MFA Compliance
+              </CardTitle>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Showing {filteredLinked.length} of {linkedAgents.length} registered accounts
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Quick Filter Tabs */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                <button
+                  onClick={() => setMfaFilter("all")}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                    mfaFilter === "all" ? "bg-white text-slate-800 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  All ({mfaCounts.total})
+                </button>
+                <button
+                  onClick={() => setMfaFilter("compliant")}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1 ${
+                    mfaFilter === "compliant" ? "bg-white text-emerald-700 shadow-xs" : "text-slate-500 hover:text-emerald-600"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  MFA Compliant ({mfaCounts.compliant})
+                </button>
+                <button
+                  onClick={() => setMfaFilter("non_compliant")}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1 ${
+                    mfaFilter === "non_compliant" ? "bg-white text-amber-700 shadow-xs" : "text-slate-500 hover:text-amber-600"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Pending Setup ({mfaCounts.non_compliant})
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchLinked}
+                  onChange={(e) => setSearchLinked(e.target.value)}
+                  placeholder="Search users..."
+                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-8 gap-2 text-sm text-slate-400">
+            <div className="flex items-center justify-center py-12 gap-2 text-sm text-slate-400">
               <Loader2 className="w-4 h-4 animate-spin" /> Loading users...
             </div>
           ) : filteredLinked.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">
-              {searchLinked ? "No users match your search." : "No users have been invited yet."}
+            <p className="text-sm text-slate-400 text-center py-12">
+              {searchLinked || mfaFilter !== "all" ? "No users match your filters." : "No users have been invited yet."}
             </p>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {filteredLinked.map(agent => (
-                <div key={agent.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 gap-2 group">
-                  <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                      {agent.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-800">{agent.name}</span>
-                        {agent.role === "admin" && (
-                          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200">
-                            Admin
-                          </Badge>
-                        )}
-                        {agent.auth_user_id && mfaStatus[agent.auth_user_id] ? (
-                          <span title="MFA Enabled"><ShieldCheck className="w-4 h-4 text-emerald-500" /></span>
-                        ) : (
-                          <span title="No MFA"><Shield className="w-4 h-4 text-slate-300" /></span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        {agent.email} · {agent.team || "No team"} · {agent.office || "No office"}
-                      </p>
-                    </div>
-                  </div>
+            <div className="relative">
+              {/* Top Synchronized Scrollbar (Visible on smaller screens) */}
+              <div 
+                id="top-scrollbar-container"
+                className="overflow-x-auto border-b border-slate-200 bg-slate-100/70 xl:hidden"
+                onScroll={(e) => {
+                  const bottom = document.getElementById("bottom-scrollbar-container")
+                  if (bottom && bottom.scrollLeft !== e.currentTarget.scrollLeft) {
+                    bottom.scrollLeft = e.currentTarget.scrollLeft
+                  }
+                }}
+              >
+                <div style={{ width: "940px", height: "8px" }} />
+              </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-end sm:self-center">
-                    {resetAgentId === agent.id ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="password"
-                          value={resetPassword}
-                          onChange={(e) => setResetPassword(e.target.value)}
-                          placeholder="12+ chars, A-Z, 0-9"
-                          autoComplete="new-password"
-                          spellCheck={false}
-                          maxLength={128}
-                          className="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-md w-36 focus:outline-none focus:ring-1 focus:ring-blue-300 font-mono"
-                          autoFocus
-                        />
-                        <button
-                          onClick={handleResetPassword}
-                          disabled={
-                            resetting ||
-                            !resetPassword ||
-                            resetPassword.length < 12 ||
-                            !/[A-Z]/.test(resetPassword) ||
-                            !/\d/.test(resetPassword)
-                          }
-                          className="p-1 rounded text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
-                          title="Confirm reset"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => { setResetAgentId(null); setResetPassword("") }}
-                          className="p-1 rounded text-slate-400 hover:bg-slate-100"
-                          title="Cancel"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleToggleRole(agent.id, agent.role, agent.name)}
-                          className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                            agent.role === "admin"
-                              ? "text-amber-600 hover:bg-amber-50"
-                              : "text-slate-500 hover:bg-slate-100"
-                          }`}
-                          title={agent.role === "admin" ? "Demote to Agent" : "Promote to Admin"}
-                        >
-                          <Shield className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setResetAgentId(agent.id)}
-                          className="px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 rounded-md transition-colors"
-                          title="Reset password"
-                        >
-                          <KeyRound className="w-3.5 h-3.5" />
-                        </button>
-                        {agent.auth_user_id && mfaStatus[agent.auth_user_id] && (
-                          <button
-                            onClick={async () => {
-                              if (!confirm(`Are you sure you want to reset MFA for ${agent.name}?`)) return
-                              setLoading(true)
-                              const res = await resetUserMfa(agent.id)
-                              setFeedback({ type: res.success ? "success" : "error", message: res.message })
-                              if (res.success) await fetchData()
-                              setLoading(false)
-                            }}
-                            className="px-2 py-1 text-xs text-red-600 border border-red-200 hover:bg-red-50 rounded-md transition-colors"
-                            title="Reset MFA"
-                          >
-                            Reset MFA
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleRevoke(agent.id, agent.name)}
-                          className="px-2 py-1 text-xs text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title="Revoke access"
-                        >
-                          <UserX className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+              {/* Main Table Scroll Container */}
+              <div 
+                id="bottom-scrollbar-container"
+                className="overflow-x-auto"
+                onScroll={(e) => {
+                  const top = document.getElementById("top-scrollbar-container")
+                  if (top && top.scrollLeft !== e.currentTarget.scrollLeft) {
+                    top.scrollLeft = e.currentTarget.scrollLeft
+                  }
+                }}
+              >
+                <table className="w-full text-left border-collapse min-w-[920px]">
+                  <thead>
+                    <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                      <th className="py-3 px-4 w-[22%]">User</th>
+                      <th className="py-3 px-3 w-[26%]">Email Address</th>
+                      <th className="py-3 px-3 w-[15%]">Team & Office</th>
+                      <th className="py-3 px-2 text-center w-[8%]">Role</th>
+                      <th className="py-3 px-2 text-center w-[9%]">MFA</th>
+                      <th className="py-3 px-4 text-right w-[20%]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {filteredLinked.map(agent => {
+                      const isCompliant = !!(agent.auth_user_id && mfaStatus[agent.auth_user_id])
+                      return (
+                        <tr key={agent.id} className="hover:bg-slate-50/80 transition-colors h-14">
+                          {/* User Name & Avatar */}
+                          <td className="py-2.5 px-4 truncate">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                {agent.name.charAt(0)}
+                              </div>
+                              <span className="font-semibold text-slate-900 truncate" title={agent.name}>{agent.name}</span>
+                            </div>
+                          </td>
+
+                          {/* Email */}
+                          <td className="py-2.5 px-3 text-xs text-slate-600 font-mono truncate" title={agent.email || ""}>
+                            {agent.email || "—"}
+                          </td>
+
+                          {/* Team & Office */}
+                          <td className="py-2.5 px-3 text-xs text-slate-600 truncate">
+                            {agent.team || "No team"} · <span className="font-semibold">{agent.office || "No office"}</span>
+                          </td>
+
+                          {/* Role */}
+                          <td className="py-2.5 px-2 text-center">
+                            {agent.role === "admin" ? (
+                              <Badge variant="default" className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 border-amber-200 font-semibold">
+                                Admin
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-slate-50 text-slate-600 border-slate-200">
+                                Agent
+                              </Badge>
+                            )}
+                          </td>
+
+                          {/* MFA Status */}
+                          <td className="py-2.5 px-2 text-center">
+                            {isCompliant ? (
+                              <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 shadow-xs" title="MFA Enabled (Compliant)">
+                                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-50 border border-rose-200 text-rose-500 shadow-xs" title="MFA Pending (Not Set Up)">
+                                <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-2.5 px-4 text-right">
+                            {resetAgentId === agent.id ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <input
+                                  type="password"
+                                  value={resetPassword}
+                                  onChange={(e) => setResetPassword(e.target.value)}
+                                  placeholder="12+ chars"
+                                  autoComplete="new-password"
+                                  spellCheck={false}
+                                  maxLength={128}
+                                  className="px-2 py-1 text-xs bg-white border border-slate-300 rounded-md w-28 focus:outline-none focus:ring-1 focus:ring-blue-400 font-mono"
+                                  autoFocus
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={handleResetPassword}
+                                  disabled={
+                                    resetting ||
+                                    !resetPassword ||
+                                    resetPassword.length < 12 ||
+                                    !/[A-Z]/.test(resetPassword) ||
+                                    !/\d/.test(resetPassword)
+                                  }
+                                  className="h-7 px-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs shrink-0"
+                                  title="Confirm reset"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => { setResetAgentId(null); setResetPassword("") }}
+                                  className="h-7 px-1.5 text-slate-400 hover:text-slate-700 shrink-0"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleToggleRole(agent.id, agent.role, agent.name)}
+                                  className={`h-7 px-2 text-xs font-medium shrink-0 ${
+                                    agent.role === "admin"
+                                      ? "text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100"
+                                      : "text-slate-600 border-slate-200 hover:bg-slate-100"
+                                  }`}
+                                  title={agent.role === "admin" ? "Demote to Agent" : "Promote to Admin"}
+                                >
+                                  <Shield className="w-3 h-3 mr-1" />
+                                  {agent.role === "admin" ? "Admin" : "Role"}
+                                </Button>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setResetAgentId(agent.id)}
+                                  className="h-7 px-2 text-xs font-medium text-slate-600 border-slate-200 hover:bg-slate-100 shrink-0"
+                                  title="Reset password"
+                                >
+                                  <KeyRound className="w-3 h-3 mr-1" />
+                                  Password
+                                </Button>
+
+                                {isCompliant && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={async () => {
+                                      if (!confirm(`Are you sure you want to reset MFA for ${agent.name}?`)) return
+                                      setLoading(true)
+                                      const res = await resetUserMfa(agent.id)
+                                      setFeedback({ type: res.success ? "success" : "error", message: res.message })
+                                      if (res.success) await fetchData()
+                                      setLoading(false)
+                                    }}
+                                    className="h-7 px-1.5 text-xs font-medium text-amber-700 border-amber-200 bg-amber-50/50 hover:bg-amber-100 shrink-0"
+                                    title="Reset user MFA"
+                                  >
+                                    Reset MFA
+                                  </Button>
+                                )}
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRevoke(agent.id, agent.name)}
+                                  className="h-7 px-1.5 text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-700 shrink-0"
+                                  title="Revoke access"
+                                >
+                                  <UserX className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </CardContent>
