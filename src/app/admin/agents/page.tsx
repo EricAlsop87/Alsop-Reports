@@ -51,8 +51,8 @@ interface ChatPermission {
   updated_at?: string
 }
 
-type AgentStatus = "active" | "on_leave" | "archived"
-type StatusFilter = "all" | "active" | "on_leave" | "archived"
+type AgentStatus = "active" | "on_leave" | "resigned" | "archived"
+type StatusFilter = "all" | "active" | "on_leave" | "resigned" | "archived"
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -81,6 +81,7 @@ const EMPTY_NEW_AGENT = {
 }
 
 function getAgentStatus(agent: Pick<Agent, "active" | "report_visible">): AgentStatus {
+  if (!agent.active && !agent.report_visible) return "resigned"
   if (!agent.active) return "archived"
   if (!agent.report_visible) return "on_leave"
   return "active"
@@ -155,6 +156,8 @@ export default function AgentManagement() {
       result = result.filter((a) => a.active && a.report_visible)
     } else if (statusFilter === "on_leave") {
       result = result.filter((a) => a.active && !a.report_visible)
+    } else if (statusFilter === "resigned") {
+      result = result.filter((a) => !a.active && !a.report_visible)
     } else if (statusFilter === "archived") {
       result = result.filter((a) => !a.active)
     }
@@ -179,6 +182,7 @@ export default function AgentManagement() {
     all:      agents.length,
     active:   agents.filter((a) => a.active && a.report_visible).length,
     on_leave: agents.filter((a) => a.active && !a.report_visible).length,
+    resigned: agents.filter((a) => !a.active && !a.report_visible).length,
     archived: agents.filter((a) => !a.active).length,
   }), [agents])
 
@@ -242,9 +246,10 @@ export default function AgentManagement() {
   }
 
   const handleStatusChange = async (agentId: string, newStatus: AgentStatus) => {
-    if (newStatus === "archived") {
+    if (newStatus === "archived" || newStatus === "resigned") {
       const agent = agents.find(a => a.id === agentId)
-      if (!confirm(`Are you sure you want to archive ${agent?.name}? This will permanently revoke their login access.`)) return
+      const actionLabel = newStatus === "resigned" ? "mark as resigned" : "archive"
+      if (!confirm(`Are you sure you want to ${actionLabel} ${agent?.name}? This will revoke login access while preserving all historical report totals.`)) return
       
       try {
         const result = await archiveAgent(agentId)
@@ -261,7 +266,7 @@ export default function AgentManagement() {
           alert(result.message)
         }
       } catch (e) {
-        console.error("Failed to archive agent:", e)
+        console.error("Failed to update status:", e)
       }
       return
     }
@@ -312,7 +317,7 @@ export default function AgentManagement() {
     if (!newAgent.name.trim()) return
     setSavingNew(true)
     try {
-      const active = newAgent.status !== "archived"
+      const active = newAgent.status !== "archived" && newAgent.status !== "resigned"
       const reportVisible = newAgent.status === "active"
 
       const payload: Record<string, unknown> = {
@@ -489,6 +494,7 @@ export default function AgentManagement() {
                 >
                   <option value="active">Active</option>
                   <option value="on_leave">On Leave</option>
+                  <option value="resigned">Resigned</option>
                   <option value="archived">Archived</option>
                 </select>
               </div>
@@ -596,6 +602,7 @@ export default function AgentManagement() {
             { key: "all",      label: "All" },
             { key: "active",   label: "Active" },
             { key: "on_leave", label: "On Leave" },
+            { key: "resigned", label: "Resigned" },
             { key: "archived", label: "Archived" },
           ] as { key: StatusFilter; label: string }[]).map((tab) => (
             <button
@@ -813,7 +820,7 @@ export default function AgentManagement() {
             <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> Agent Status Rules & Data Retention
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
               <div className="bg-slate-800/80 p-3.5 rounded-xl border border-emerald-500/30">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
@@ -841,6 +848,21 @@ export default function AgentManagement() {
                   <li>• <strong>Hidden</strong> from individual Daily, MTD, and Quotes tables.</li>
                   <li>• <strong>ALL historical data counts in Agency Totals</strong>.</li>
                   <li>• Hidden from chat member pickers and mention dropdowns.</li>
+                </ul>
+              </div>
+
+              <div className="bg-slate-800/80 p-3.5 rounded-xl border border-purple-500/30">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400" />
+                  <span className="font-bold text-purple-300 text-sm">Resigned</span>
+                </div>
+                <p className="text-slate-300 mb-2 leading-relaxed">
+                  Former employee who departed with past production.
+                </p>
+                <ul className="space-y-1 text-slate-400">
+                  <li>• <strong>Revokes login & chat access</strong> immediately.</li>
+                  <li>• <strong>Preserves historical production</strong> in past scorecards & MTD totals.</li>
+                  <li>• Automatically excluded from new month active rosters & goals.</li>
                 </ul>
               </div>
 
@@ -1116,7 +1138,7 @@ function AgentRow({
           </Badge>
         </td>
 
-        {/* 3-State Status Selector */}
+        {/* Status Selector */}
         <td className="py-2.5 px-3">
           <select
             value={currentStatus}
@@ -1127,11 +1149,14 @@ function AgentRow({
                 ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                 : currentStatus === "on_leave"
                 ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                : currentStatus === "resigned"
+                ? "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
                 : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
             }`}
           >
             <option value="active">Active</option>
             <option value="on_leave">On Leave</option>
+            <option value="resigned">Resigned</option>
             <option value="archived">Archived</option>
           </select>
         </td>
