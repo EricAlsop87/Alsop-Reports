@@ -48,7 +48,7 @@ const DATA_SOURCES: DataSource[] = [
     uploadTypes: ["rc", "rico_ch", "rico_ap"],
     filePatterns: [
       { pattern: /rc_|Office_Perf.*Users/i, type: "rc", label: "RC (RingCentral)", hasInternalDate: true },
-      { pattern: /^ch-/i, type: "rico_ch", label: "Rico CH (Talk Time)", hasInternalDate: true },
+      { pattern: /^(ch-|report-ch-|call.*history)/i, type: "rico_ch", label: "Rico CH (Talk Time)", hasInternalDate: true },
       { pattern: /Agent Performance/i, type: "rico_ap", label: "Rico AP (Calls)", hasInternalDate: false },
     ],
     howToGet: "Download from RingCentral email (auto-arrives in Outlook) or Ricochet Admin → Reports",
@@ -867,7 +867,7 @@ export default function DataSyncPage() {
               source="Ricochet Dialer"
               method="Manual Download → Downloads folder"
               location="C:/Users/scag3s29/Downloads/ch-*.zip"
-              description="A ZIP file exported from the Ricochet admin portal containing individual call records for Sales agents. You download this manually from ricochet.me, and the pipeline picks it up from your Downloads folder."
+              description="A CSV file exported from the Ricochet admin portal containing individual call records for Sales agents. Note: If Ricochet gives you a ZIP file, please extract it and upload the CSV file inside! (Filename should start with ch- or Call_History)."
               type="Communication"
             />
             <DictionaryItem
