@@ -86,10 +86,6 @@ interface ScoreCellProps {
 }
 
 function ScoreCell({ score, unlocked, canEdit, onEnter }: ScoreCellProps) {
-  if (!unlocked) {
-    return <div className="flex items-center justify-center py-2"><Lock className="w-3.5 h-3.5 text-slate-300" /></div>
-  }
-
   if (score) {
     const content = (
       <div className="flex flex-col items-center justify-center gap-0 w-full h-full">
@@ -105,6 +101,7 @@ function ScoreCell({ score, unlocked, canEdit, onEnter }: ScoreCellProps) {
     return (
       <button 
         onClick={onEnter}
+        title="Manager: Click to edit or override score"
         className="flex flex-col items-center justify-center gap-0 w-full h-full rounded hover:bg-slate-50 transition-colors cursor-pointer"
       >
         <div className={cn("text-[13px] font-bold", scoreColorClass(score.score))}>
@@ -112,6 +109,25 @@ function ScoreCell({ score, unlocked, canEdit, onEnter }: ScoreCellProps) {
         </div>
         <span className="text-[10px] text-slate-400 font-mono">{formatDate(score.completed_at)}</span>
       </button>
+    )
+  }
+
+  if (!unlocked) {
+    if (!canEdit) {
+      return <div className="flex items-center justify-center py-2"><Lock className="w-3.5 h-3.5 text-slate-300" /></div>
+    }
+    // Manager override: allow adding scores directly to locked tiers
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <button
+          onClick={onEnter}
+          title="Manager Override: Click to enter score directly"
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer whitespace-nowrap"
+        >
+          <Lock className="w-3 h-3 text-slate-300" />
+          <Plus className="w-3 h-3" /> Add
+        </button>
+      </div>
     )
   }
 
@@ -205,7 +221,8 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
   // Agent "show all" toggle
   const [showAll, setShowAll] = useState(false)
 
-  const canEdit = isManagerOrAdmin || (!!currentAgent && currentAgent.id === agentId)
+  // Only managers and admins can add or edit roleplay scores; agents/producers are view-only
+  const canEdit = isManagerOrAdmin
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -352,7 +369,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
                       key={mod.id}
                       className={cn(
                         "border-b border-slate-100 transition-colors hover:bg-slate-50/50",
-                        !modUnlocked && "bg-slate-50/30 opacity-60"
+                        !modUnlocked && !isManagerOrAdmin && "bg-slate-50/30 opacity-60"
                       )}
                     >
                       {/* Module name */}
@@ -364,7 +381,7 @@ export function RoleplayTracker({ agentId, currentAgent, isManagerOrAdmin }: Rol
                           <div className="min-w-0 flex items-center gap-2">
                             <span className={cn(
                               "text-sm font-medium truncate",
-                              !modUnlocked ? "text-slate-400" : "text-slate-800"
+                              !modUnlocked && !isManagerOrAdmin ? "text-slate-400" : "text-slate-800"
                             )}>
                               {mod.name}
                             </span>
