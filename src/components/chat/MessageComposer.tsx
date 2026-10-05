@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
   File as FileIcon,
   Plus,
+  Link2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import MentionAutocomplete from './MentionAutocomplete'
@@ -131,6 +132,10 @@ const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerP
     const [showPriority, setShowPriority] = useState(false)
     const [showGifPicker, setShowGifPicker] = useState(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const [showLinkModal, setShowLinkModal] = useState(false)
+    const [linkUrlInput, setLinkUrlInput] = useState('')
+    const [linkTitleInput, setLinkTitleInput] = useState('')
+    const [isResolvingLink, setIsResolvingLink] = useState(false)
     const [mentionQuery, setMentionQuery] = useState<string | null>(null)
     const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 })
     const editorRef = useRef<HTMLDivElement>(null)
@@ -447,6 +452,32 @@ const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerP
     setShowEmojiPicker(false)
   }, [updateContentFromDom])
 
+  const handleInsertLink = useCallback(() => {
+    if (!linkUrlInput.trim() || !editorRef.current) return
+    const textToInsert = linkTitleInput.trim()
+      ? `[${linkTitleInput.trim()}](${linkUrlInput.trim()}) `
+      : `${linkUrlInput.trim()} `
+
+    editorRef.current.focus()
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      const textNode = document.createTextNode(textToInsert)
+      range.insertNode(textNode)
+      range.setStartAfter(textNode)
+      range.setEndAfter(textNode)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    } else {
+      editorRef.current.appendChild(document.createTextNode(textToInsert))
+    }
+    updateContentFromDom()
+    setLinkUrlInput('')
+    setLinkTitleInput('')
+    setShowLinkModal(false)
+  }, [linkUrlInput, linkTitleInput, updateContentFromDom])
+
   const canSendUrgent = hasPermission('send_urgent_messages')
   const isEmpty = !content.trim() && attachments.length === 0
 
@@ -613,6 +644,109 @@ const MessageComposer = React.forwardRef<MessageComposerHandle, MessageComposerP
                 <Paperclip className="w-4 h-4 text-slate-500" />
                 <span className={cn("hidden", isCompact ? "" : "sm:inline")}>Attach</span>
               </button>
+
+              {/* Link Inserter Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(!showLinkModal)}
+                  className={cn(
+                    'p-2 sm:px-2 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer select-none',
+                    showLinkModal
+                      ? 'bg-blue-100 text-blue-800 shadow-xs ring-1 ring-blue-300'
+                      : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40'
+                  )}
+                  title="Insert Link with File / Document Title"
+                  aria-label="Link inserter"
+                >
+                  <Link2 className="w-4 h-4 text-blue-500" />
+                  <span className={cn("hidden", isCompact ? "" : "sm:inline")}>Link</span>
+                </button>
+
+                {showLinkModal && (
+                  <div className="absolute z-50 bottom-full left-0 sm:left-auto sm:right-0 mb-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-3.5 space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                        Share Link with Title
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowLinkModal(false)}
+                        className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                        Link URL (Google Sheet, Doc, etc.)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://docs.google.com/..."
+                        value={linkUrlInput}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setLinkUrlInput(val)
+                          if (val.startsWith('http') && !linkTitleInput) {
+                            setIsResolvingLink(true)
+                            fetch(`/api/chat/link-preview?url=${encodeURIComponent(val)}`)
+                              .then((r) => r.json())
+                              .then((data) => {
+                                if (data.success && data.title && !linkTitleInput) {
+                                  setLinkTitleInput(data.title)
+                                }
+                              })
+                              .finally(() => setIsResolvingLink(false))
+                          }
+                        }}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        autoFocus
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                          File / Document Name
+                        </label>
+                        {isResolvingLink && (
+                          <span className="text-[10px] text-blue-500 flex items-center gap-1">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Detecting...
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g. Life Report - Whiteboard Tracker"
+                        value={linkTitleInput}
+                        onChange={(e) => setLinkTitleInput(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowLinkModal(false)}
+                        className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 rounded-lg cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleInsertLink}
+                        disabled={!linkUrlInput.trim()}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg disabled:opacity-50 transition-colors cursor-pointer"
+                      >
+                        Insert Link
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Built-in Emoji Picker Button */}
               <div className="relative">

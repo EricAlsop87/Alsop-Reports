@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, Fragment } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import {
   Reply,
   Smile,
@@ -357,12 +357,14 @@ function PdfViewerModal({
  */
 function PdfCard({
   url,
+  customTitle,
   onOpenModal,
 }: {
   url: string
+  customTitle?: string
   onOpenModal: (url: string, name: string) => void
 }) {
-  const fileName = getFileNameFromUrl(url)
+  const fileName = customTitle || getFileNameFromUrl(url)
 
   return (
     <div className="my-1.5 max-w-sm bg-white dark:bg-slate-900 border border-red-200/80 dark:border-red-950/60 rounded-xl p-2.5 shadow-xs hover:shadow-md transition-all group/pdf">
@@ -413,8 +415,8 @@ function PdfCard({
 /**
  * Modern In-Chat General Document Card Component
  */
-function DocCard({ url }: { url: string }) {
-  const fileName = getFileNameFromUrl(url)
+function DocCard({ url, customTitle }: { url: string; customTitle?: string }) {
+  const fileName = customTitle || getFileNameFromUrl(url)
   const isExcel = /\.xlsx?$/i.test(fileName) || /\.csv$/i.test(fileName)
   const isWord = /\.docx?$/i.test(fileName)
 
@@ -479,12 +481,45 @@ function isGoogleUrl(url: string): { type: string; label: string; iconColor: str
   }
 }
 
+// Global in-memory cache for client-side resolved link titles
+const clientLinkTitleCache = new Map<string, string | null>()
+
 /**
  * Rich Card Component for Google Workspace Links (Sheets, Docs, Drive)
  */
-function GoogleLinkCard({ url }: { url: string }) {
+function GoogleLinkCard({ url, customTitle }: { url: string; customTitle?: string | null }) {
   const [copied, setCopied] = useState(false)
-  const info = isGoogleUrl(url) || { label: 'Google Workspace', iconColor: 'text-emerald-600', bgColor: 'bg-emerald-50 border-emerald-200' }
+  const [fetchedTitle, setFetchedTitle] = useState<string | null>(() => clientLinkTitleCache.get(url) || null)
+  const info = isGoogleUrl(url) || { type: 'sheet', label: 'Google Workspace', iconColor: 'text-emerald-600', bgColor: 'bg-emerald-50 border-emerald-200' }
+
+  useEffect(() => {
+    // If a custom title is already provided via markdown, no need to fetch!
+    if (customTitle) return
+    if (clientLinkTitleCache.has(url)) {
+      setFetchedTitle(clientLinkTitleCache.get(url) || null)
+      return
+    }
+
+    let isMounted = true
+    fetch(`/api/chat/link-preview?url=${encodeURIComponent(url)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return
+        if (data.success && data.title) {
+          clientLinkTitleCache.set(url, data.title)
+          setFetchedTitle(data.title)
+        } else {
+          clientLinkTitleCache.set(url, null)
+        }
+      })
+      .catch(() => {
+        if (isMounted) clientLinkTitleCache.set(url, null)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [url, customTitle])
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -499,11 +534,28 @@ function GoogleLinkCard({ url }: { url: string }) {
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
+  const finalTitle = customTitle || fetchedTitle
+
+  // Clean URL for display
+  const displayUrl = useMemo(() => {
+    try {
+      const parsed = new URL(url)
+      const path = parsed.pathname.length > 40 ? parsed.pathname.slice(0, 40) + '...' : parsed.pathname
+      return parsed.hostname + path
+    } catch {
+      return url
+    }
+  }, [url])
+
   return (
     <div className="my-1.5 max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-xs hover:shadow-md transition-all">
       <div className="flex items-center gap-3">
         <div className={cn("w-10 h-10 rounded-lg border flex items-center justify-center shrink-0", info.bgColor, info.iconColor)}>
-          <FileSpreadsheet className="w-5 h-5" />
+          {info.type === 'doc' ? (
+            <FileText className="w-5 h-5" />
+          ) : (
+            <FileSpreadsheet className="w-5 h-5" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -511,9 +563,20 @@ function GoogleLinkCard({ url }: { url: string }) {
               {info.label}
             </span>
           </div>
-          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5" title={url}>
-            {url}
-          </p>
+          {finalTitle ? (
+            <>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5" title={finalTitle}>
+                {finalTitle}
+              </p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5" title={url}>
+                {displayUrl}
+              </p>
+            </>
+          ) : (
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5" title={url}>
+              {url}
+            </p>
+          )}
         </div>
       </div>
 
@@ -555,8 +618,9 @@ function renderContent(
   const multiWordPattern = KNOWN_MULTI_WORD_MENTIONS.map((m) => escapeRegExp(m)).join('|')
   const mentionPattern = `@(?:${multiWordPattern}|[a-zA-Z0-9_]+)`
 
+  // Matches markdown links [Title](url), bold **bold**, italic *italic*, code `code`, mentions @mention, or bare URLs
   const regex = new RegExp(
-    `(\\*\\*(.+?)\\*\\*|\\*(.+?)\\*|\`([^\`]+)\`|(${mentionPattern})|https?:\\/\\/[^\\s<]+|data:image\\/[^\\s<]+)`,
+    `(\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s<)]+)\\))|(\\*\\*(.+?)\\*\\*)|(\\*([^*]+)\\*)|(\`([^\`]+)\`)|(${mentionPattern})|(https?:\\/\\/[^\\s<]+)|(data:image\\/[^\\s<]+)`,
     'g'
   )
 
@@ -571,32 +635,65 @@ function renderContent(
 
     const full = match[0]
 
-    if (match[2]) {
-      // **bold**
+    // 1. Markdown link: [Title](url) -> match[2] = label, match[3] = url
+    if (match[2] && match[3]) {
+      const label = match[2]
+      const url = match[3]
+
+      if (isGoogleUrl(url)) {
+        parts.push(
+          <GoogleLinkCard key={match.index} url={url} customTitle={label} />
+        )
+      } else if (isPdfUrl(url)) {
+        parts.push(
+          <PdfCard key={match.index} url={url} customTitle={label} onOpenModal={onOpenPdf} />
+        )
+      } else if (isDocUrl(url)) {
+        parts.push(
+          <DocCard key={match.index} url={url} customTitle={label} />
+        )
+      } else {
+        parts.push(
+          <a
+            key={match.index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title={url}
+            className="text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1 dark:text-blue-400 font-semibold cursor-pointer"
+          >
+            <span>{label}</span>
+            <ExternalLink className="w-3 h-3 inline shrink-0" />
+          </a>
+        )
+      }
+    } else if (match[5]) {
+      // 2. **bold**
       parts.push(
         <strong key={match.index} className="font-bold">
-          {match[2]}
+          {match[5]}
         </strong>
       )
-    } else if (match[3]) {
-      // *italic*
+    } else if (match[7]) {
+      // 3. *italic*
       parts.push(
         <em key={match.index} className="italic">
-          {match[3]}
+          {match[7]}
         </em>
       )
-    } else if (match[4]) {
-      // `code`
+    } else if (match[9]) {
+      // 4. `code`
       parts.push(
         <code
           key={match.index}
           className="bg-slate-100 text-pink-600 px-1 py-0.5 rounded text-[13px] font-mono dark:bg-slate-800 dark:text-pink-400"
         >
-          {match[4]}
+          {match[9]}
         </code>
       )
     } else if (full.startsWith('@')) {
-      // @Mention
+      // 5. @Mention
       const targetName = full.slice(1).toLowerCase()
       const isTargetingMe = currentAgent && (
         currentAgent.name.toLowerCase() === targetName ||
@@ -621,23 +718,23 @@ function renderContent(
         </span>
       )
     } else if (full.startsWith('http') || full.startsWith('data:image/')) {
-      // 1. PDF detection
+      // 6. Bare URLs
       if (isPdfUrl(full)) {
         parts.push(
           <PdfCard key={match.index} url={full} onOpenModal={onOpenPdf} />
         )
       } else if (isDocUrl(full)) {
-        // 2. Document attachment (Word / Excel / CSV)
+        // Document attachment (Word / Excel / CSV)
         parts.push(
           <DocCard key={match.index} url={full} />
         )
       } else if (isGoogleUrl(full)) {
-        // 3. Google Workspace Link (Sheets / Docs / Drive)
+        // Google Workspace Link (Option A: Auto title preview)
         parts.push(
           <GoogleLinkCard key={match.index} url={full} />
         )
       } else {
-        // 4. Check for GIF platform view pages
+        // Check for GIF platform view pages
         const embedUrl = full.startsWith('http') ? getGifEmbedUrl(full) : null
         if (embedUrl && embedUrl !== full) {
           parts.push(
@@ -656,7 +753,7 @@ function renderContent(
             </div>
           )
         } else if (isImageUrl(full) || (embedUrl === full)) {
-          // 5. Image with Interactive Lightbox on Click
+          // Image with Interactive Lightbox on Click
           parts.push(
             <div
               key={match.index}
@@ -684,7 +781,7 @@ function renderContent(
             </div>
           )
         } else {
-          // 6. Regular URL
+          // Regular URL
           parts.push(
             <a
               key={match.index}
