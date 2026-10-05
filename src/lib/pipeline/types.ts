@@ -76,7 +76,7 @@ export interface FilePattern {
 
 /** Standard file detection patterns — mirrors the Python FILE_DETECT list */
 export const FILE_PATTERNS: FilePattern[] = [
-  { pattern: /^rc_|Office_Perf.*Users/i, type: "rc", label: "RC (RingCentral)", hasInternalDate: true },
+  { pattern: /^rc_|Office_Perf|Yesterday_KPI/i, type: "rc", label: "RC (RingCentral)", hasInternalDate: true },
   { pattern: /Performance Breakdown Report/i, type: "hs", label: "Hearsay", hasInternalDate: false },
   { pattern: /Quotes Detail/i, type: "quotes", label: "Quotes", hasInternalDate: true },
   { pattern: /New Business/i, type: "nb", label: "NB (Items)", hasInternalDate: true },

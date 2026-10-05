@@ -47,7 +47,7 @@ const DATA_SOURCES: DataSource[] = [
     key: "calls", label: "Calls & Talk Time", system: "RingCentral / Ricochet", icon: Phone, color: "sky",
     uploadTypes: ["rc", "rico_ch", "rico_ap"],
     filePatterns: [
-      { pattern: /rc_|Office_Perf.*Users/i, type: "rc", label: "RC (RingCentral)", hasInternalDate: true },
+      { pattern: /rc_|Office_Perf|Yesterday_KPI/i, type: "rc", label: "RC (RingCentral)", hasInternalDate: true },
       { pattern: /^(ch-|report-ch-|call.*history)/i, type: "rico_ch", label: "Rico CH (Talk Time)", hasInternalDate: true },
       { pattern: /Agent Performance/i, type: "rico_ap", label: "Rico AP (Calls)", hasInternalDate: false },
     ],

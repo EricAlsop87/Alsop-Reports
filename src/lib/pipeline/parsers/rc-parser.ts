@@ -54,6 +54,9 @@ export function parseRC(
   if (sheetNames.includes("Users")) {
     logs.push("[rc-parser] Detected daily report format (Users sheet present)");
     return parseDailyReport(wb, fileName, spine, targetDate, logs);
+  } else if (/calls|queues/i.test(fileName)) {
+    logs.push(`[rc-parser] "${fileName}" is a RingCentral queue/call log export (not individual user metrics) — safely skipped.`);
+    return { type: "rc", rows: [], logs };
   } else {
     logs.push("[rc-parser] Detected multi-date export format");
     return parseMultiDate(wb, fileName, spine, targetDate, logs);

@@ -773,7 +773,7 @@ def _run_from_uploads(
 
     # Auto-detect and group files by type
     FILE_DETECT = [
-        (r"rc_|Office_Perf.*Users", "rc"),
+        (r"rc_|Office_Perf|Yesterday_KPI", "rc"),
         (r"Performance Breakdown Report", "hs"),
         (r"Quotes Detail Report", "quotes"),
         (r"New Business", "nb"),
