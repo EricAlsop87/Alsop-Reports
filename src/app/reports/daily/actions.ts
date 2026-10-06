@@ -39,7 +39,7 @@ export async function getDailyData(dateStr: string) {
       .eq("report_date", dateStr)
       .eq("agents.report_visible", true)
       .eq("agents.active", true)
-      .not("agents.team", "in", '("Managers","Support")')
+      .neq("agents.team", "Support")
       .order("created_at", { ascending: false })
 
     if (metricsErr) {
@@ -95,7 +95,7 @@ export async function getDailyData(dateStr: string) {
     const lastMonthItems = prevKPI.totals.nb_auto_items
 
     // Backfill: ensure all active + report-visible production agents are represented
-    // (Managers, Support, and on-leave agents are excluded from individual standup table rows).
+    // (Support and on-leave agents are excluded; Managers are included if they have MTD production).
     const { data: allActiveAgents } = await supabase
       .from("agents")
       .select("id, name, team, office, meeting_time, report_visible, active")
@@ -103,12 +103,26 @@ export async function getDailyData(dateStr: string) {
       .eq("report_visible", true)
       .not("team", "in", '("Managers","Support")')
 
+    // Also fetch active/visible managers to include any manager who has issued policies this month
+    const { data: activeManagers } = await supabase
+      .from("agents")
+      .select("id, name, team, office, meeting_time, report_visible, active")
+      .eq("active", true)
+      .eq("report_visible", true)
+      .eq("team", "Managers")
+
+    const producingManagers = (activeManagers || []).filter(
+      (mgr) => (agencyKPI.perAgentItems[mgr.id] || 0) > 0 || (agencyKPI.perAgentPremium[mgr.id] || 0) > 0
+    )
+
+    const candidateAgents = [...(allActiveAgents || []), ...producingManagers]
+
     const productionMetrics = (metrics || []).filter(
-      (m: any) => m.agents?.team !== "Managers" && m.agents?.team !== "Support"
+      (m: any) => m.agents?.team !== "Support" && (m.agents?.team !== "Managers" || (agencyKPI.perAgentItems[m.agent_id] || 0) > 0)
     )
     const existingIds = new Set(productionMetrics.map((m: any) => m.agent_id))
     const backfilled = [...productionMetrics]
-    for (const agent of (allActiveAgents || [])) {
+    for (const agent of candidateAgents) {
       if (!existingIds.has(agent.id)) {
         backfilled.push({
           agent_id: agent.id,

@@ -398,20 +398,24 @@ export default function CommunicationHub() {
       // Parse and create mentions
       const mentions = parseMentions(content, members)
       if (mentions.length > 0 && msg) {
-        await createMentionRecords(msg.id, mentions)
-        // Create notifications for mentioned users
-        const targetIds = await resolveMentionTargets(mentions)
-        for (const targetId of targetIds) {
-          if (targetId !== currentAgent.id) {
-            await createNotification({
-              agent_id: targetId,
-              type: "mention",
-              title: `${currentAgent.name} mentioned you`,
-              body: content.substring(0, 200),
-              conversation_id: selectedId,
-              message_id: msg.id,
-            })
+        try {
+          await createMentionRecords(msg.id, mentions)
+          // Create notifications for mentioned users
+          const targetIds = await resolveMentionTargets(mentions)
+          for (const targetId of targetIds) {
+            if (targetId !== currentAgent.id) {
+              await createNotification({
+                agent_id: targetId,
+                type: "mention",
+                title: `${currentAgent.name} mentioned you`,
+                body: content.substring(0, 200),
+                conversation_id: selectedId,
+                message_id: msg.id,
+              })
+            }
           }
+        } catch (mentionErr) {
+          console.error('[mentions] Failed to process mentions/notifications:', mentionErr)
         }
       }
 

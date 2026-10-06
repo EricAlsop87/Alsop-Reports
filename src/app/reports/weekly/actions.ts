@@ -101,7 +101,7 @@ export async function getWeeklyData(weekStartStr: string, weekEndStr: string) {
       .lte("report_date", weekEndStr)
       .eq("agents.active", true)
       .eq("agents.report_visible", true)
-      .not("agents.team", "in", '("Managers","Support")')
+      .neq("agents.team", "Support")
 
     // 2. Fetch weekly manual metrics for this week
     const { data: weeklyManual } = await supabase
@@ -184,7 +184,7 @@ export async function getWeeklyData(weekStartStr: string, weekEndStr: string) {
 
     // ── Aggregate daily rows into per-agent weekly totals ──
     // Pre-populate agentMap with active/visible production agents
-    // (Managers, Support, and on-leave agents are excluded from individual weekly table rows).
+    // (Support and on-leave agents are excluded; Managers are included if they have MTD production).
     const { data: allActiveAgents } = await supabase
       .from("agents")
       .select("id, name, team, office, meeting_time, report_visible, active")
@@ -192,9 +192,23 @@ export async function getWeeklyData(weekStartStr: string, weekEndStr: string) {
       .eq("report_visible", true)
       .not("team", "in", '("Managers","Support")')
 
+    // Also fetch active/visible managers to include any manager who has issued policies this month
+    const { data: activeManagers } = await supabase
+      .from("agents")
+      .select("id, name, team, office, meeting_time, report_visible, active")
+      .eq("active", true)
+      .eq("report_visible", true)
+      .eq("team", "Managers")
+
+    const producingManagers = (activeManagers || []).filter(
+      (mgr) => (agencyKPI.perAgentItems[mgr.id] || 0) > 0 || (agencyKPI.perAgentPremium[mgr.id] || 0) > 0
+    )
+
+    const candidateAgents = [...(allActiveAgents || []), ...producingManagers]
+
     const agentMap: Record<string, any> = {}
 
-    for (const agent of (allActiveAgents || [])) {
+    for (const agent of candidateAgents) {
       agentMap[agent.id] = {
         agent_id: agent.id,
         agents: agent,

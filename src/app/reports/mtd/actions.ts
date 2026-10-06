@@ -53,7 +53,7 @@ export async function getMTDData(year: number, month: number) {
         .lte("report_date", endDate)
         .eq("agents.active", true)
         .eq("agents.report_visible", true)
-        .not("agents.team", "in", '("Managers","Support")')
+        .neq("agents.team", "Support")
         .range(from, to)
     )
 
@@ -154,7 +154,7 @@ export async function getMTDData(year: number, month: number) {
 
     // ── Aggregate daily rows into per-agent monthly totals ──
     // Pre-populate agentMap with active/visible production agents
-    // (Managers, Support, and on-leave agents are excluded from individual MTD table rows).
+    // (Support and on-leave agents are excluded; Managers are included if they have MTD production).
     const { data: allActiveAgents } = await supabase
       .from("agents")
       .select("id, name, team, office, meeting_time, report_visible, active")
@@ -162,9 +162,23 @@ export async function getMTDData(year: number, month: number) {
       .eq("report_visible", true)
       .not("team", "in", '("Managers","Support")')
 
+    // Also fetch active/visible managers to include any manager who has issued policies this month
+    const { data: activeManagers } = await supabase
+      .from("agents")
+      .select("id, name, team, office, meeting_time, report_visible, active")
+      .eq("active", true)
+      .eq("report_visible", true)
+      .eq("team", "Managers")
+
+    const producingManagers = (activeManagers || []).filter(
+      (mgr) => (agencyKPI.perAgentItems[mgr.id] || 0) > 0 || (agencyKPI.perAgentPremium[mgr.id] || 0) > 0
+    )
+
+    const candidateAgents = [...(allActiveAgents || []), ...producingManagers]
+
     const agentMap: Record<string, any> = {}
 
-    for (const agent of (allActiveAgents || [])) {
+    for (const agent of candidateAgents) {
       agentMap[agent.id] = {
         agent_id: agent.id,
         agents: agent,

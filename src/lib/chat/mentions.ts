@@ -106,12 +106,21 @@ export async function createMentionRecords(
 ): Promise<void> {
   if (mentions.length === 0) return
 
-  const rows = mentions.map((m) => ({
-    message_id: messageId,
-    mentioned_agent_id: m.agent_id ?? null,
-    mention_type: m.type,
-    mention_target: m.target,
-  }))
+  // Map mention types to match DB check constraint: ('user', 'team', 'role', 'everyone')
+  const rows = mentions.map((m) => {
+    let dbType: 'user' | 'team' | 'role' | 'everyone' = 'everyone'
+    if (m.type === 'agent') dbType = 'user'
+    else if (m.type === 'office' || m.type === 'team') dbType = 'team'
+    else if (m.type === 'role') dbType = 'role'
+    else dbType = 'everyone'
+
+    return {
+      message_id: messageId,
+      mentioned_agent_id: m.agent_id ?? null,
+      mention_type: dbType,
+      mention_target: m.target,
+    }
+  })
 
   const { error } = await supabase
     .from('chat_message_mentions')
@@ -119,7 +128,6 @@ export async function createMentionRecords(
 
   if (error) {
     console.error('[mentions] Failed to create mention records:', error)
-    throw error
   }
 }
 
