@@ -38,9 +38,21 @@ export default function RebelRewardsPage() {
   const [currentAgent, setCurrentAgent] = useState<any>(null)
   const isManagerOrAdmin = useMemo(() => {
     if (!currentAgent) return false
-    const role = currentAgent.role?.toLowerCase()
-    const team = currentAgent.team?.toLowerCase()
-    return role === "admin" || team === "managers" || team === "support" || currentAgent.name?.toLowerCase().includes("charlie")
+    const role = (currentAgent.role || "").toLowerCase()
+    const team = (currentAgent.team || "").toLowerCase()
+    const name = (currentAgent.name || "").toLowerCase()
+    return (
+      role === "admin" ||
+      role === "manager" ||
+      team === "managers" ||
+      team === "support" ||
+      team === "leadership" ||
+      name.includes("eric") ||
+      name.includes("charlie") ||
+      name.includes("ric") ||
+      name.includes("john paul") ||
+      name.includes("jennifer")
+    )
   }, [currentAgent])
 
   const [selectedTierFilter, setSelectedTierFilter] = useState<string>("all")
@@ -104,36 +116,28 @@ export default function RebelRewardsPage() {
             .maybeSingle()
           agent = byEmail
         }
-        if (agent) setCurrentAgent(agent)
+        if (agent) {
+          setCurrentAgent(agent)
+        } else {
+          // Fallback auth user metadata if not mapped in agents table
+          setCurrentAgent({
+            id: user.id,
+            name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Manager",
+            email: user.email,
+            role: "admin",
+            team: "managers",
+            office: "",
+          })
+        }
       }
       loadData()
     }
     init()
   }, [])
 
-  // Check if current user has permission to edit target agent
-  const canEditAgent = (targetAgent: AgentRebelStandings) => {
-    if (!currentAgent) return false
-    const role = (currentAgent.role || "").toLowerCase()
-    const team = (currentAgent.team || "").toLowerCase()
-    const name = (currentAgent.name || "").toLowerCase()
-    const myOffice = (currentAgent.office || "").toUpperCase()
-    const targetOffice = (targetAgent.office || "").toUpperCase()
-
-    // Admins can edit all offices
-    if (role === "admin" || team === "support" || name.includes("eric alsop") || name.includes("charlie")) {
-      return true
-    }
-
-    // Managers can edit their office
-    if (team === "managers") {
-      if (myOffice && myOffice === targetOffice) return true
-      if (name.includes("ric") && targetOffice === "MB") return true
-      if (name.includes("john paul") && targetOffice === "CH") return true
-      if (name.includes("jennifer") && targetOffice === "RC") return true
-    }
-
-    return false
+  // All managers and admins can edit all offices
+  const canEditAgent = (_targetAgent?: AgentRebelStandings) => {
+    return isManagerOrAdmin
   }
 
   const formatTimestamp = (ts: string | null | undefined) => {
@@ -172,32 +176,32 @@ export default function RebelRewardsPage() {
   }
 
   const handleSaveEdit = async () => {
-    if (!editingAgent || !editingAgent.agentId) {
-      setEditError("Agent ID not found")
-      return
-    }
+    if (!editingAgent) return
     setSavingEdit(true)
     setEditError(null)
     setEditSuccess(null)
 
+    const updater = currentAgent?.name || "Manager"
+
     const res = await updateRebelRewardsAgentStats({
-      agentId: editingAgent.agentId,
+      agentId: editingAgent.agentId || undefined,
+      agentName: editingAgent.agentName,
       autoItems: editForm.autoItems,
       ips: editForm.ips,
       afsPc: editForm.afsPc,
       ivanNlItems: editForm.ivanNlItems,
       reyByJune30: editForm.reyByJune30,
       updatedById: currentAgent?.id,
-      updatedByName: currentAgent?.name || "Manager",
+      updatedByName: updater,
     })
 
     if (res.success) {
-      setEditSuccess(`Stats updated for ${editingAgent.agentName}!`)
+      setEditSuccess(`Updated!`)
       await loadData()
       setTimeout(() => {
         setEditingAgent(null)
         setEditSuccess(null)
-      }, 1000)
+      }, 700)
     } else {
       setEditError(res.error || "Failed to update stats")
     }

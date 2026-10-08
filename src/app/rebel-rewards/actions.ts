@@ -254,6 +254,7 @@ export async function uploadRebelRewardsExcel(base64Data: string, fileName: stri
  */
 export async function updateRebelRewardsAgentStats({
   agentId,
+  agentName,
   autoItems,
   ips,
   afsPc,
@@ -262,7 +263,8 @@ export async function updateRebelRewardsAgentStats({
   updatedById,
   updatedByName,
 }: {
-  agentId: string
+  agentId?: string
+  agentName?: string
   autoItems: number
   ips: number
   afsPc: number
@@ -270,20 +272,33 @@ export async function updateRebelRewardsAgentStats({
   reyByJune30?: boolean
   updatedById?: string
   updatedByName?: string
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; updatedAt?: string; updatedByName?: string; error?: string }> {
   noStore()
   try {
-    const { data: targetAgent, error: fetchErr } = await supabase
-      .from("agents")
-      .select("id, name, office, system_variants")
-      .eq("id", agentId)
-      .single()
+    let targetAgent: any = null
 
-    if (fetchErr || !targetAgent) {
-      return { success: false, error: "Agent not found" }
+    if (agentId) {
+      const { data } = await supabase
+        .from("agents")
+        .select("id, name, office, system_variants")
+        .eq("id", agentId)
+        .maybeSingle()
+      targetAgent = data
+    }
+
+    if (!targetAgent && agentName) {
+      const { data: allAgents } = await supabase
+        .from("agents")
+        .select("id, name, office, system_variants")
+      targetAgent = resolveContestAgentMatch(agentName, allAgents || [])
+    }
+
+    if (!targetAgent) {
+      return { success: false, error: "Agent not found in database" }
     }
 
     const nowIso = new Date().toISOString()
+    const updater = updatedByName || "Manager"
     const existingVariants = (targetAgent.system_variants as Record<string, any>) || {}
 
     const updatedVariants = {
@@ -296,7 +311,7 @@ export async function updateRebelRewardsAgentStats({
         rey_by_june_30: !!reyByJune30,
         updated_at: nowIso,
         updated_by_id: updatedById || null,
-        updated_by_name: updatedByName || "Manager",
+        updated_by_name: updater,
       },
     }
 
@@ -306,13 +321,13 @@ export async function updateRebelRewardsAgentStats({
         system_variants: updatedVariants,
         updated_at: nowIso,
       })
-      .eq("id", agentId)
+      .eq("id", targetAgent.id)
 
     if (updateErr) {
       return { success: false, error: updateErr.message }
     }
 
-    return { success: true }
+    return { success: true, updatedAt: nowIso, updatedByName: updater }
   } catch (err: any) {
     console.error("Error updating Rebel Rewards agent stats:", err)
     return { success: false, error: err?.message || "Failed to update agent stats" }
