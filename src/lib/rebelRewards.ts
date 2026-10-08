@@ -152,6 +152,8 @@ export interface AgentRebelStandings {
   highestTier: "none" | "anakin" | "rey" | "luke" | "obiwan"
   totalPayout: number
   payoutBreakdown: string[]
+  updatedAt?: string | null
+  updatedByName?: string | null
   nextTier: RebelRewardTier | null
   nextTierProgress: {
     autoItemsNeeded: number
@@ -178,6 +180,8 @@ export function calculateAgentRebelStatus(
     office?: string
     team?: string
     reyByJune30?: boolean
+    updatedAt?: string | null
+    updatedByName?: string | null
   }
 ): AgentRebelStandings {
   const autoItems = Number(rawAuto) || 0
@@ -362,6 +366,8 @@ export function calculateAgentRebelStatus(
     highestTier,
     totalPayout,
     payoutBreakdown,
+    updatedAt: extra?.updatedAt || null,
+    updatedByName: extra?.updatedByName || null,
     nextTier,
     nextTierProgress,
   }

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import Link from "next/link"
-import { getRebelRewardsStandings, uploadRebelRewardsExcel } from "./actions"
-import { REBEL_TIERS, AgentRebelStandings, RebelRewardTier } from "@/lib/rebelRewards"
+import { getRebelRewardsStandings, uploadRebelRewardsExcel, updateRebelRewardsAgentStats } from "./actions"
+import { REBEL_TIERS, AgentRebelStandings, RebelRewardTier, calculateAgentRebelStatus } from "@/lib/rebelRewards"
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 import { Badge } from "@/components/ui/Badge"
 import { FilterBar, FilterState } from "@/components/ui/FilterBar"
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/Button"
 import {
   Trophy, Upload, Car, Heart, Home,
   Search, CheckCircle2, X, Target, Check,
-  ArrowUpDown, ArrowUp, ArrowDown
+  ArrowUpDown, ArrowUp, ArrowDown,
+  Edit3, Clock, Save, RefreshCw, AlertCircle
 } from "lucide-react"
 
 // Tier milestone thresholds for the multi-tier progress bars
@@ -32,6 +33,7 @@ export default function RebelRewardsPage() {
   })
   const [periodLabel, setPeriodLabel] = useState("YTD July 2026")
   const [lastUpdated, setLastUpdated] = useState("2026-07-31")
+  const [lastUpdatedBy, setLastUpdatedBy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentAgent, setCurrentAgent] = useState<any>(null)
   const isManagerOrAdmin = useMemo(() => {
@@ -54,6 +56,19 @@ export default function RebelRewardsPage() {
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Edit Modal State
+  const [editingAgent, setEditingAgent] = useState<AgentRebelStandings | null>(null)
+  const [editForm, setEditForm] = useState({
+    autoItems: 0,
+    ips: 0,
+    afsPc: 0,
+    ivanNlItems: 0,
+    reyByJune30: false,
+  })
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editSuccess, setEditSuccess] = useState<string | null>(null)
+
   const loadData = async () => {
     setLoading(true)
     const res = await getRebelRewardsStandings()
@@ -62,6 +77,7 @@ export default function RebelRewardsPage() {
       setSummary(res.summary)
       setPeriodLabel(res.periodLabel)
       setLastUpdated(res.lastUpdated)
+      setLastUpdatedBy(res.lastUpdatedBy || null)
     }
     setLoading(false)
   }
@@ -71,14 +87,139 @@ export default function RebelRewardsPage() {
       const supabase = createSupabaseBrowserClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: agent } = await supabase
-          .from("agents").select("id, name, email, role, team, office").eq("id", user.id).single()
+        let agent = null
+        const { data: byAuth } = await supabase
+          .from("agents")
+          .select("id, name, email, role, team, office")
+          .eq("auth_user_id", user.id)
+          .maybeSingle()
+
+        if (byAuth) {
+          agent = byAuth
+        } else {
+          const { data: byEmail } = await supabase
+            .from("agents")
+            .select("id, name, email, role, team, office")
+            .eq("email", user.email)
+            .maybeSingle()
+          agent = byEmail
+        }
         if (agent) setCurrentAgent(agent)
       }
       loadData()
     }
     init()
   }, [])
+
+  // Check if current user has permission to edit target agent
+  const canEditAgent = (targetAgent: AgentRebelStandings) => {
+    if (!currentAgent) return false
+    const role = (currentAgent.role || "").toLowerCase()
+    const team = (currentAgent.team || "").toLowerCase()
+    const name = (currentAgent.name || "").toLowerCase()
+    const myOffice = (currentAgent.office || "").toUpperCase()
+    const targetOffice = (targetAgent.office || "").toUpperCase()
+
+    // Admins can edit all offices
+    if (role === "admin" || team === "support" || name.includes("eric alsop") || name.includes("charlie")) {
+      return true
+    }
+
+    // Managers can edit their office
+    if (team === "managers") {
+      if (myOffice && myOffice === targetOffice) return true
+      if (name.includes("ric") && targetOffice === "MB") return true
+      if (name.includes("john paul") && targetOffice === "CH") return true
+      if (name.includes("jennifer") && targetOffice === "RC") return true
+    }
+
+    return false
+  }
+
+  const formatTimestamp = (ts: string | null | undefined) => {
+    if (!ts) return null
+    try {
+      if (ts.includes("T")) {
+        const d = new Date(ts)
+        if (isNaN(d.getTime())) return ts
+        return d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }) + " at " + d.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+      }
+      return ts
+    } catch {
+      return ts
+    }
+  }
+
+  const handleOpenEdit = (agent: AgentRebelStandings) => {
+    setEditingAgent(agent)
+    setEditForm({
+      autoItems: agent.autoItems,
+      ips: agent.ips,
+      afsPc: agent.afsPc,
+      ivanNlItems: agent.ivanNlItems,
+      reyByJune30: !!(agent as any).rey?.yodaBonusEarned,
+    })
+    setEditError(null)
+    setEditSuccess(null)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingAgent || !editingAgent.agentId) {
+      setEditError("Agent ID not found")
+      return
+    }
+    setSavingEdit(true)
+    setEditError(null)
+    setEditSuccess(null)
+
+    const res = await updateRebelRewardsAgentStats({
+      agentId: editingAgent.agentId,
+      autoItems: editForm.autoItems,
+      ips: editForm.ips,
+      afsPc: editForm.afsPc,
+      ivanNlItems: editForm.ivanNlItems,
+      reyByJune30: editForm.reyByJune30,
+      updatedById: currentAgent?.id,
+      updatedByName: currentAgent?.name || "Manager",
+    })
+
+    if (res.success) {
+      setEditSuccess(`Stats updated for ${editingAgent.agentName}!`)
+      await loadData()
+      setTimeout(() => {
+        setEditingAgent(null)
+        setEditSuccess(null)
+      }, 1000)
+    } else {
+      setEditError(res.error || "Failed to update stats")
+    }
+    setSavingEdit(false)
+  }
+
+  const previewStatus = useMemo(() => {
+    if (!editingAgent) return null
+    return calculateAgentRebelStatus(
+      editingAgent.agentName,
+      editForm.autoItems,
+      editForm.ips,
+      editForm.afsPc,
+      editForm.ivanNlItems,
+      {
+        agentId: editingAgent.agentId,
+        office: editingAgent.office,
+        team: editingAgent.team,
+        reyByJune30: editForm.reyByJune30,
+      }
+    )
+  }, [editingAgent, editForm])
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -180,12 +321,20 @@ export default function RebelRewardsPage() {
           <div className="relative z-10 p-4 sm:p-6 md:p-8">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="space-y-2 flex-1 min-w-0">
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-[11px] font-semibold text-blue-300">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-400" />
-                  </span>
-                  LIVE • {periodLabel}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-[11px] font-semibold text-blue-300">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-400" />
+                    </span>
+                    LIVE • {periodLabel}
+                  </div>
+                  {lastUpdated && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-sm border border-emerald-400/40 text-[11px] font-semibold text-emerald-300 shadow-sm">
+                      <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Updated as of <strong className="text-white font-bold">{formatTimestamp(lastUpdated)}</strong>{lastUpdatedBy ? ` by ${lastUpdatedBy}` : ''}</span>
+                    </div>
+                  )}
                 </div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-white uppercase drop-shadow-lg">
                   Rebel Rewards <span className="text-blue-400">2026</span>
@@ -274,9 +423,17 @@ export default function RebelRewardsPage() {
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
           <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" /> Leaderboard
-              </h2>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" /> Leaderboard
+                </h2>
+                {lastUpdated && (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-semibold text-emerald-800">
+                    <Clock className="w-3 h-3 text-emerald-600" />
+                    Updated as of {formatTimestamp(lastUpdated)}{lastUpdatedBy ? ` by ${lastUpdatedBy}` : ''}
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-slate-400 font-medium mt-0.5 hidden sm:block">Click any advisor for full progress breakdown</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -318,8 +475,195 @@ export default function RebelRewardsPage() {
                   <tr><td colSpan={7} className="py-10 text-center text-slate-400 text-sm">No advisors found.</td></tr>
                 ) : (
                   filteredStandings.map((agent, i) => {
+                    const isEditing = editingAgent?.agentName === agent.agentName
                     const colors = tierColors[agent.highestTier]
                     const nt = agent.nextTier
+
+                    if (isEditing) {
+                      const previewTier = previewStatus ? previewStatus.highestTier : agent.highestTier
+                      const previewColors = tierColors[previewTier]
+                      const previewPayout = previewStatus ? previewStatus.totalPayout : agent.totalPayout
+                      const previewNt = previewStatus?.nextTier ?? agent.nextTier
+                      const autoTarget = previewNt?.targets.autoItems || 360
+                      const autoPct = Math.min(100, Math.round((editForm.autoItems / autoTarget) * 100))
+                      const ipsTarget = previewNt?.targets.ips || 5
+                      const ivanTarget = previewNt?.targets.ivanNlItems || 65
+                      const ivanPct = Math.min(100, Math.round((editForm.ivanNlItems / ivanTarget) * 100))
+
+                      return (
+                        <tr
+                          key={agent.agentName}
+                          onClick={e => e.stopPropagation()}
+                          className="bg-blue-50/70 border-y-2 border-blue-500 shadow-sm transition-all"
+                        >
+                          {/* Col 1: Rank */}
+                          <td className="py-3 px-3 text-center font-mono font-bold text-blue-600 text-[11px] align-top pt-3.5">
+                            {i + 1}
+                          </td>
+
+                          {/* Col 2: Advisor + Inline Controls */}
+                          <td className="py-3 px-3 align-top">
+                            <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                              {agent.agentName}
+                              <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                                Editing
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {agent.office} • {agent.team}
+                            </div>
+
+                            {/* Early Rey bonus toggle */}
+                            <label className="flex items-center gap-1.5 mt-2 text-[10px] text-amber-900 bg-amber-100/80 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-300/80 cursor-pointer w-fit select-none font-semibold">
+                              <input
+                                type="checkbox"
+                                checked={editForm.reyByJune30}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, reyByJune30: e.target.checked }))}
+                                className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-3 h-3"
+                              />
+                              <span>Early Rey (+$2k Yoda)</span>
+                            </label>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1.5 mt-2.5">
+                              <button
+                                type="button"
+                                onClick={handleSaveEdit}
+                                disabled={savingEdit}
+                                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                              >
+                                {savingEdit ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingAgent(null)}
+                                disabled={savingEdit}
+                                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+
+                            {editSuccess && (
+                              <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-1.5">
+                                <Check className="w-3 h-3" /> {editSuccess}
+                              </span>
+                            )}
+                            {editError && (
+                              <span className="text-[10px] text-rose-600 font-bold flex items-center gap-1 mt-1.5">
+                                <AlertCircle className="w-3 h-3" /> {editError}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Col 3: Live Tier */}
+                          <td className="py-3 px-3 text-center align-top pt-3.5">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase border transition-all ${previewColors.badge}`}>
+                                {previewTier === "none" ? "Padawan" : previewTier}
+                              </span>
+                              <span className="text-[9px] font-mono text-blue-600 font-bold uppercase tracking-wider">Live</span>
+                            </div>
+                          </td>
+
+                          {/* Col 4: Live Bounty Summary */}
+                          <td className="py-3 px-3 text-center font-mono font-bold align-top pt-3.5">
+                            <div className="flex flex-col items-center gap-1">
+                              {previewPayout > 0 ? (
+                                <span className="text-emerald-700 font-black text-sm">
+                                  ${previewPayout.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 text-xs">--</span>
+                              )}
+                              <span className="text-[9px] font-mono text-emerald-600 font-bold uppercase tracking-wider">Summary</span>
+                            </div>
+                          </td>
+
+                          {/* Col 5: Auto Input */}
+                          <td className="py-3 px-3 text-center align-top pt-3">
+                            <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={editForm.autoItems}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, autoItems: Math.max(0, parseInt(e.target.value) || 0) }))}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
+                                  className="w-16 h-7 text-center font-mono font-bold text-xs bg-white border-2 border-blue-500 rounded-md shadow-xs focus:ring-2 focus:ring-blue-200 outline-none"
+                                  autoFocus
+                                />
+                                <span className="font-mono text-[11px] text-slate-400 font-semibold">
+                                  /{autoTarget}
+                                </span>
+                              </div>
+                              <div className="w-full max-w-[64px] h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${editForm.autoItems >= autoTarget ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${autoPct}%` }} />
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Col 6: AFS (IPS) Inputs */}
+                          <td className="py-3 px-3 text-center align-top pt-3">
+                            <div className="flex flex-col items-center gap-1.5 min-w-[85px]">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={editForm.ips}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, ips: Math.max(0, parseInt(e.target.value) || 0) }))}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
+                                  className="w-12 h-7 text-center font-mono font-bold text-xs bg-white border-2 border-blue-500 rounded-md shadow-xs focus:ring-2 focus:ring-blue-200 outline-none"
+                                  title="AFS IPS Count"
+                                />
+                                <span className="font-mono text-[11px] text-slate-400 font-semibold">
+                                  /{ipsTarget}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                <span className="text-[10px] text-slate-500 font-bold">$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="100"
+                                  value={editForm.afsPc}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, afsPc: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
+                                  className="w-16 h-6 text-center font-mono text-[10px] font-semibold bg-white border border-slate-300 rounded focus:border-blue-500 outline-none"
+                                  placeholder="PC $"
+                                  title="AFS PC Premium ($)"
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Col 7: Ivan+NL Input */}
+                          <td className="py-3 px-3 text-center align-top pt-3">
+                            <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={editForm.ivanNlItems}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, ivanNlItems: Math.max(0, parseInt(e.target.value) || 0) }))}
+                                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
+                                  className="w-14 h-7 text-center font-mono font-bold text-xs bg-white border-2 border-blue-500 rounded-md shadow-xs focus:ring-2 focus:ring-blue-200 outline-none"
+                                  title="Ivan+NL Items"
+                                />
+                                <span className="font-mono text-[11px] text-slate-400 font-semibold">
+                                  /{ivanTarget}
+                                </span>
+                              </div>
+                              <div className="w-full max-w-[64px] h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${editForm.ivanNlItems >= ivanTarget ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${ivanPct}%` }} />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    }
+
                     return (
                       <tr key={agent.agentName} onClick={() => { setSelectedAgent(agent); setModalTargetTierId(agent.nextTier?.id || "obiwan"); }} className="hover:bg-blue-50/40 transition-colors cursor-pointer group">
                         <td className="py-2 px-3 text-center font-mono font-bold text-slate-300 text-[11px]">{i + 1}</td>
@@ -329,8 +673,29 @@ export default function RebelRewardsPage() {
                             {agent.agentId && (
                               <Link href={`/reports/agent/${agent.agentId}`} onClick={e => e.stopPropagation()} className="text-slate-300 hover:text-blue-600"><ExternalLinkIcon className="w-3 h-3" /></Link>
                             )}
+                            {canEditAgent(agent) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleOpenEdit(agent)
+                                }}
+                                className="p-1 rounded hover:bg-blue-100 text-blue-600 transition-colors ml-1 cursor-pointer"
+                                title={`Edit contest stats for ${agent.agentName}`}
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">{agent.office} • {agent.team}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <span>{agent.office} • {agent.team}</span>
+                            {agent.updatedAt && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 font-semibold">
+                                <Clock className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                                Updated {formatTimestamp(agent.updatedAt)}{agent.updatedByName ? ` by ${agent.updatedByName}` : ''}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2 px-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colors.badge}`}>
@@ -366,16 +731,155 @@ export default function RebelRewardsPage() {
               <div className="py-10 text-center text-slate-400 text-sm">No advisors found.</div>
             ) : (
               filteredStandings.map((agent, i) => {
+                const isEditing = editingAgent?.agentName === agent.agentName
                 const colors = tierColors[agent.highestTier]
                 const nt = agent.nextTier
+
+                if (isEditing) {
+                  const previewTier = previewStatus ? previewStatus.highestTier : agent.highestTier
+                  const previewColors = tierColors[previewTier]
+                  const previewPayout = previewStatus ? previewStatus.totalPayout : agent.totalPayout
+
+                  return (
+                    <div key={agent.agentName} className="p-3.5 bg-blue-50/70 border-2 border-blue-500 rounded-xl space-y-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                            {agent.agentName}
+                            <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                              Editing
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-500">{agent.office} • {agent.team}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${previewColors.badge}`}>
+                            {previewTier === "none" ? "Padawan" : previewTier}
+                          </span>
+                          {previewPayout > 0 && (
+                            <span className="font-mono font-black text-xs text-emerald-700">
+                              ${previewPayout.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-1">
+                            <Car className="w-3 h-3 text-blue-600" /> Auto Items
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editForm.autoItems}
+                            onChange={e => setEditForm(prev => ({ ...prev, autoItems: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full px-2.5 py-1.5 font-mono font-bold text-xs bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-1">
+                            <Heart className="w-3 h-3 text-rose-500" /> AFS (IPS) Count
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editForm.ips}
+                            onChange={e => setEditForm(prev => ({ ...prev, ips: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full px-2.5 py-1.5 font-mono font-bold text-xs bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-1">
+                            <span className="text-rose-500 font-bold">$</span> AFS PC ($)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="100"
+                            value={editForm.afsPc}
+                            onChange={e => setEditForm(prev => ({ ...prev, afsPc: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                            className="w-full px-2.5 py-1.5 font-mono font-bold text-xs bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-1">
+                            <Home className="w-3 h-3 text-amber-500" /> Ivan+NL Items
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={editForm.ivanNlItems}
+                            onChange={e => setEditForm(prev => ({ ...prev, ivanNlItems: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full px-2.5 py-1.5 font-mono font-bold text-xs bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-[11px] text-amber-900 bg-amber-100/80 p-2 rounded-lg border border-amber-300/80 cursor-pointer select-none font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={editForm.reyByJune30}
+                          onChange={e => setEditForm(prev => ({ ...prev, reyByJune30: e.target.checked }))}
+                          className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                        />
+                        <span>Early Rey Bonus (+$2k Yoda)</span>
+                      </label>
+
+                      {editSuccess && (
+                        <div className="text-xs text-emerald-700 font-bold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> {editSuccess}
+                        </div>
+                      )}
+                      {editError && (
+                        <div className="text-xs text-rose-700 font-bold flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" /> {editError}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <Button size="sm" variant="outline" disabled={savingEdit} onClick={() => setEditingAgent(null)} className="text-xs">
+                          Cancel
+                        </Button>
+                        <Button size="sm" disabled={savingEdit} onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1">
+                          {savingEdit ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                }
+
                 return (
                   <div key={agent.agentName} onClick={() => { setSelectedAgent(agent); setModalTargetTierId(agent.nextTier?.id || "obiwan"); }} className="p-3 cursor-pointer hover:bg-blue-50/30 transition-colors active:bg-blue-50/50">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[10px] font-mono font-bold text-slate-300 w-5 text-center flex-shrink-0">{i + 1}</span>
                         <div className="min-w-0">
-                          <div className="font-bold text-sm text-slate-900 truncate">{agent.agentName}</div>
-                          <div className="text-[10px] text-slate-400">{agent.office} • {agent.team}</div>
+                          <div className="font-bold text-sm text-slate-900 truncate flex items-center gap-1.5">
+                            {agent.agentName}
+                            {canEditAgent(agent) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleOpenEdit(agent)
+                                }}
+                                className="p-1 rounded hover:bg-blue-100 text-blue-600"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <span>{agent.office} • {agent.team}</span>
+                            {agent.updatedAt && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 font-semibold">
+                                <Clock className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                                Updated {formatTimestamp(agent.updatedAt)}{agent.updatedByName ? ` by ${agent.updatedByName}` : ''}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -417,6 +921,19 @@ export default function RebelRewardsPage() {
                   <div className="text-xs text-slate-500 mt-0.5">{selectedAgent.office || "HQ"} • {selectedAgent.team || "OPS"}</div>
                 </div>
                 <div className="flex items-center gap-3">
+                  {canEditAgent(selectedAgent) && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const target = selectedAgent
+                        setSelectedAgent(null)
+                        handleOpenEdit(target)
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" /> Edit in Table
+                    </Button>
+                  )}
                   <div className="text-center">
                     <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Rank</div>
                     <div className={`text-sm font-black uppercase ${tierColors[selectedAgent.highestTier].text}`}>
@@ -548,6 +1065,12 @@ export default function RebelRewardsPage() {
                       </div>
                     )
                   })()}
+                  {selectedAgent.updatedAt && (
+                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Last updated {formatTimestamp(selectedAgent.updatedAt)} {selectedAgent.updatedByName ? `by ${selectedAgent.updatedByName}` : ''}</span>
+                    </div>
+                  )}
                 </div>
               )
             })()}
@@ -574,6 +1097,8 @@ export default function RebelRewardsPage() {
           </div>
         </div>
       )}
+
+
     </div>
   )
 }

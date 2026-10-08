@@ -17,6 +17,7 @@ export async function getRebelRewardsStandings(): Promise<{
   standings: AgentRebelStandings[]
   periodLabel: string
   lastUpdated: string
+  lastUpdatedBy?: string
   summary: {
     totalAgents: number
     prizeEarnersCount: number
@@ -33,7 +34,7 @@ export async function getRebelRewardsStandings(): Promise<{
     // 1. Fetch ALL agents from DB to match against Excel sheet
     const { data: dbAgents } = await supabase
       .from("agents")
-      .select("id, name, office, team, active, report_visible")
+      .select("id, name, office, team, active, report_visible, system_variants")
 
     const agentsList = dbAgents || []
     const sourceRows = customUploadedRows || REBEL_REWARDS_2026_SEED
@@ -52,6 +53,9 @@ export async function getRebelRewardsStandings(): Promise<{
       }
     }
 
+    let latestTimestamp: string | null = null
+    let latestUpdater: string | null = null
+
     // 2. Compute Rebel standings for each row
     const standings: AgentRebelStandings[] = sourceRows
       .filter(row => {
@@ -68,9 +72,25 @@ export async function getRebelRewardsStandings(): Promise<{
       })
       .map(row => {
         const matchedAgent = resolveContestAgentMatch(row.name, agentsList)
-        // Use live YTD auto items from daily uploads if available, otherwise fall back to contest report
+        const customRR = (matchedAgent?.system_variants as any)?.rebel_rewards
+
+        // Use custom numbers if edited, otherwise fallback to live YTD or contest seed
         const liveAutoItems = matchedAgent?.id ? liveAutoMap.get(matchedAgent.id) : undefined
-        const autoItems = liveAutoItems !== undefined ? liveAutoItems : row.autoItems
+        const autoItems = customRR?.auto_items !== undefined
+          ? Number(customRR.auto_items)
+          : (liveAutoItems !== undefined ? liveAutoItems : row.autoItems)
+
+        const ips = customRR?.ips !== undefined ? Number(customRR.ips) : row.ips
+        const afsPc = customRR?.afs_pc !== undefined ? Number(customRR.afs_pc) : row.afsPc
+        const ivanNlItems = customRR?.ivan_nl_items !== undefined ? Number(customRR.ivan_nl_items) : row.ivanNlItems
+        const reyByJune30 = customRR?.rey_by_june_30 !== undefined ? !!customRR.rey_by_june_30 : row.reyByJune30
+        const updatedAt = customRR?.updated_at || null
+        const updatedByName = customRR?.updated_by_name || null
+
+        if (updatedAt && (!latestTimestamp || new Date(updatedAt) > new Date(latestTimestamp))) {
+          latestTimestamp = updatedAt
+          latestUpdater = updatedByName
+        }
 
         // Use the agent's clean display name from DB if matched (e.g. "Nancy G", "Rosie", "Ric Becerra")
         let displayName = matchedAgent?.name || row.name
@@ -85,14 +105,16 @@ export async function getRebelRewardsStandings(): Promise<{
         return calculateAgentRebelStatus(
           displayName,
           autoItems,
-          row.ips,
-          row.afsPc,
-          row.ivanNlItems,
+          ips,
+          afsPc,
+          ivanNlItems,
           {
             agentId: matchedAgent?.id || null,
             office: matchedAgent?.office || undefined,
             team: matchedAgent?.team || undefined,
-            reyByJune30: row.reyByJune30,
+            reyByJune30,
+            updatedAt,
+            updatedByName,
           }
         )
       })
@@ -137,7 +159,8 @@ export async function getRebelRewardsStandings(): Promise<{
       success: true,
       standings,
       periodLabel: customPeriodLabel,
-      lastUpdated: customLastUpdated,
+      lastUpdated: latestTimestamp || customLastUpdated,
+      lastUpdatedBy: latestUpdater || undefined,
       summary: {
         totalAgents: standings.length,
         prizeEarnersCount,
@@ -224,3 +247,75 @@ export async function uploadRebelRewardsExcel(base64Data: string, fileName: stri
     return { success: false, error: err?.message || "Failed to parse Excel file." }
   }
 }
+
+/**
+ * Server action to update contest stats for a specific agent.
+ * Saves directly to agent's system_variants.rebel_rewards so it persists permanently.
+ */
+export async function updateRebelRewardsAgentStats({
+  agentId,
+  autoItems,
+  ips,
+  afsPc,
+  ivanNlItems,
+  reyByJune30,
+  updatedById,
+  updatedByName,
+}: {
+  agentId: string
+  autoItems: number
+  ips: number
+  afsPc: number
+  ivanNlItems: number
+  reyByJune30?: boolean
+  updatedById?: string
+  updatedByName?: string
+}): Promise<{ success: boolean; error?: string }> {
+  noStore()
+  try {
+    const { data: targetAgent, error: fetchErr } = await supabase
+      .from("agents")
+      .select("id, name, office, system_variants")
+      .eq("id", agentId)
+      .single()
+
+    if (fetchErr || !targetAgent) {
+      return { success: false, error: "Agent not found" }
+    }
+
+    const nowIso = new Date().toISOString()
+    const existingVariants = (targetAgent.system_variants as Record<string, any>) || {}
+
+    const updatedVariants = {
+      ...existingVariants,
+      rebel_rewards: {
+        auto_items: Number(autoItems) || 0,
+        ips: Number(ips) || 0,
+        afs_pc: Number(afsPc) || 0,
+        ivan_nl_items: Number(ivanNlItems) || 0,
+        rey_by_june_30: !!reyByJune30,
+        updated_at: nowIso,
+        updated_by_id: updatedById || null,
+        updated_by_name: updatedByName || "Manager",
+      },
+    }
+
+    const { error: updateErr } = await supabase
+      .from("agents")
+      .update({
+        system_variants: updatedVariants,
+        updated_at: nowIso,
+      })
+      .eq("id", agentId)
+
+    if (updateErr) {
+      return { success: false, error: updateErr.message }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    console.error("Error updating Rebel Rewards agent stats:", err)
+    return { success: false, error: err?.message || "Failed to update agent stats" }
+  }
+}
+
