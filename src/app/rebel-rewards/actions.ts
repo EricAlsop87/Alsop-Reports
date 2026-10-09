@@ -95,9 +95,9 @@ export async function getRebelRewardsStandings(): Promise<{
         // Use the agent's clean display name from DB if matched (e.g. "Nancy G", "Rosie", "Ric Becerra")
         let displayName = matchedAgent?.name || row.name
         if (
-          displayName.toLowerCase() === "nancy" ||
           row.name?.toLowerCase() === "nancy g" ||
-          (matchedAgent?.name?.toLowerCase() === "nancy" && matchedAgent?.team === "CSR")
+          matchedAgent?.name?.toLowerCase() === "nancy g" ||
+          (matchedAgent?.team === "CSR" && matchedAgent?.name?.toLowerCase().includes("nancy"))
         ) {
           displayName = "Nancy G"
         }

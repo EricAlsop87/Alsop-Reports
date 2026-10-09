@@ -93,6 +93,10 @@ const ALIAS_MAP: Record<string, string> = {
   'gabby': 'carmen “gabby” davis',
   'rosie': 'rosario delgado',
   'roxana': 'roxanna topete',
+  'nancy': 'nancy',
+  'nancy g': 'nancy g',
+  'nancy maldonado': 'nancy',
+  'nancy gutierrez': 'nancy g',
 }
 
 export default function AgentHudPanel() {

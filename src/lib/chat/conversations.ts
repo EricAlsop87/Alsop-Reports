@@ -202,7 +202,13 @@ export async function createConversation(
       .in('id', allIds)
 
     if (agents && agents.length > 0) {
-      convName = agents.map((a) => a.name.split(' ')[0]).join(' & ')
+      convName = agents.map((a) => {
+        const parts = a.name.trim().split(' ')
+        if (parts.length === 2 && parts[1].length === 1) {
+          return a.name.trim()
+        }
+        return parts[0]
+      }).join(' & ')
     } else {
       convName = 'Direct Message'
     }

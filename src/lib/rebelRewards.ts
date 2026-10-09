@@ -380,7 +380,9 @@ export function calculateAgentRebelStatus(
 export const KNOWN_CONTEST_ALIASES: Record<string, string> = {
   "alex c": "alex",
   "chris e": "chris",
-  "nancy g": "nancy",
+  "nancy g": "nancy g",
+  "nancy gutierrez": "nancy g",
+  "nancy maldonado": "nancy",
   "rosario d": "rosie",
   "rosario": "rosie",
   "ricardo": "ric becerra",
