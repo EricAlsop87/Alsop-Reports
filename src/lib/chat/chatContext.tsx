@@ -199,7 +199,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           setLivePresenceMap(map)
         }
       } catch (err) {
-        console.error('[chatContext] Failed to load initial presence map:', err)
+        console.warn('[chatContext] Presence poll temporarily offline (will retry next interval):', err)
       }
     }
 

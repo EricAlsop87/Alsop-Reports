@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/rebel-rewards": "Rebel Rewards",
   "/communication": "Chat Hub",
   "/staff": "Staff Directory",
+  "/referrals": "Referral Program",
   "/admin/users": "User Management",
   "/admin/agents": "Agent Roster",
   "/admin/docs": "Documentation",

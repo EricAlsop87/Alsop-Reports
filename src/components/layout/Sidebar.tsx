@@ -25,7 +25,8 @@ import {
   Menu,
   Flame,
   Users,
-  Trophy
+  Trophy,
+  Gift
 } from "lucide-react"
 
 /* ── Letter icon for D / W / M reports ─────────────────────────────── */
@@ -95,6 +96,7 @@ const navGroups: NavGroup[] = [
       { name: 'Agent Portal',     href: '/reports/agent', icon: UserCircle,  pageKey: 'agent_portal' },
       { name: 'Rebel Rewards',    href: '/rebel-rewards', icon: Trophy },
       { name: 'Staff Directory',  href: '/staff',         icon: Users },
+      { name: 'Referral Program', href: '/referrals',     icon: Gift,        pageKey: 'referrals' },
     ],
   },
 ]
@@ -316,6 +318,7 @@ export function Sidebar() {
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => {
               if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'referrals' && !isManagerOrAdmin) return false
               if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
               if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
               if (!item.pageKey) return true
@@ -530,6 +533,7 @@ export function Sidebar() {
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => {
               if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'referrals' && !isManagerOrAdmin) return false
               if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
               if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
               if (!item.pageKey) return true
