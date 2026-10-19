@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Search,
@@ -86,13 +86,32 @@ export default function ConversationSidebar({
   const [search, setSearch] = useState('')
   const [channelsOpen, setChannelsOpen] = useState(true)
   const [dmsOpen, setDmsOpen] = useState(true)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
+  const statusMenuRef = useRef<HTMLDivElement>(null)
   const { getLivePresence, getLiveLastSeen } = useChat()
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
+        setStatusMenuOpen(false)
+      }
+    }
+    if (statusMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [statusMenuOpen])
 
   const getDmPresence = (conversation: Conversation, currentAgentId: string): PresenceStatus => {
     if (conversation.type === 'direct_dm' && conversation.members) {
       const other = conversation.members.find((m) => m.agent_id !== currentAgentId)
       if (other?.agent_id) {
         return getLivePresence ? getLivePresence(other.agent_id, other?.agent) : ((other?.agent?.presence as any) ?? 'offline')
+      }
+      // If it's a direct DM with self, resolve currentAgent presence
+      const self = conversation.members.find((m) => m.agent_id === currentAgentId)
+      if (self?.agent_id) {
+        return getLivePresence ? getLivePresence(self.agent_id, currentAgent) : (currentAgent?.presence ?? 'online')
       }
       return (other?.agent?.presence as any) ?? 'offline'
     }
@@ -327,7 +346,7 @@ export default function ConversationSidebar({
               const presence = getDmPresence(conv, currentAgent.id)
 
               const otherMember = conv.type === 'direct_dm' && conv.members
-                ? conv.members.find((m) => m.agent_id !== currentAgent.id)?.agent
+                ? (conv.members.find((m) => m.agent_id !== currentAgent.id)?.agent || conv.members.find((m) => m.agent_id === currentAgent.id)?.agent)
                 : null
               const otherId = otherMember?.id
               const lastSeenAt = otherId && getLiveLastSeen ? getLiveLastSeen(otherId, otherMember) : otherMember?.last_seen_at
@@ -434,25 +453,65 @@ export default function ConversationSidebar({
       </div>
 
       {/* Current User Footer */}
-      <div className="border-t border-slate-100 p-3">
+      <div className="border-t border-slate-100 p-3 relative" ref={statusMenuRef}>
+        {/* Status Dropdown Menu (Opens Upward) */}
+        {statusMenuOpen && (
+          <div className="absolute bottom-full left-3 right-3 mb-1 bg-white rounded-xl shadow-xl border border-slate-200/90 p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Set presence status
+            </div>
+            {STATUS_OPTIONS.filter(o => o.value !== 'offline').map((opt) => {
+              const isCurrent = (currentAgent.presence || 'online') === opt.value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onStatusChange(opt.value)
+                    setStatusMenuOpen(false)
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer",
+                    isCurrent ? "bg-blue-50 text-blue-700 font-semibold" : "text-slate-700 hover:bg-slate-100"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", opt.color)} />
+                    <span>{opt.label}</span>
+                  </div>
+                  {isCurrent && <span className="text-[10px] text-blue-600 font-semibold">Active</span>}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         <div className="flex items-center gap-2.5">
-          <Avatar name={currentAgent.name} url={currentAgent.avatar_url} className="w-8 h-8 text-xs shadow-sm" />
+          <div className="relative shrink-0">
+            <Avatar name={currentAgent.name} url={currentAgent.avatar_url} className="w-8 h-8 text-xs shadow-sm" />
+            <span
+              className={cn(
+                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white",
+                currentAgent.presence === 'online' && "bg-emerald-500",
+                currentAgent.presence === 'away' && "bg-amber-500",
+                currentAgent.presence === 'busy' && "bg-rose-500",
+                (!currentAgent.presence || currentAgent.presence === 'offline') && "bg-slate-400"
+              )}
+            />
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate leading-tight">
               {currentAgent.name}
             </p>
-            <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-              <span
-                className={cn(
-                  "w-2 h-2 rounded-full shrink-0",
-                  currentAgent.presence === 'online' && "bg-emerald-500",
-                  currentAgent.presence === 'away' && "bg-amber-500",
-                  currentAgent.presence === 'busy' && "bg-rose-500",
-                  (!currentAgent.presence || currentAgent.presence === 'offline') && "bg-slate-400"
-                )}
-              />
-              <span className="capitalize">{currentAgent.presence || 'Online'}</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setStatusMenuOpen(prev => !prev)}
+              className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-1 mt-0.5 group/status transition-colors cursor-pointer select-none"
+              title="Click to change your presence status"
+            >
+              <span className="capitalize font-medium">{currentAgent.presence || 'Online'}</span>
+              <ChevronDown className={cn("w-3 h-3 text-slate-400 group-hover/status:text-slate-600 transition-transform", statusMenuOpen && "rotate-180")} />
+            </button>
           </div>
         </div>
       </div>

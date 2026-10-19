@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
     // Process each file
     const files = formData.getAll("files") as File[]
     const autoScrape = formData.get("autoScrape") as string
+    const uploaderName = (formData.get("uploaderName") as string)?.trim() || null
+    const uploaderEmail = (formData.get("uploaderEmail") as string)?.trim() || null
 
     if (files.length === 0 && !autoScrape) {
       return NextResponse.json({ success: false, error: "No files uploaded and no scraper specified" }, { status: 400 })
@@ -98,17 +100,36 @@ export async function POST(request: NextRequest) {
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
       if (supabaseUrl && supabaseKey && knownFiles.length > 0) {
         const supabase = createClient(supabaseUrl, supabaseKey)
-        const { data: uploadRow } = await supabase
+        const uploaderHeader = uploaderName ? `[Uploader: ${uploaderName}]\n` : ""
+        const uploadPayload: Record<string, any> = {
+          target_date: defaultDate,
+          status: "processing",
+          file_count: knownFiles.length,
+          source_types: sourceTypes,
+          logs: uploaderHeader + "Uploading and processing...",
+        }
+        if (uploaderName) uploadPayload.uploader_name = uploaderName
+        if (uploaderEmail) uploadPayload.uploader_email = uploaderEmail
+
+        let uploadRow: any = null
+        const firstAttempt = await supabase
           .from("upload_history")
-          .insert({
-            target_date: defaultDate,
-            status: "processing",
-            file_count: knownFiles.length,
-            source_types: sourceTypes,
-            logs: "Uploading and processing...",
-          })
+          .insert(uploadPayload)
           .select("id")
           .single()
+
+        if (firstAttempt.error) {
+          delete uploadPayload.uploader_name
+          delete uploadPayload.uploader_email
+          const secondAttempt = await supabase
+            .from("upload_history")
+            .insert(uploadPayload)
+            .select("id")
+            .single()
+          uploadRow = secondAttempt.data
+        } else {
+          uploadRow = firstAttempt.data
+        }
         
         if (uploadRow?.id) {
           uploadId = uploadRow.id
@@ -252,11 +273,12 @@ export async function POST(request: NextRequest) {
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
         if (supabaseUrl && supabaseKey) {
           const supabase = createClient(supabaseUrl, supabaseKey)
+          const uploaderHeader = uploaderName ? `[Uploader: ${uploaderName}]\n` : ""
           await supabase
             .from("upload_history")
             .update({
               status: allSuccess ? "success" : "error",
-              logs: allLogs.substring(0, 2000),
+              logs: (uploaderHeader + allLogs).substring(0, 2000),
             })
             .eq("id", uploadId)
         }

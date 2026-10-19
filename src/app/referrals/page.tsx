@@ -199,6 +199,7 @@ export default function ReferralsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "sent" | "needs_amount">("all")
   const [selectedOffice, setSelectedOffice] = useState<string>("all")
   const [selectedProducer, setSelectedProducer] = useState<string>("all")
+  const [selectedLeadSource, setSelectedLeadSource] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState("")
 
   // Inline editing state tracking
@@ -267,6 +268,35 @@ export default function ReferralsPage() {
     return Array.from(set).sort()
   }, [entries, selectedOffice])
 
+  // Lead sources list & frequency (filtered by selectedOffice if active)
+  const leadSourceStats = useMemo(() => {
+    const counts: Record<string, number> = {}
+    entries.forEach(e => {
+      if (selectedOffice === "all" || getProducerOfficeCodes(e.producer).includes(selectedOffice)) {
+        const src = (e.lead_source || "Direct").trim()
+        if (src) {
+          counts[src] = (counts[src] || 0) + 1
+        }
+      }
+    })
+    const sortedByCount = Object.entries(counts).sort((a, b) => b[1] - a[1])
+    const allSources = Object.keys(counts).sort((a, b) => a.localeCompare(b))
+    const topSources = sortedByCount.slice(0, 7).map(([src]) => src)
+
+    return { allSources, topSources, counts }
+  }, [entries, selectedOffice])
+
+  const displayLeadSourcePills = useMemo(() => {
+    const pills = [...leadSourceStats.topSources]
+    if (
+      selectedLeadSource !== "all" &&
+      !pills.some(p => p.toLowerCase() === selectedLeadSource.toLowerCase())
+    ) {
+      pills.push(selectedLeadSource)
+    }
+    return pills
+  }, [leadSourceStats.topSources, selectedLeadSource])
+
   // Filtered rows
   const filteredEntries = useMemo(() => {
     return entries.filter(e => {
@@ -284,7 +314,13 @@ export default function ReferralsPage() {
       // 3. Producer filter
       if (selectedProducer !== "all" && e.producer !== selectedProducer) return false
 
-      // 4. Search query
+      // 4. Lead Source filter
+      if (selectedLeadSource !== "all") {
+        const src = (e.lead_source || "Direct").trim()
+        if (src.toLowerCase() !== selectedLeadSource.toLowerCase()) return false
+      }
+
+      // 5. Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim()
         const matchName = e.customer_name?.toLowerCase().includes(q)
@@ -300,7 +336,7 @@ export default function ReferralsPage() {
 
       return true
     })
-  }, [entries, statusFilter, selectedOffice, selectedProducer, searchQuery])
+  }, [entries, statusFilter, selectedOffice, selectedProducer, selectedLeadSource, searchQuery])
 
   // Inline update handlers
   const handleToggleStatus = async (entry: ReferralEntry) => {
@@ -742,6 +778,7 @@ export default function ReferralsPage() {
                 onClick={() => {
                   setSelectedOffice("all")
                   setSelectedProducer("all")
+                  setSelectedLeadSource("all")
                 }}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                   selectedOffice === "all"
@@ -757,6 +794,7 @@ export default function ReferralsPage() {
                   onClick={() => {
                     setSelectedOffice(selectedOffice === code ? "all" : code)
                     setSelectedProducer("all")
+                    setSelectedLeadSource("all")
                   }}
                   title={OFFICE_DICT[code].name}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
@@ -812,6 +850,67 @@ export default function ReferralsPage() {
             </select>
           </div>
         </div>
+
+        {/* Lead Source Filter Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-0.5">
+              Lead Source:
+            </span>
+            <button
+              onClick={() => setSelectedLeadSource("all")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                selectedLeadSource === "all"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+              }`}
+            >
+              All
+            </button>
+            {displayLeadSourcePills.map(src => {
+              const isSelected = selectedLeadSource.toLowerCase() === src.toLowerCase()
+              return (
+                <button
+                  key={src}
+                  onClick={() => setSelectedLeadSource(isSelected ? "all" : src)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                    isSelected
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                  }`}
+                >
+                  <span>{toTitleCase(src)}</span>
+                  <span className={`text-[10px] font-normal ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
+                    ({leadSourceStats.counts[src] || 0})
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* All lead sources dropdown selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              More Sources:
+            </span>
+            <select
+              value={selectedLeadSource}
+              onChange={e => setSelectedLeadSource(e.target.value)}
+              className="px-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+            >
+              <option value="all">
+                {selectedOffice !== "all"
+                  ? `All Sources in ${selectedOffice} (${leadSourceStats.allSources.length})`
+                  : `All Lead Sources (${leadSourceStats.allSources.length})`}
+              </option>
+              {leadSourceStats.allSources.map(src => (
+                <option key={src} value={src}>
+                  {toTitleCase(src)} ({leadSourceStats.counts[src]})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Main Table */}
@@ -821,7 +920,6 @@ export default function ReferralsPage() {
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/75 dark:bg-slate-900/40 text-xs font-bold text-slate-600 dark:text-slate-300">
                 <th className="py-3 px-4">Customer</th>
-                <th className="py-3 px-3">Lead Source</th>
                 <th className="py-3 px-3">Producer</th>
                 <th className="py-3 px-4">Policy / Carrier</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Sold Date</th>
@@ -835,14 +933,14 @@ export default function ReferralsPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center text-slate-400">
+                  <td colSpan={9} className="py-16 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
                     <span>Loading referral list...</span>
                   </td>
                 </tr>
               ) : filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-slate-400">
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
                     <Gift className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                     <p className="font-semibold text-slate-600 dark:text-slate-300">
                       No records match the current filter
@@ -878,19 +976,6 @@ export default function ReferralsPage() {
                         </div>
                       </td>
 
-                      {/* Lead Source */}
-                      <td className="py-2.5 px-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
-                            entry.is_referral
-                              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                          }`}
-                        >
-                          {toTitleCase(entry.lead_source || "Direct")}
-                        </span>
-                      </td>
-
                       {/* Producer */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <div className="flex flex-col">
@@ -918,7 +1003,17 @@ export default function ReferralsPage() {
                               </span>
                             ) : null}
                           </div>
-                          <span className="text-[11px] text-slate-400 font-normal">{toTitleCase(entry.carrier)}</span>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-normal flex-wrap">
+                            <span>{toTitleCase(entry.carrier || "Direct")}</span>
+                            {entry.lead_source && (
+                              <>
+                                <span className="text-slate-300 dark:text-slate-600 font-bold">•</span>
+                                <span className="font-medium text-purple-600 dark:text-purple-400">
+                                  {toTitleCase(entry.lead_source)}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
 

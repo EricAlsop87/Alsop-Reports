@@ -16,6 +16,7 @@ import {
   Loader2,
   AlertCircle,
   ChevronLeft,
+  User,
 } from "lucide-react"
 import {
   getUploadHistory,
@@ -44,6 +45,7 @@ interface UploadRecord {
   uploaded_at: string
   target_date: string
   status: "processing" | "success" | "reassigned" | "deleted" | "error"
+  uploader_name?: string | null
   files: UploadFile[]
 }
 
@@ -337,16 +339,27 @@ export default function UploadHistory({ refreshTrigger }: UploadHistoryProps) {
                     className="w-full flex items-center justify-between gap-4 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
                   >
                     {/* Left side */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Upload className="h-4 w-4 text-slate-400 shrink-0" />
-                      <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
-                        {formatDateTime(upload.uploaded_at)}
-                      </span>
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Upload className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                          {formatDateTime(upload.uploaded_at)}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {fileTypes.map((ft) => (
                           <FileTypePill key={ft} type={ft} />
                         ))}
                       </div>
+                      {upload.uploader_name && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/80 shrink-0"
+                          title={`Uploaded by ${upload.uploader_name}`}
+                        >
+                          <User className="h-3 w-3 text-slate-400" />
+                          <span>{upload.uploader_name}</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Right side */}
@@ -370,6 +383,12 @@ export default function UploadHistory({ refreshTrigger }: UploadHistoryProps) {
                   {/* Expanded content */}
                   {isExpanded && (
                     <div className="bg-slate-50/60 border-t border-slate-100">
+                      {upload.uploader_name && (
+                        <div className="flex items-center gap-2 px-6 py-2 bg-slate-100/70 border-b border-slate-200/60 text-xs text-slate-600">
+                          <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span>Uploaded by: <strong className="font-semibold text-slate-900">{upload.uploader_name}</strong></span>
+                        </div>
+                      )}
                       {/* File list */}
                       <div className="divide-y divide-slate-100">
                         {upload.files.map((file) => {

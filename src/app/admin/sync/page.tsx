@@ -18,6 +18,7 @@ import Link from "next/link"
 import { processUploadedFiles, type UploadFile } from "@/lib/pipeline"
 import { LeadsModal } from "@/components/reports/LeadsModal"
 import { RoleplayModuleManager } from "@/components/admin/RoleplayModuleManager"
+import { useChat } from "@/lib/chat/chatContext"
 
 
 // ─── Source Configuration ─────────────────────────────────────────────────────
@@ -150,6 +151,7 @@ function detectFileSource(filename: string): { source: DataSource; pattern: File
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DataSyncPage() {
+  const { currentAgent } = useChat()
   const [date, setDate] = useState<string>(() => {
     const d = new Date()
     d.setDate(d.getDate() - 1)
@@ -354,12 +356,28 @@ export default function DataSyncPage() {
     setLastFailedSource(null)
     setUploadLogs(autoScrapeKey ? `Triggering automation for ${autoScrapeKey}...\n` : "Processing files...\n")
 
+    // Determine uploader name and email
+    let uploaderName = currentAgent?.name || null
+    let uploaderEmail = currentAgent?.email || null
+
+    if (!uploaderName) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          uploaderEmail = user.email || null
+          uploaderName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || null
+        }
+      } catch {}
+    }
+
     try {
       if (autoScrapeKey) {
         // Auto-scrape (Lead Pipeline) — still uses the server-side API route (localhost only)
         const formData = new FormData()
         formData.append("defaultDate", date)
         formData.append("autoScrape", autoScrapeKey)
+        if (uploaderName) formData.append("uploaderName", uploaderName)
+        if (uploaderEmail) formData.append("uploaderEmail", uploaderEmail)
 
         const res = await fetch("/api/upload-data", {
           method: "POST",
@@ -385,6 +403,7 @@ export default function DataSyncPage() {
           uploadFiles,
           date,
           (msg) => setUploadLogs(prev => prev + msg + "\n"),
+          { name: uploaderName, email: uploaderEmail },
         )
 
         setUploadLogs(result.logs)
@@ -407,7 +426,7 @@ export default function DataSyncPage() {
     } finally {
       setUploading(false)
     }
-  }, [validFiles, date])
+  }, [validFiles, date, currentAgent])
 
   // ── Coverage helpers ──
   const sourcesPresent = useMemo(() => {

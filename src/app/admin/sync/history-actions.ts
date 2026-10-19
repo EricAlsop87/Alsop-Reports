@@ -55,15 +55,21 @@ export async function getUploadHistory(page: number, pageSize: number = 10) {
           .select("*")
           .eq("upload_id", upload.id);
 
+        let uploaderName = (upload as any).uploader_name || null;
+        if (!uploaderName && upload.logs) {
+          const match = upload.logs.match(/\[Uploader:\s*([^\]]+)\]/i);
+          if (match) uploaderName = match[1].trim();
+        }
+
         if (filesError) {
           console.error(
             `Error fetching files for upload ${upload.id}:`,
             filesError.message,
           );
-          return { ...upload, files: [] };
+          return { ...upload, uploader_name: uploaderName, files: [] };
         }
 
-        return { ...upload, files: files ?? [] };
+        return { ...upload, uploader_name: uploaderName, files: files ?? [] };
       }),
     );
 

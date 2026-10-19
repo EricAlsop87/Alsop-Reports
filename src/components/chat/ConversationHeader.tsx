@@ -35,7 +35,7 @@ export default function ConversationHeader({
   onBackClick,
   onAddMembersClick,
 }: ConversationHeaderProps) {
-  const { unreadCounts } = useChat()
+  const { unreadCounts, getLivePresence } = useChat()
   const [isMembersPinned, setIsMembersPinned] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
   const membersRef = useRef<HTMLDivElement>(null)
@@ -79,6 +79,11 @@ export default function ConversationHeader({
     isDm && conversation.members?.length
       ? (conversation.members.find((m) => m.agent_id !== currentAgentId) || conversation.members[0])
       : null
+
+  const dmAgentId = dmMember?.agent?.id
+  const liveDmPresence = dmAgentId && getLivePresence
+    ? getLivePresence(dmAgentId, dmMember?.agent)
+    : ((dmMember?.agent?.presence as any) || 'offline')
 
   const displayName = isDm && dmMember?.agent 
     ? dmMember.agent.name 
@@ -143,7 +148,7 @@ export default function ConversationHeader({
             <Avatar name={displayName} url={dmMember?.agent?.avatar_url} className="w-9 h-9 text-sm shadow-none" fallbackClassName="w-9 h-9 text-sm shadow-none" />
             {isDm && dmMember?.agent && (
               <div className="absolute -bottom-0.5 -right-0.5">
-                <UserPresenceBadge status={dmMember.agent.presence} size="sm" />
+                <UserPresenceBadge status={liveDmPresence} size="sm" />
               </div>
             )}
           </div>
@@ -153,7 +158,7 @@ export default function ConversationHeader({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             {isDm && dmMember?.agent ? (
-              <UserHoverCard agent={dmMember.agent} side="bottom">
+              <UserHoverCard agent={{ ...dmMember.agent, presence: liveDmPresence }} side="bottom">
                 <h2 className="text-[15px] font-bold text-slate-900 truncate leading-tight hover:text-blue-600 cursor-pointer transition-colors">
                   {displayName}
                 </h2>
@@ -168,7 +173,7 @@ export default function ConversationHeader({
             )}
             {isDm && dmMember?.agent && (
               <span className="text-xs text-slate-400 font-medium capitalize">
-                {dmMember.agent.presence}
+                {liveDmPresence}
               </span>
             )}
           </div>

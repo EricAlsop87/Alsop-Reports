@@ -131,6 +131,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Track the agent's manually-chosen status so the heartbeat doesn't overwrite it.
   // 'online' is the default — 'away'/'busy' are manually set by the user.
   const manualStatusRef = useRef<'online' | 'away' | 'busy'>('online')
+  // Track last user activity timestamp and whether presence was auto-set to away due to inactivity
+  const lastActivityTimeRef = useRef<number>(Date.now())
+  const isAutoAwayRef = useRef<boolean>(false)
   // Keep a ref to the current agent ID for use in beforeunload/visibilitychange
   const agentIdRef = useRef<string | null>(null)
   const tabIdRef = useRef<string>(
@@ -339,9 +342,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Preserve busy or away if currently set on agent, otherwise bring online
-      const initialStatus = (agent.presence === 'busy' || agent.presence === 'away') ? agent.presence : 'online'
+      // Only preserve 'busy' (Do Not Disturb) across sessions/refreshes.
+      // If the agent was previously 'away' or 'offline', opening the site brings them 'online'.
+      const initialStatus = agent.presence === 'busy' ? 'busy' : 'online'
       manualStatusRef.current = initialStatus
+      isAutoAwayRef.current = false
+      lastActivityTimeRef.current = Date.now()
       registerActiveTab(agentId)
 
       setCurrentAgent({ ...agent, presence: initialStatus } as Agent)
@@ -399,10 +405,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           .then(() => {}, () => {})
       }
 
-      // Track last activity time (for 30-min idle auto-away)
-      const lastActivityTimeRef = { current: Date.now() }
-      const isAutoAwayRef = { current: false }
-
       // Set presence to initial active status (defaults to online)
       await updatePresence(agentId, initialStatus)
 
@@ -427,26 +429,39 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       }, 15_000)
 
-      // User activity listeners: when active again after auto-away, restore to Online
+      // User activity listeners: when active again after auto-away or stuck away, restore to Online
       let lastThrottle = 0
       const handleUserActivity = () => {
-        registerActiveTab(agentId)
+        if (!agentIdRef.current) return
+        registerActiveTab(agentIdRef.current)
         const now = Date.now()
         if (now - lastThrottle < 2000) return
         lastThrottle = now
         lastActivityTimeRef.current = now
 
-        // If they were auto-set to Away after 30 min, restore to Online as soon as they are active
-        if (isAutoAwayRef.current && agentIdRef.current) {
+        // If they were marked as Away (from idle timeout or previous session),
+        // any active interaction (typing, clicking, mouse move, focus) immediately restores to Online.
+        // Busy (Do Not Disturb) is preserved.
+        if ((isAutoAwayRef.current || manualStatusRef.current === 'away') && agentIdRef.current) {
           isAutoAwayRef.current = false
           manualStatusRef.current = 'online'
-          updatePresence(agentIdRef.current, 'online').catch(() => {})
+          const id = agentIdRef.current
+          updatePresence(id, 'online').catch(() => {})
           setCurrentAgent(prev => prev ? { ...prev, presence: 'online' } as Agent : null)
+          setLivePresenceMap(prev => ({
+            ...prev,
+            [id]: {
+              ...prev[id],
+              presence: 'online',
+              last_seen_at: new Date().toISOString(),
+            },
+          }))
         }
       }
 
-      const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll', 'click']
+      const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll', 'click', 'focus']
       ACTIVITY_EVENTS.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }))
+      document.addEventListener('visibilitychange', handleUserActivity)
 
       // When tab/site actually closes, send offline beacon ONLY IF this is the last open tab for this user
       const handleSiteExit = () => {
@@ -465,6 +480,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (prevCleanup) prevCleanup()
       ;(window as any).__chatPresenceCleanup = () => {
         ACTIVITY_EVENTS.forEach(ev => window.removeEventListener(ev, handleUserActivity))
+        document.removeEventListener('visibilitychange', handleUserActivity)
         window.removeEventListener('pagehide', handleSiteExit)
         window.removeEventListener('beforeunload', handleSiteExit)
         if (heartbeatRef.current) clearInterval(heartbeatRef.current)
@@ -675,6 +691,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const setManualPresence = useCallback(async (status: 'online' | 'away' | 'busy') => {
     if (!currentAgent) return
     manualStatusRef.current = status
+    isAutoAwayRef.current = status === 'away'
+    lastActivityTimeRef.current = Date.now()
     await updatePresence(currentAgent.id, status)
     // Update local agent state and livePresenceMap immediately
     setCurrentAgent(prev => prev ? { ...prev, presence: status } as Agent : null)

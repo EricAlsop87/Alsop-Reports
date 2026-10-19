@@ -35,17 +35,24 @@ export interface UploadFile {
   dateOverride?: string | null
 }
 
+export interface UploaderInfo {
+  name?: string | null
+  email?: string | null
+}
+
 /**
  * Process uploaded files entirely on the client side.
  * Returns a PipelineResult with structured logs.
  * 
  * @param onLog - Optional callback for real-time log streaming to the UI
+ * @param uploader - Optional uploader details for audit trail and history display
  */
 export async function processUploadedFiles(
   supabase: SupabaseClient,
   files: UploadFile[],
   defaultDate: string,
   onLog?: (message: string) => void,
+  uploader?: UploaderInfo | null,
 ): Promise<PipelineResult> {
   const allLogs: string[] = []
   const log = (msg: string) => {
@@ -334,17 +341,40 @@ export async function processUploadedFiles(
 
     // Record upload history for source-tracking (used by getDailyCoverage sub-source detection)
     try {
-      const { data: uploadRow } = await supabase
+      const uploaderName = uploader?.name?.trim() || null
+      const uploaderEmail = uploader?.email?.trim() || null
+      const logHeader = uploaderName ? `[Uploader: ${uploaderName}]\n` : ""
+
+      const uploadPayload: Record<string, any> = {
+        target_date: defaultDate,
+        status: "success",
+        file_count: files.filter(f => f.type !== "unknown").length,
+        source_types: actualTypes,
+        logs: (logHeader + allLogs.join("\n")).substring(0, 2000),
+      }
+      if (uploaderName) uploadPayload.uploader_name = uploaderName
+      if (uploaderEmail) uploadPayload.uploader_email = uploaderEmail
+
+      let uploadRow: any = null
+      const firstAttempt = await supabase
         .from("upload_history")
-        .insert({
-          target_date: defaultDate,
-          status: "success",
-          file_count: files.filter(f => f.type !== "unknown").length,
-          source_types: actualTypes,
-          logs: allLogs.join("\n").substring(0, 2000),
-        })
+        .insert(uploadPayload)
         .select("id")
         .single()
+
+      if (firstAttempt.error) {
+        // Fall back without uploader columns if not yet present in schema
+        delete uploadPayload.uploader_name
+        delete uploadPayload.uploader_email
+        const secondAttempt = await supabase
+          .from("upload_history")
+          .insert(uploadPayload)
+          .select("id")
+          .single()
+        uploadRow = secondAttempt.data
+      } else {
+        uploadRow = firstAttempt.data
+      }
 
       if (uploadRow?.id) {
         const fileRows = files
