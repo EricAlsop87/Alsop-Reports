@@ -55,6 +55,60 @@ export default function RebelRewardsPage() {
     )
   }, [currentAgent])
 
+  const REBEL_OFFICE_OPTIONS = [
+    { code: "MC", name: "Montclair" },
+    { code: "CH", name: "Chino" },
+    { code: "CM", name: "Claremont" },
+    { code: "RC", name: "Rancho Cucamonga" },
+    { code: "MB", name: "Montebello" },
+    { code: "PQ", name: "Process & Quality" },
+  ]
+
+  const matchesOffice = (agentOffice: string | undefined | null, targetCode: string): boolean => {
+    if (!agentOffice) return false
+    const off = agentOffice.trim().toUpperCase()
+    const target = targetCode.trim().toUpperCase()
+
+    if (off === target) return true
+
+    // Montclair / MCM
+    if ((target === "MC" || target === "MCM") && (off === "MC" || off === "MCM" || off.includes("MONTCLAIR"))) {
+      return true
+    }
+
+    // Claremont / CM / CL
+    if ((target === "CM" || target === "CL") && (off === "CM" || off === "CL" || off.includes("CLAREMONT"))) {
+      return true
+    }
+
+    // Chino
+    if (target === "CH" && (off === "CH" || off.includes("CHINO"))) {
+      return true
+    }
+
+    // Rancho Cucamonga
+    if (target === "RC" && (off === "RC" || off.includes("RANCHO"))) {
+      return true
+    }
+
+    // Montebello
+    if (target === "MB" && (off === "MB" || off.includes("MONTEBELLO"))) {
+      return true
+    }
+
+    // Process & Quality
+    if (target === "PQ" && (off === "PQ" || off.includes("PROCESS") || off.includes("QUALITY"))) {
+      return true
+    }
+
+    // ML
+    if (target === "ML" && off === "ML") {
+      return true
+    }
+
+    return false
+  }
+
   const [selectedTierFilter, setSelectedTierFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [filters, setFilters] = useState<FilterState>({ offices: [], teams: [], agents: [], meetings: [] })
@@ -253,7 +307,7 @@ export default function RebelRewardsPage() {
 
   const filteredStandings = useMemo(() => {
         const filtered = standings.filter((agent) => {
-      if (filters.offices.length > 0 && (!agent.office || !filters.offices.includes(agent.office))) return false;
+      if (filters.offices.length > 0 && !filters.offices.some(code => matchesOffice(agent.office, code))) return false;
       if (filters.teams.length > 0 && (!agent.team || !filters.teams.includes(agent.team))) return false;
       if (filters.agents.length > 0 && (!agent.agentName || !filters.agents.includes(agent.agentName))) return false;
       
@@ -458,6 +512,35 @@ export default function RebelRewardsPage() {
             <FilterPill label={`Luke (${summary.lukeCount})`} active={selectedTierFilter === "luke"} onClick={() => setSelectedTierFilter("luke")} color="green" />
             <FilterPill label={`Obi-Wan (${summary.obiwanCount})`} active={selectedTierFilter === "obiwan"} onClick={() => setSelectedTierFilter("obiwan")} color="blue" />
             <FilterPill label="Padawans" active={selectedTierFilter === "padawan"} onClick={() => setSelectedTierFilter("padawan")} color="slate" />
+          </div>
+
+          {/* Office Filter Row */}
+          <div className="flex flex-wrap items-center p-2 sm:p-2.5 bg-slate-50/70 gap-1.5 border-b border-slate-100">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Offices:</span>
+            <FilterPill
+              label={`All (${standings.length})`}
+              active={filters.offices.length === 0}
+              onClick={() => setFilters(prev => ({ ...prev, offices: [] }))}
+              color="slate"
+            />
+            {REBEL_OFFICE_OPTIONS.map(opt => {
+              const count = standings.filter(s => matchesOffice(s.office, opt.code)).length
+              const isActive = filters.offices.includes(opt.code)
+              return (
+                <FilterPill
+                  key={opt.code}
+                  label={`${opt.code} (${count})`}
+                  active={isActive}
+                  onClick={() => {
+                    setFilters(prev => ({
+                      ...prev,
+                      offices: prev.offices.includes(opt.code) ? [] : [opt.code]
+                    }))
+                  }}
+                  color={isActive ? "blue" : "slate"}
+                />
+              )
+            })}
           </div>
 
           {/* Desktop Table — shows pacing toward next tier */}

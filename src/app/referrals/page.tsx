@@ -41,11 +41,13 @@ const GIFT_PRESETS = [
 ]
 
 export const OFFICE_DICT: Record<string, { code: string; name: string }> = {
-  MB: { code: "MB", name: "Montebello" },
   MC: { code: "MC", name: "Montclair" },
+  MCM: { code: "MCM", name: "Montclair" },
   CH: { code: "CH", name: "Chino" },
+  CM: { code: "CM", name: "Claremont" },
   CL: { code: "CL", name: "Claremont" },
   RC: { code: "RC", name: "Rancho Cucamonga" },
+  MB: { code: "MB", name: "Montebello" },
   PQ: { code: "PQ", name: "Process & Quality" },
 }
 
@@ -53,73 +55,120 @@ const PRODUCER_OFFICE_MAP: Record<string, string> = {
   // Montclair (MC)
   "eric alsop": "MC",
   "misty torrez": "MC",
+  "misty": "MC",
   "suzanne yniguez": "MC",
+  "suzanne": "MC",
   "brigilda aquino": "MC",
   "gilda aquino": "MC",
+  "gilda": "MC",
   "alexandra quintana": "MC",
+  "alexandra": "MC",
   "charmaine carrillo": "MC",
+  "charmaine": "MC",
   "andrea alpine": "MC",
+  "andrea": "MC",
   "christine lansing": "MC",
+  "christine": "MC",
+  "danielle self": "MC",
+  "danielle": "MC",
 
-  // Claremont (CL)
-  "lori ohlhauser": "CL",
-  "dawn zenor": "CL",
-  "denice santos": "CL",
-  "chris elliott": "CL",
-  "frank villalobos": "CL",
-  "frank a villalobos": "CL",
+  // Claremont (CM)
+  "lori ohlhauser": "CM",
+  "lori": "CM",
+  "dawn zenor": "CM",
+  "dawn": "CM",
+  "denice santos": "CM",
+  "denice": "CM",
+  "chris elliott": "CM",
+  "chris": "CM",
+  "frank villalobos": "CM",
+  "frank a villalobos": "CM",
+  "frank": "CM",
 
   // Rancho Cucamonga (RC)
   "jennifer martinez": "RC",
   "liliana morales": "RC",
+  "liliana": "RC",
   "maila castro": "RC",
+  "maila": "RC",
   "sylvia duran": "RC",
+  "sylvia": "RC",
   "rosalba lozano": "RC",
+  "rosalba": "RC",
   "claudia sambrano": "RC",
+  "claudia": "RC",
   "eddie sanchez": "RC",
+  "eddie": "RC",
   "isabel torres": "RC",
+  "isabel": "RC",
   "taylor davis": "RC",
+  "taylor": "RC",
   "estela montalvo": "RC",
   "estela jimenez": "RC",
+  "estela": "RC",
+  "angelina": "RC",
 
   // Chino (CH)
   "john paul dizon": "CH",
   "giselle ramos": "CH",
+  "giselle": "CH",
   "edwin sernas": "CH",
+  "edwin": "CH",
   "roxanna topete": "CH",
   "roxana topete": "CH",
+  "roxana": "CH",
   "jerome delfin": "CH",
+  "jerome": "CH",
   "alex clancy": "CH",
+  "alex": "CH",
   "danny bonilla": "CH",
+  "danny": "CH",
 
   // Montebello (MB)
   "ricardo becerra": "MB",
   "ric becerra": "MB",
   "juanita calderon": "MB",
+  "juanita": "MB",
   "rosario delgado": "MB",
   "rosie delgado": "MB",
+  "rosie": "MB",
   "jose huerta": "MB",
+  "jose": "MB",
   "christian reyes": "MB",
+  "christian": "MB",
   "jenna zazueta": "MB",
+  "jenna": "MB",
   "nancy gutierrez": "MB",
+  "nancy g": "MB",
   "robert lewis": "MB",
   "robert lewis jr": "MB",
+  "robert": "MB",
   "myles vinluan": "MB",
+  "myles": "MB",
+  "jonathan": "MB",
 
   // Process & Quality (PQ)
   "nancy maldonado": "PQ",
+  "nancy": "PQ",
   "greg alsop": "PQ",
   "diane bedard": "PQ",
   "esmeralda cervantes": "PQ",
+  "esme": "PQ",
   "cynthia romero-larias": "PQ",
   "carmen davis": "PQ",
+  "carmen “gabby” davis": "PQ",
   "gabby davis": "PQ",
+  "gabby": "PQ",
   "ariana crawford": "PQ",
+  "ariana": "PQ",
   "olga soto": "PQ",
   "donna priddy": "PQ",
   "teyssy espino": "PQ",
+  "teyssy": "PQ",
   "diana ramirez": "PQ",
+  "diana": "PQ",
   "zypher schnakenberg": "PQ",
+  "zypher": "PQ",
 }
 
 export function getProducerOfficeCodes(producer: string | null | undefined): string[] {
@@ -260,7 +309,14 @@ export default function ReferralsPage() {
     const set = new Set<string>()
     entries.forEach(e => {
       if (e.producer) {
-        if (selectedOffice === "all" || getProducerOfficeCodes(e.producer).includes(selectedOffice)) {
+        const pCodes = getProducerOfficeCodes(e.producer)
+        const matchOffice = selectedOffice === "all" || pCodes.some(c => 
+          c === selectedOffice || 
+          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
+          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
+          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
+        )
+        if (matchOffice) {
           set.add(e.producer)
         }
       }
@@ -272,7 +328,14 @@ export default function ReferralsPage() {
   const leadSourceStats = useMemo(() => {
     const counts: Record<string, number> = {}
     entries.forEach(e => {
-      if (selectedOffice === "all" || getProducerOfficeCodes(e.producer).includes(selectedOffice)) {
+      const pCodes = getProducerOfficeCodes(e.producer)
+        const matchOffice = selectedOffice === "all" || pCodes.some(c => 
+          c === selectedOffice || 
+          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
+          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
+          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
+        )
+        if (matchOffice) {
         const src = (e.lead_source || "Direct").trim()
         if (src) {
           counts[src] = (counts[src] || 0) + 1
@@ -308,7 +371,13 @@ export default function ReferralsPage() {
       // 2. Office filter
       if (selectedOffice !== "all") {
         const codes = getProducerOfficeCodes(e.producer)
-        if (!codes.includes(selectedOffice)) return false
+        const matchOffice = codes.some(c => 
+          c === selectedOffice || 
+          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
+          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
+          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
+        )
+        if (!matchOffice) return false
       }
 
       // 3. Producer filter
@@ -788,7 +857,7 @@ export default function ReferralsPage() {
               >
                 All
               </button>
-              {(["MB", "MC", "CH", "CL", "RC", "PQ"] as const).map(code => (
+              {(["MC", "CH", "CM", "RC", "MB", "PQ"] as const).map(code => (
                 <button
                   key={code}
                   onClick={() => {
