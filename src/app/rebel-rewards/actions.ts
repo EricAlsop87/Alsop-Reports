@@ -9,8 +9,8 @@ import * as XLSX from "xlsx"
 
 // In-memory / dynamic cache for uploaded snapshots in current server lifetime
 let customUploadedRows: RawRebelAgentRow[] | null = null
-let customPeriodLabel = "YTD July 2026"
-let customLastUpdated = "2026-07-31"
+let customPeriodLabel = "YTD September 2026"
+let customLastUpdated = "2026-10-19"
 
 export async function getRebelRewardsStandings(): Promise<{
   success: boolean
@@ -74,18 +74,22 @@ export async function getRebelRewardsStandings(): Promise<{
         const matchedAgent = resolveContestAgentMatch(row.name, agentsList)
         const customRR = (matchedAgent?.system_variants as any)?.rebel_rewards
 
-        // Use custom numbers if edited, otherwise fallback to live YTD or contest seed
-        const liveAutoItems = matchedAgent?.id ? liveAutoMap.get(matchedAgent.id) : undefined
-        const autoItems = customRR?.auto_items !== undefined
-          ? Number(customRR.auto_items)
-          : (liveAutoItems !== undefined ? liveAutoItems : row.autoItems)
+        // Only prefer manual DB edits if they occurred AFTER the active snapshot date (2026-10-19)
+        const snapshotThreshold = new Date(`${customLastUpdated}T00:00:00Z`)
+        const isManualNewer = customRR?.updated_at && new Date(customRR.updated_at) > snapshotThreshold
 
-        const ips = customRR?.ips !== undefined ? Number(customRR.ips) : row.ips
-        const afsPc = customRR?.afs_pc !== undefined ? Number(customRR.afs_pc) : row.afsPc
-        const ivanNlItems = customRR?.ivan_nl_items !== undefined ? Number(customRR.ivan_nl_items) : row.ivanNlItems
-        const reyByJune30 = customRR?.rey_by_june_30 !== undefined ? !!customRR.rey_by_june_30 : row.reyByJune30
-        const updatedAt = customRR?.updated_at || null
-        const updatedByName = customRR?.updated_by_name || null
+        const autoItems = isManualNewer && customRR?.auto_items !== undefined
+          ? Number(customRR.auto_items)
+          : row.autoItems
+
+
+
+        const ips = isManualNewer && customRR?.ips !== undefined ? Number(customRR.ips) : row.ips
+        const afsPc = isManualNewer && customRR?.afs_pc !== undefined ? Number(customRR.afs_pc) : row.afsPc
+        const ivanNlItems = isManualNewer && customRR?.ivan_nl_items !== undefined ? Number(customRR.ivan_nl_items) : row.ivanNlItems
+        const reyByJune30 = isManualNewer && customRR?.rey_by_june_30 !== undefined ? !!customRR.rey_by_june_30 : row.reyByJune30
+        const updatedAt = isManualNewer ? customRR.updated_at : null
+        const updatedByName = isManualNewer ? customRR.updated_by_name : null
 
         if (updatedAt && (!latestTimestamp || new Date(updatedAt) > new Date(latestTimestamp))) {
           latestTimestamp = updatedAt
@@ -200,7 +204,7 @@ export async function uploadRebelRewardsExcel(base64Data: string, fileName: stri
   try {
     const buffer = Buffer.from(base64Data, "base64")
     const wb = XLSX.read(buffer, { type: "buffer" })
-    const sheetName = wb.SheetNames[0]
+    const sheetName = wb.SheetNames.find(s => s.toLowerCase() === "data") || wb.SheetNames[0]
     const ws = wb.Sheets[sheetName]
     const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 })
 
@@ -213,13 +217,21 @@ export async function uploadRebelRewardsExcel(base64Data: string, fileName: stri
     // Read rows starting from row 7 (index 6)
     for (let i = 6; i < rawRows.length; i++) {
       const row = rawRows[i]
-      if (row && typeof row[0] === "string" && row[0].trim() !== "") {
-        const name = row[0].trim()
-        const autoItems = Number(row[1]) || 0
-        const ips = Number(row[2]) || 0
-        const afsPc = Number(row[3]) || 0
-        const ivanNlItems = Number(row[4]) || 0
-        parsedAgents.push({ name, autoItems, ips, afsPc, ivanNlItems })
+      if (!row) continue
+      // Detect whether name is in col 0 (A) or col 1 (B)
+      const isCol1Name = typeof row[1] === "string" && isNaN(Number(row[1])) && row[1].trim() !== ""
+      const isCol0Name = typeof row[0] === "string" && isNaN(Number(row[0])) && row[0].trim() !== ""
+      const nameCol = isCol1Name ? 1 : (isCol0Name ? 0 : -1)
+
+      if (nameCol !== -1) {
+        const name = String(row[nameCol]).trim()
+        if (name && !name.toLowerCase().includes("total") && !name.toLowerCase().includes("allstate")) {
+          const autoItems = Number(row[nameCol + 1]) || 0
+          const ips = Number(row[nameCol + 2]) || 0
+          const afsPc = Number(row[nameCol + 3]) || 0
+          const ivanNlItems = Number(row[nameCol + 4]) || 0
+          parsedAgents.push({ name, autoItems, ips, afsPc, ivanNlItems })
+        }
       }
     }
 
@@ -334,3 +346,68 @@ export async function updateRebelRewardsAgentStats({
   }
 }
 
+
+/**
+ * Server action to sync Rebel Rewards directly from Google Sheets URL
+ */
+export async function syncRebelRewardsFromGoogleSheet(
+  sheetUrl: string = "https://docs.google.com/spreadsheets/d/1z6pbYsTIcXh2n2ubzsQQ88yCgkzJZcPcekKh2o-tEfg/edit?usp=sharing"
+) {
+  noStore()
+  try {
+    const idMatch = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
+    if (!idMatch) {
+      return { success: false, error: "Invalid Google Sheets URL format." }
+    }
+    const sheetId = idMatch[1]
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`
+
+    const res = await fetch(exportUrl)
+    if (!res.ok) {
+      return { success: false, error: `Failed to download spreadsheet from Google: ${res.statusText}` }
+    }
+    const buffer = Buffer.from(await res.arrayBuffer())
+    const wb = XLSX.read(buffer, { type: "buffer" })
+    const targetSheet = wb.SheetNames.find(s => s.toLowerCase() === "data") || wb.SheetNames[0]
+    const ws = wb.Sheets[targetSheet]
+    const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 })
+
+    const parsedAgents: RawRebelAgentRow[] = []
+    for (let i = 6; i < rawRows.length; i++) {
+      const row = rawRows[i]
+      if (!row) continue
+      const isCol1Name = typeof row[1] === "string" && isNaN(Number(row[1])) && row[1].trim() !== ""
+      const isCol0Name = typeof row[0] === "string" && isNaN(Number(row[0])) && row[0].trim() !== ""
+      const nameCol = isCol1Name ? 1 : (isCol0Name ? 0 : -1)
+
+      if (nameCol !== -1) {
+        const name = String(row[nameCol]).trim()
+        if (name && !name.toLowerCase().includes("total") && !name.toLowerCase().includes("allstate")) {
+          const autoItems = Number(row[nameCol + 1]) || 0
+          const ips = Number(row[nameCol + 2]) || 0
+          const afsPc = Number(row[nameCol + 3]) || 0
+          const ivanNlItems = Number(row[nameCol + 4]) || 0
+          parsedAgents.push({ name, autoItems, ips, afsPc, ivanNlItems })
+        }
+      }
+    }
+
+    if (parsedAgents.length === 0) {
+      return { success: false, error: "No agent rows found in the sheet." }
+    }
+
+    customUploadedRows = parsedAgents
+    customPeriodLabel = "YTD September 2026"
+    customLastUpdated = "2026-10-19"
+
+    return {
+      success: true,
+      agentCount: parsedAgents.length,
+      periodLabel: customPeriodLabel,
+      lastUpdated: customLastUpdated,
+    }
+  } catch (err: any) {
+    console.error("Error syncing from Google Sheets:", err)
+    return { success: false, error: err?.message || "Failed to sync from Google Sheets." }
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import Link from "next/link"
-import { getRebelRewardsStandings, uploadRebelRewardsExcel, updateRebelRewardsAgentStats } from "./actions"
+import { getRebelRewardsStandings, uploadRebelRewardsExcel, updateRebelRewardsAgentStats, syncRebelRewardsFromGoogleSheet } from "./actions"
 import { REBEL_TIERS, AgentRebelStandings, RebelRewardTier, calculateAgentRebelStatus } from "@/lib/rebelRewards"
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 import { Badge } from "@/components/ui/Badge"
@@ -118,6 +118,7 @@ export default function RebelRewardsPage() {
   const [modalTargetTierId, setModalTargetTierId] = useState<string | null>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -297,6 +298,26 @@ export default function RebelRewardsPage() {
       }
       reader.readAsDataURL(file)
     } catch (err: any) { setUploadError(err.message || "Failed to upload file"); setUploading(false) }
+  }
+
+  const handleSyncGoogleSheet = async () => {
+    setSyncing(true)
+    setUploadError(null)
+    setUploadSuccess(null)
+    try {
+      const res = await syncRebelRewardsFromGoogleSheet()
+      if (res.success) {
+        setUploadSuccess(`Successfully synced ${res.agentCount} agents from Google Sheets!`)
+        await loadData()
+        setTimeout(() => { setIsUploadModalOpen(false); setUploadSuccess(null) }, 1500)
+      } else {
+        setUploadError(res.error || "Failed to sync from Google Sheets.")
+      }
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to sync.")
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const tierRank: Record<string, number> = { none: 0, anakin: 1, rey: 2, luke: 3, obiwan: 4 }
@@ -1170,9 +1191,39 @@ export default function RebelRewardsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setIsUploadModalOpen(false)}>
           <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-5 space-y-3" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="font-black text-base text-slate-900">Upload Monthly Report</h3>
+              <div>
+                <h3 className="font-black text-base text-slate-900">Update Rebel Rewards Data</h3>
+                <p className="text-xs text-slate-500">Sync with the Google Sheet or upload an Excel file</p>
+              </div>
               <button onClick={() => setIsUploadModalOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400"><X className="w-4 h-4" /></button>
             </div>
+            {/* Google Sheets Sync */}
+            <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  GS
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Google Sheet Direct Sync</div>
+                  <div className="text-[11px] text-slate-500">Auto-pulls data from the active Google Sheet</div>
+                </div>
+              </div>
+              <Button
+                onClick={handleSyncGoogleSheet}
+                disabled={syncing}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3.5 rounded-lg flex items-center gap-1.5 shadow-sm"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync Now"}
+              </Button>
+            </div>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-200"></div>
+              <span className="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">or upload file</span>
+              <div className="flex-grow border-t border-slate-200"></div>
+            </div>
+
             <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/30 rounded-xl p-6 text-center cursor-pointer transition-all">
               <Upload className="w-7 h-7 text-blue-600 mx-auto mb-2" />
               <p className="text-sm font-bold text-slate-800 mb-1">{uploading ? "Processing..." : "Click to select Excel file"}</p>
