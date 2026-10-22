@@ -898,86 +898,51 @@ export default function ReferralsPage() {
             </div>
           </div>
 
-          {/* Producer filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Producer:
-            </span>
-            <select
-              value={selectedProducer}
-              onChange={e => setSelectedProducer(e.target.value)}
-              className="px-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-            >
-              <option value="all">
-                {selectedOffice !== "all" ? `All in ${selectedOffice} (${producersList.length})` : `All Producers (${producersList.length})`}
-              </option>
-              {producersList.map(p => (
-                <option key={p} value={p}>
-                  {toTitleCase(p)}
+          {/* Dropdown Filters (Producer & Lead Source) */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Producer filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Producer:
+              </span>
+              <select
+                value={selectedProducer}
+                onChange={e => setSelectedProducer(e.target.value)}
+                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="all">
+                  {selectedOffice !== "all" ? `All in ${selectedOffice} (${producersList.length})` : `All Producers (${producersList.length})`}
                 </option>
-              ))}
-            </select>
-          </div>
-        </div>
+                {producersList.map(p => (
+                  <option key={p} value={p}>
+                    {toTitleCase(p)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Lead Source Filter Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-0.5">
-              Lead Source:
-            </span>
-            <button
-              onClick={() => setSelectedLeadSource("all")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                selectedLeadSource === "all"
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
-              }`}
-            >
-              All
-            </button>
-            {displayLeadSourcePills.map(src => {
-              const isSelected = selectedLeadSource.toLowerCase() === src.toLowerCase()
-              return (
-                <button
-                  key={src}
-                  onClick={() => setSelectedLeadSource(isSelected ? "all" : src)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
-                    isSelected
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
-                  }`}
-                >
-                  <span>{toTitleCase(src)}</span>
-                  <span className={`text-[10px] font-normal ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
-                    ({leadSourceStats.counts[src] || 0})
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* All lead sources dropdown selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              More Sources:
-            </span>
-            <select
-              value={selectedLeadSource}
-              onChange={e => setSelectedLeadSource(e.target.value)}
-              className="px-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-            >
-              <option value="all">
-                {selectedOffice !== "all"
-                  ? `All Sources in ${selectedOffice} (${leadSourceStats.allSources.length})`
-                  : `All Lead Sources (${leadSourceStats.allSources.length})`}
-              </option>
-              {leadSourceStats.allSources.map(src => (
-                <option key={src} value={src}>
-                  {toTitleCase(src)} ({leadSourceStats.counts[src]})
+            {/* Lead Source dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Lead Source:
+              </span>
+              <select
+                value={selectedLeadSource}
+                onChange={e => setSelectedLeadSource(e.target.value)}
+                className="px-2.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="all">
+                  {selectedOffice !== "all"
+                    ? `All Sources in ${selectedOffice} (${leadSourceStats.allSources.length})`
+                    : `All Lead Sources (${leadSourceStats.allSources.length})`}
                 </option>
-              ))}
-            </select>
+                {leadSourceStats.allSources.map(src => (
+                  <option key={src} value={src}>
+                    {toTitleCase(src)} ({leadSourceStats.counts[src]})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -990,7 +955,7 @@ export default function ReferralsPage() {
               <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/75 dark:bg-slate-900/40 text-xs font-bold text-slate-600 dark:text-slate-300">
                 <th className="py-3 px-4">Customer</th>
                 <th className="py-3 px-3">Producer</th>
-                <th className="py-3 px-4">Policy / Carrier</th>
+                <th className="py-3 px-4">Policy / Carrier / Lead Source</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Sold Date</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Amount ($)</th>
                 <th className="py-3 px-3 whitespace-nowrap">Gift Type</th>
@@ -1059,7 +1024,7 @@ export default function ReferralsPage() {
                         </div>
                       </td>
 
-                      {/* Policy / Carrier */}
+                      {/* Policy / Carrier / Lead Source */}
                       <td className="py-2.5 px-4">
                         <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-1.5 flex-wrap">

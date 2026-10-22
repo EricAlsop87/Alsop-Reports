@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createSupabaseAdmin } from "@/lib/supabaseServer"
-import { ReferralEntry, ReferralSummary } from "@/lib/referralTypes"
+import { ReferralEntry, ReferralSummary, isNonReferralLeadSource } from "@/lib/referralTypes"
 import { REFERRAL_PROGRAM_SEPTEMBER_2026_SEED } from "@/lib/referralSeed"
 
 // Fallback in-memory storage for local dev / when DB table is not yet created
@@ -30,12 +30,12 @@ export async function getReferralsData(monthKey: string = "2026-09"): Promise<{
 
     if (error || !data || data.length === 0) {
       // Table does not exist yet or no rows for this month: use memory store
-      entries = memoryStore.filter(e => e.month_key === monthKey)
+      entries = memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
       if (entries.length === 0 && monthKey === "2026-09") {
-        entries = memoryStore
+        entries = memoryStore.filter(e => !isNonReferralLeadSource(e.lead_source))
       }
     } else {
-      entries = data as ReferralEntry[]
+      entries = (data as ReferralEntry[]).filter(e => !isNonReferralLeadSource(e.lead_source))
     }
 
     // Compute summary
@@ -62,7 +62,7 @@ export async function getReferralsData(monthKey: string = "2026-09"): Promise<{
   } catch (err: any) {
     console.error("Error in getReferralsData:", err)
     // Fallback gracefully
-    const entries = memoryStore.filter(e => e.month_key === monthKey)
+    const entries = memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
     const giftsSent = entries.filter(e => e.gift_status === "sent")
     const giftsPending = entries.filter(e => e.gift_status === "pending")
     const totalAmount = giftsSent.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
