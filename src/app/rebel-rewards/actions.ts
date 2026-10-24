@@ -88,6 +88,7 @@ export async function getRebelRewardsStandings(): Promise<{
         const afsPc = isManualNewer && customRR?.afs_pc !== undefined ? Number(customRR.afs_pc) : row.afsPc
         const ivanNlItems = isManualNewer && customRR?.ivan_nl_items !== undefined ? Number(customRR.ivan_nl_items) : row.ivanNlItems
         const reyByJune30 = isManualNewer && customRR?.rey_by_june_30 !== undefined ? !!customRR.rey_by_june_30 : row.reyByJune30
+        const yodaBonus = isManualNewer && customRR?.yoda_bonus !== undefined ? !!customRR.yoda_bonus : undefined
         const updatedAt = isManualNewer ? customRR.updated_at : null
         const updatedByName = isManualNewer ? customRR.updated_by_name : null
 
@@ -117,6 +118,7 @@ export async function getRebelRewardsStandings(): Promise<{
             office: matchedAgent?.office || undefined,
             team: matchedAgent?.team || undefined,
             reyByJune30,
+            yodaBonus,
             updatedAt,
             updatedByName,
           }
@@ -272,6 +274,7 @@ export async function updateRebelRewardsAgentStats({
   afsPc,
   ivanNlItems,
   reyByJune30,
+  yodaBonus,
   updatedById,
   updatedByName,
 }: {
@@ -282,6 +285,7 @@ export async function updateRebelRewardsAgentStats({
   afsPc: number
   ivanNlItems: number
   reyByJune30?: boolean
+  yodaBonus?: boolean
   updatedById?: string
   updatedByName?: string
 }): Promise<{ success: boolean; updatedAt?: string; updatedByName?: string; error?: string }> {
@@ -321,6 +325,7 @@ export async function updateRebelRewardsAgentStats({
         afs_pc: Number(afsPc) || 0,
         ivan_nl_items: Number(ivanNlItems) || 0,
         rey_by_june_30: !!reyByJune30,
+        yoda_bonus: yodaBonus !== undefined ? !!yodaBonus : (existingVariants.rebel_rewards?.yoda_bonus ?? false),
         updated_at: nowIso,
         updated_by_id: updatedById || null,
         updated_by_name: updater,

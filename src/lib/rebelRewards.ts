@@ -150,6 +150,7 @@ export interface AgentRebelStandings {
 
   // Aggregate results
   highestTier: "none" | "anakin" | "rey" | "luke" | "obiwan"
+  yodaBonusEarned?: boolean
   totalPayout: number
   payoutBreakdown: string[]
   updatedAt?: string | null
@@ -180,6 +181,7 @@ export function calculateAgentRebelStatus(
     office?: string
     team?: string
     reyByJune30?: boolean
+    yodaBonus?: boolean
     updatedAt?: string | null
     updatedByName?: string | null
   }
@@ -210,7 +212,8 @@ export function calculateAgentRebelStatus(
   const lukeIvan = ivanNlItems >= 65
   const lukeHits = (lukeAuto ? 1 : 0) + (lukeAfs ? 1 : 0) + (lukeIvan ? 1 : 0)
   const lukeEarned = lukeHits >= 2
-  const lukeYodaBonusEarned = lukeHits >= 1 // Hit 1 of 3 Disney bonus
+  // Hit 1 of 3 for Luke = $400 Yoda Bonus (or explicitly toggled by manager)
+  const lukeYodaBonusEarned = extra?.yodaBonus !== undefined ? !!extra.yodaBonus : (lukeHits >= 1)
 
   // 4. Obi-Wan (Hit 3 of 3)
   const obiwanAuto = autoItems >= 500
@@ -242,6 +245,9 @@ export function calculateAgentRebelStatus(
   if (lukeEarned) {
     totalPayout += 3000
     payoutBreakdown.push("Luke: $3,000")
+  } else if (lukeYodaBonusEarned) {
+    totalPayout += 400
+    payoutBreakdown.push("Yoda Bonus: $400")
   }
   if (obiwanEarned) {
     totalPayout += 5000
@@ -364,6 +370,7 @@ export function calculateAgentRebelStatus(
       earned: obiwanEarned,
     },
     highestTier,
+    yodaBonusEarned: lukeYodaBonusEarned,
     totalPayout,
     payoutBreakdown,
     updatedAt: extra?.updatedAt || null,

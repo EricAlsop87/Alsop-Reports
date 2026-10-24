@@ -131,6 +131,7 @@ export default function RebelRewardsPage() {
     afsPc: 0,
     ivanNlItems: 0,
     reyByJune30: false,
+    yodaBonus: false,
   })
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -225,6 +226,7 @@ export default function RebelRewardsPage() {
       afsPc: agent.afsPc,
       ivanNlItems: agent.ivanNlItems,
       reyByJune30: !!(agent as any).rey?.yodaBonusEarned,
+      yodaBonus: !!agent.yodaBonusEarned,
     })
     setEditError(null)
     setEditSuccess(null)
@@ -246,6 +248,7 @@ export default function RebelRewardsPage() {
       afsPc: editForm.afsPc,
       ivanNlItems: editForm.ivanNlItems,
       reyByJune30: editForm.reyByJune30,
+      yodaBonus: editForm.yodaBonus,
       updatedById: currentAgent?.id,
       updatedByName: updater,
     })
@@ -276,6 +279,7 @@ export default function RebelRewardsPage() {
         office: editingAgent.office,
         team: editingAgent.team,
         reyByJune30: editForm.reyByJune30,
+      yodaBonus: editForm.yodaBonus,
       }
     )
   }, [editingAgent, editForm])
@@ -631,6 +635,15 @@ export default function RebelRewardsPage() {
                               />
                               <span>Early Rey (+$2k Yoda)</span>
                             </label>
+                            <label className="flex items-center gap-1.5 mt-2 text-[10px] text-emerald-900 bg-emerald-100/80 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300/80 cursor-pointer w-fit select-none font-semibold" title="Award $400 for hitting 1 of 3 (or manual bonus)">
+                              <input
+                                type="checkbox"
+                                checked={editForm.yodaBonus}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, yodaBonus: e.target.checked }))}
+                                className="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 w-3 h-3"
+                              />
+                              <span>⭐ Yoda Bonus ($400)</span>
+                            </label>
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-1.5 mt-2.5">
@@ -797,6 +810,11 @@ export default function RebelRewardsPage() {
                           </div>
                           <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
                             <span>{agent.office} • {agent.team}</span>
+                            {agent.yodaBonusEarned && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[9px] text-amber-800 font-bold shadow-xs">
+                                ⭐ Yoda Bonus: $400
+                              </span>
+                            )}
                             {agent.updatedAt && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 font-semibold">
                                 <Clock className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
@@ -806,8 +824,8 @@ export default function RebelRewardsPage() {
                           </div>
                         </td>
                         <td className="py-2 px-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colors.badge}`}>
-                            {agent.highestTier === "none" ? "Padawan" : agent.highestTier}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${agent.highestTier === "none" && agent.yodaBonusEarned ? "bg-amber-100 text-amber-900 border-amber-300 font-black" : colors.badge}`}>
+                            {agent.highestTier === "none" ? (agent.yodaBonusEarned ? "⭐ Yoda Bonus" : "Padawan") : agent.highestTier}
                           </span>
                         </td>
                         <td className="py-2 px-3 text-center font-mono font-bold text-xs">
@@ -934,6 +952,16 @@ export default function RebelRewardsPage() {
                         <span>Early Rey Bonus (+$2k Yoda)</span>
                       </label>
 
+                      <label className="flex items-center gap-2 text-[11px] text-emerald-900 bg-emerald-100/80 p-2 rounded-lg border border-emerald-300/80 cursor-pointer select-none font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={editForm.yodaBonus}
+                          onChange={e => setEditForm(prev => ({ ...prev, yodaBonus: e.target.checked }))}
+                          className="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5"
+                        />
+                        <span>⭐ Yoda Bonus ($400)</span>
+                      </label>
+
                       {editSuccess && (
                         <div className="text-xs text-emerald-700 font-bold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" /> {editSuccess}
@@ -981,6 +1009,11 @@ export default function RebelRewardsPage() {
                           </div>
                           <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
                             <span>{agent.office} • {agent.team}</span>
+                            {agent.yodaBonusEarned && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[9px] text-amber-800 font-bold shadow-xs">
+                                ⭐ Yoda Bonus: $400
+                              </span>
+                            )}
                             {agent.updatedAt && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 font-semibold">
                                 <Clock className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
@@ -991,8 +1024,8 @@ export default function RebelRewardsPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colors.badge}`}>
-                          {agent.highestTier === "none" ? "Padawan" : agent.highestTier}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${agent.highestTier === "none" && agent.yodaBonusEarned ? "bg-amber-100 text-amber-900 border-amber-300 font-black" : colors.badge}`}>
+                          {agent.highestTier === "none" ? (agent.yodaBonusEarned ? "⭐ Yoda Bonus" : "Padawan") : agent.highestTier}
                         </span>
                         {agent.totalPayout > 0 && <span className="font-mono font-bold text-xs text-emerald-700">${agent.totalPayout.toLocaleString()}</span>}
                       </div>
@@ -1045,7 +1078,7 @@ export default function RebelRewardsPage() {
                   <div className="text-center">
                     <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Rank</div>
                     <div className={`text-sm font-black uppercase ${tierColors[selectedAgent.highestTier].text}`}>
-                      {selectedAgent.highestTier === "none" ? "Padawan" : selectedAgent.highestTier}
+                      {selectedAgent.highestTier === "none" ? (selectedAgent.yodaBonusEarned ? "⭐ Yoda Bonus" : "Padawan") : selectedAgent.highestTier}
                     </div>
                   </div>
                   <div className="p-2.5 bg-white/80 rounded-xl border border-slate-200/80">
@@ -1173,6 +1206,22 @@ export default function RebelRewardsPage() {
                       </div>
                     )
                   })()}
+                  {selectedAgent.payoutBreakdown && selectedAgent.payoutBreakdown.length > 0 && (
+                    <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                        <Trophy className="w-4 h-4 text-emerald-600" />
+                        <span>Bounties Unlocked:</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedAgent.payoutBreakdown.map((item, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-bold font-mono">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {selectedAgent.updatedAt && (
                     <div className="text-[11px] text-slate-500 flex items-center gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
