@@ -182,6 +182,7 @@ export function calculateAgentRebelStatus(
     team?: string
     reyByJune30?: boolean
     yodaBonus?: boolean
+    customPayout?: number | null
     updatedAt?: string | null
     updatedByName?: string | null
   }
@@ -213,7 +214,8 @@ export function calculateAgentRebelStatus(
   const lukeHits = (lukeAuto ? 1 : 0) + (lukeAfs ? 1 : 0) + (lukeIvan ? 1 : 0)
   const lukeEarned = lukeHits >= 2
   // Hit 1 of 3 for Luke = $400 Yoda Bonus (or explicitly toggled by manager)
-  const lukeYodaBonusEarned = extra?.yodaBonus !== undefined ? !!extra.yodaBonus : (lukeHits >= 1)
+  const autoLukeYoda = lukeHits >= 1 && !lukeEarned
+  const lukeYodaBonusEarned = extra?.yodaBonus !== undefined ? !!extra.yodaBonus : autoLukeYoda
 
   // 4. Obi-Wan (Hit 3 of 3)
   const obiwanAuto = autoItems >= 500
@@ -252,6 +254,13 @@ export function calculateAgentRebelStatus(
   if (obiwanEarned) {
     totalPayout += 5000
     payoutBreakdown.push("Obi-Wan: $5,000")
+  }
+
+  // Custom Bounty Override by Manager
+  if (extra?.customPayout !== undefined && extra?.customPayout !== null) {
+    totalPayout = Math.max(0, Number(extra.customPayout))
+    payoutBreakdown.length = 0
+    payoutBreakdown.push(`Custom Bounty: $${totalPayout.toLocaleString()}`)
   }
 
   // Smart "True Goal" Determination for Next Tier

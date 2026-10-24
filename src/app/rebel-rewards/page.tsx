@@ -132,6 +132,7 @@ export default function RebelRewardsPage() {
     ivanNlItems: 0,
     reyByJune30: false,
     yodaBonus: false,
+    customPayout: 0 as number | "",
   })
   const [savingEdit, setSavingEdit] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -227,6 +228,7 @@ export default function RebelRewardsPage() {
       ivanNlItems: agent.ivanNlItems,
       reyByJune30: !!(agent as any).rey?.yodaBonusEarned,
       yodaBonus: !!agent.yodaBonusEarned,
+      customPayout: agent.totalPayout,
     })
     setEditError(null)
     setEditSuccess(null)
@@ -249,6 +251,7 @@ export default function RebelRewardsPage() {
       ivanNlItems: editForm.ivanNlItems,
       reyByJune30: editForm.reyByJune30,
       yodaBonus: editForm.yodaBonus,
+      customPayout: editForm.customPayout !== "" ? Number(editForm.customPayout) : null,
       updatedById: currentAgent?.id,
       updatedByName: updater,
     })
@@ -280,6 +283,7 @@ export default function RebelRewardsPage() {
         team: editingAgent.team,
         reyByJune30: editForm.reyByJune30,
       yodaBonus: editForm.yodaBonus,
+      customPayout: editForm.customPayout !== "" ? Number(editForm.customPayout) : null,
       }
     )
   }, [editingAgent, editForm])
@@ -688,17 +692,22 @@ export default function RebelRewardsPage() {
                             </div>
                           </td>
 
-                          {/* Col 4: Live Bounty Summary */}
-                          <td className="py-3 px-3 text-center font-mono font-bold align-top pt-3.5">
+                          {/* Col 4: Live Bounty Summary & Manager Override */}
+                          <td className="py-2.5 px-3 text-center font-mono font-bold align-top">
                             <div className="flex flex-col items-center gap-1">
-                              {previewPayout > 0 ? (
-                                <span className="text-emerald-700 font-black text-sm">
-                                  ${previewPayout.toLocaleString()}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300 text-xs">--</span>
-                              )}
-                              <span className="text-[9px] font-mono text-emerald-600 font-bold uppercase tracking-wider">Summary</span>
+                              <div className="relative">
+                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="100"
+                                  value={editForm.customPayout}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, customPayout: e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0) }))}
+                                  className="w-20 pl-4 pr-1 py-1 font-mono font-black text-xs text-emerald-700 bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none text-center shadow-xs"
+                                  title="Manager custom bounty ($)"
+                                />
+                              </div>
+                              <span className="text-[9px] font-mono text-emerald-600 font-bold uppercase tracking-wider">Bounty ($)</span>
                             </div>
                           </td>
 
@@ -938,6 +947,20 @@ export default function RebelRewardsPage() {
                             value={editForm.ivanNlItems}
                             onChange={e => setEditForm(prev => ({ ...prev, ivanNlItems: Math.max(0, parseInt(e.target.value) || 0) }))}
                             className="w-full px-2.5 py-1.5 font-mono font-bold text-xs bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                      <div>
+                          <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-1">
+                            <Trophy className="w-3 h-3 text-emerald-600" /> Bounty ($)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="100"
+                            value={editForm.customPayout}
+                            onChange={e => setEditForm(prev => ({ ...prev, customPayout: e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className="w-full px-2.5 py-1.5 font-mono font-black text-xs text-emerald-700 bg-white border border-slate-300 rounded-lg focus:border-blue-500 outline-none"
+                            title="Manager custom bounty ($)"
                           />
                         </div>
                       </div>

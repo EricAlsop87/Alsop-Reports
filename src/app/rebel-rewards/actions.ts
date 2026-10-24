@@ -89,6 +89,7 @@ export async function getRebelRewardsStandings(): Promise<{
         const ivanNlItems = isManualNewer && customRR?.ivan_nl_items !== undefined ? Number(customRR.ivan_nl_items) : row.ivanNlItems
         const reyByJune30 = isManualNewer && customRR?.rey_by_june_30 !== undefined ? !!customRR.rey_by_june_30 : row.reyByJune30
         const yodaBonus = isManualNewer && customRR?.yoda_bonus !== undefined ? !!customRR.yoda_bonus : undefined
+        const customPayout = isManualNewer && customRR?.custom_payout !== undefined && customRR?.custom_payout !== null ? Number(customRR.custom_payout) : undefined
         const updatedAt = isManualNewer ? customRR.updated_at : null
         const updatedByName = isManualNewer ? customRR.updated_by_name : null
 
@@ -119,6 +120,7 @@ export async function getRebelRewardsStandings(): Promise<{
             team: matchedAgent?.team || undefined,
             reyByJune30,
             yodaBonus,
+            customPayout,
             updatedAt,
             updatedByName,
           }
@@ -275,6 +277,7 @@ export async function updateRebelRewardsAgentStats({
   ivanNlItems,
   reyByJune30,
   yodaBonus,
+  customPayout,
   updatedById,
   updatedByName,
 }: {
@@ -286,6 +289,7 @@ export async function updateRebelRewardsAgentStats({
   ivanNlItems: number
   reyByJune30?: boolean
   yodaBonus?: boolean
+  customPayout?: number | null
   updatedById?: string
   updatedByName?: string
 }): Promise<{ success: boolean; updatedAt?: string; updatedByName?: string; error?: string }> {
@@ -326,6 +330,7 @@ export async function updateRebelRewardsAgentStats({
         ivan_nl_items: Number(ivanNlItems) || 0,
         rey_by_june_30: !!reyByJune30,
         yoda_bonus: yodaBonus !== undefined ? !!yodaBonus : (existingVariants.rebel_rewards?.yoda_bonus ?? false),
+        custom_payout: customPayout !== undefined ? (customPayout === null ? null : Math.max(0, Number(customPayout))) : (existingVariants.rebel_rewards?.custom_payout ?? null),
         updated_at: nowIso,
         updated_by_id: updatedById || null,
         updated_by_name: updater,
