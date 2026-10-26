@@ -20,7 +20,10 @@ import {
   ShieldAlert,
   Loader2,
   Calendar,
-  X
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import { ReferralEntry, ReferralSummary } from "@/lib/referralTypes"
 import {
@@ -84,6 +87,36 @@ function getTodaySoldDate(): string {
   const m = months[d.getMonth()]
   const yr = String(d.getFullYear()).slice(-2)
   return `${day}-${m}-${yr}`
+}
+
+/**
+ * Parses sold dates like "17-Sep-26", "4-Sep-26", "30-Sep-26" into epoch timestamps for sorting.
+ */
+export function parseSoldDate(dateStr: string | null | undefined): number {
+  if (!dateStr) return 0
+  const s = dateStr.trim()
+  
+  // Format: D-MMM-YY or DD-MMM-YY (e.g. 17-Sep-26, 4-Sep-26, 30-Sep-26)
+  const dMmmYyMatch = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/)
+  if (dMmmYyMatch) {
+    const day = parseInt(dMmmYyMatch[1], 10)
+    const monthStr = dMmmYyMatch[2].toLowerCase()
+    let year = parseInt(dMmmYyMatch[3], 10)
+    if (year < 100) year += 2000
+    
+    const months: Record<string, number> = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    }
+    const month = months[monthStr] ?? 0
+    return new Date(year, month, day).getTime()
+  }
+
+  // Format: YYYY-MM-DD or standard parseable dates
+  const parsed = Date.parse(s)
+  if (!isNaN(parsed)) return parsed
+
+  return 0
 }
 
 export const OFFICE_DICT: Record<string, { code: string; name: string }> = {
@@ -336,6 +369,10 @@ export default function ReferralsPage() {
   // Custom gift tracking for table rows
   const [customGiftRows, setCustomGiftRows] = useState<Record<string, string>>({})
 
+  // Sorting state: default to "sold_date" descending (from recent date to first date of the month)
+  const [sortKey, setSortKey] = useState<"sold_date" | "customer" | "producer" | "amount">("sold_date")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+
   // Recipient Notes Drawer
   const [notesModalEntry, setNotesModalEntry] = useState<ReferralEntry | null>(null)
   const [notesDraft, setNotesDraft] = useState("")
@@ -458,9 +495,9 @@ export default function ReferralsPage() {
     return [...Array.from(set).sort((a, b) => a.localeCompare(b)), "Other"]
   }, [leadSourceStats.allSources])
 
-  // Filtered rows
+  // Filtered and sorted rows
   const filteredEntries = useMemo(() => {
-    return entries.filter(e => {
+    const list = entries.filter(e => {
       // 1. Status filter
       if (statusFilter === "pending" && e.gift_status !== "pending") return false
       if (statusFilter === "sent" && e.gift_status !== "sent") return false
@@ -503,7 +540,30 @@ export default function ReferralsPage() {
 
       return true
     })
-  }, [entries, statusFilter, selectedOffice, selectedProducer, selectedLeadSource, searchQuery])
+
+    // Sort entries: default from recent date to first date of the month (descending)
+    return [...list].sort((a, b) => {
+      if (sortKey === "sold_date") {
+        const dateA = parseSoldDate(a.sold_date)
+        const dateB = parseSoldDate(b.sold_date)
+        if (dateA !== dateB) {
+          return sortDir === "desc" ? dateB - dateA : dateA - dateB
+        }
+      } else if (sortKey === "customer") {
+        const cmp = (a.customer_name || "").localeCompare(b.customer_name || "")
+        if (cmp !== 0) return sortDir === "desc" ? -cmp : cmp
+      } else if (sortKey === "producer") {
+        const cmp = (a.producer || "").localeCompare(b.producer || "")
+        if (cmp !== 0) return sortDir === "desc" ? -cmp : cmp
+      } else if (sortKey === "amount") {
+        const valA = a.amount || 0
+        const valB = b.amount || 0
+        if (valA !== valB) return sortDir === "desc" ? valB - valA : valA - valB
+      }
+      // Tie breaker by sold_date descending
+      return parseSoldDate(b.sold_date) - parseSoldDate(a.sold_date)
+    })
+  }, [entries, statusFilter, selectedOffice, selectedProducer, selectedLeadSource, searchQuery, sortKey, sortDir])
 
   // Inline update handlers
   const handleToggleStatus = async (entry: ReferralEntry) => {
@@ -1144,11 +1204,79 @@ export default function ReferralsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/75 dark:bg-slate-900/40 text-xs font-bold text-slate-600 dark:text-slate-300">
-                <th className="py-3 px-4">Customer</th>
-                <th className="py-3 px-3">Producer</th>
+                <th
+                  className="py-3 px-4 cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors"
+                  onClick={() => {
+                    if (sortKey === "customer") setSortDir(d => d === "asc" ? "desc" : "asc")
+                    else { setSortKey("customer"); setSortDir("asc"); }
+                  }}
+                  title="Click to sort by Customer"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>Customer</span>
+                    {sortKey === "customer" ? (
+                      sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="py-3 px-3 cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors"
+                  onClick={() => {
+                    if (sortKey === "producer") setSortDir(d => d === "asc" ? "desc" : "asc")
+                    else { setSortKey("producer"); setSortDir("asc"); }
+                  }}
+                  title="Click to sort by Producer"
+                >
+                  <div className="inline-flex items-center gap-1">
+                    <span>Producer</span>
+                    {sortKey === "producer" ? (
+                      sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                </th>
                 <th className="py-3 px-4">Policy / Carrier / Lead Source</th>
-                <th className="py-3 px-3 text-center whitespace-nowrap">Sold Date</th>
-                <th className="py-3 px-3 text-center whitespace-nowrap">Amount ($)</th>
+                <th
+                  className="py-3 px-3 text-center whitespace-nowrap cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors bg-blue-50/50 dark:bg-blue-950/20"
+                  onClick={() => {
+                    if (sortKey === "sold_date") setSortDir(d => d === "desc" ? "asc" : "desc")
+                    else { setSortKey("sold_date"); setSortDir("desc"); }
+                  }}
+                  title="Click to sort: Recent date to first date of the month"
+                >
+                  <div className="inline-flex items-center gap-1 justify-center">
+                    <span>Sold Date</span>
+                    {sortKey === "sold_date" ? (
+                      sortDir === "desc" ? (
+                        <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="py-3 px-3 text-center whitespace-nowrap cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors"
+                  onClick={() => {
+                    if (sortKey === "amount") setSortDir(d => d === "desc" ? "asc" : "desc")
+                    else { setSortKey("amount"); setSortDir("desc"); }
+                  }}
+                  title="Click to sort by Amount"
+                >
+                  <div className="inline-flex items-center gap-1 justify-center">
+                    <span>Amount ($)</span>
+                    {sortKey === "amount" ? (
+                      sortDir === "desc" ? <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> : <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                </th>
                 <th className="py-3 px-3 whitespace-nowrap">Gift Type</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Gift Status</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Date Sent</th>
