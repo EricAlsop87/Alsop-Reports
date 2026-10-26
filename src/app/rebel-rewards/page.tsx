@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge"
 import { FilterBar, FilterState } from "@/components/ui/FilterBar"
 import { Button } from "@/components/ui/Button"
 import {
-  Trophy, Upload, Car, Heart, Home,
+  Trophy, Upload, Car, Heart, Home, DollarSign,
   Search, CheckCircle2, X, Target, Check,
   ArrowUpDown, ArrowUp, ArrowDown,
   Edit3, Clock, Save, RefreshCw, AlertCircle
@@ -359,7 +359,9 @@ export default function RebelRewardsPage() {
         case "tier": cmp = tierRank[a.highestTier] - tierRank[b.highestTier]; break
         case "bounty": cmp = a.totalPayout - b.totalPayout; break
         case "auto": cmp = a.autoItems - b.autoItems; break
+        case "ips": cmp = a.ips - b.ips; break
         case "afs": cmp = a.ips - b.ips; break
+        case "afspc": cmp = a.afsPc - b.afsPc; break
         case "ivan": cmp = a.ivanNlItems - b.ivanNlItems; break
         default: cmp = 0
       }
@@ -370,7 +372,7 @@ export default function RebelRewardsPage() {
 
   const toggleSort = (key: string) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc")
-    else { setSortKey(key); setSortDir(key === "bounty" || key === "auto" || key === "afs" || key === "ivan" ? "desc" : "asc") }
+    else { setSortKey(key); setSortDir(key === "bounty" || key === "auto" || key === "ips" || key === "afs" || key === "afspc" || key === "ivan" ? "desc" : "asc") }
   }
   const SortIcon = ({ col }: { col: string }) => {
     if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 text-slate-300 ml-0.5 inline" />
@@ -582,13 +584,14 @@ export default function RebelRewardsPage() {
                   <Th col="tier" label="Tier" center onClick={toggleSort}><SortIcon col="tier" /></Th>
                   <Th col="bounty" label="Bounty" center onClick={toggleSort}><SortIcon col="bounty" /></Th>
                   <Th col="auto" label="Auto" center onClick={toggleSort}><SortIcon col="auto" /></Th>
-                  <Th col="afs" label="AFS (IPS)" center onClick={toggleSort}><SortIcon col="afs" /></Th>
+                  <Th col="ips" label="IPS (Life)" center onClick={toggleSort}><SortIcon col="ips" /></Th>
+                  <Th col="afspc" label="AFS PC ($)" center onClick={toggleSort}><SortIcon col="afspc" /></Th>
                   <Th col="ivan" label="Ivan+NL" center onClick={toggleSort}><SortIcon col="ivan" /></Th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-xs">
                 {filteredStandings.length === 0 ? (
-                  <tr><td colSpan={7} className="py-10 text-center text-slate-400 text-sm">No advisors found.</td></tr>
+                  <tr><td colSpan={8} className="py-10 text-center text-slate-400 text-sm">No advisors found.</td></tr>
                 ) : (
                   filteredStandings.map((agent, i) => {
                     const isEditing = editingAgent?.agentName === agent.agentName
@@ -734,9 +737,9 @@ export default function RebelRewardsPage() {
                             </div>
                           </td>
 
-                          {/* Col 6: AFS (IPS) Inputs */}
+                          {/* Col 6: IPS Input */}
                           <td className="py-3 px-3 text-center align-top pt-3">
-                            <div className="flex flex-col items-center gap-1.5 min-w-[85px]">
+                            <div className="flex flex-col items-center gap-1 min-w-[70px]">
                               <div className="flex items-center gap-1">
                                 <input
                                   type="number"
@@ -745,14 +748,23 @@ export default function RebelRewardsPage() {
                                   onChange={(e) => setEditForm(prev => ({ ...prev, ips: Math.max(0, parseInt(e.target.value) || 0) }))}
                                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
                                   className="w-12 h-7 text-center font-mono font-bold text-xs bg-white border-2 border-blue-500 rounded-md shadow-xs focus:ring-2 focus:ring-blue-200 outline-none"
-                                  title="AFS IPS Count"
+                                  title="IPS (Life) Count"
                                 />
                                 <span className="font-mono text-[11px] text-slate-400 font-semibold">
                                   /{ipsTarget}
                                 </span>
                               </div>
+                              <div className="w-full max-w-[56px] h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${editForm.ips >= ipsTarget ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(100, Math.round((editForm.ips / ipsTarget) * 100))}%` }} />
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Col 7: AFS PC ($) Input */}
+                          <td className="py-3 px-3 text-center align-top pt-3">
+                            <div className="flex flex-col items-center gap-1 min-w-[85px]">
                               <div className="flex items-center gap-0.5">
-                                <span className="text-[10px] text-slate-500 font-bold">$</span>
+                                <span className="text-[11px] font-bold text-slate-500">$</span>
                                 <input
                                   type="number"
                                   min="0"
@@ -760,10 +772,16 @@ export default function RebelRewardsPage() {
                                   value={editForm.afsPc}
                                   onChange={(e) => setEditForm(prev => ({ ...prev, afsPc: Math.max(0, parseFloat(e.target.value) || 0) }))}
                                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditingAgent(null); }}
-                                  className="w-16 h-6 text-center font-mono text-[10px] font-semibold bg-white border border-slate-300 rounded focus:border-blue-500 outline-none"
+                                  className="w-16 h-7 text-center font-mono font-bold text-xs bg-white border-2 border-blue-500 rounded-md shadow-xs focus:ring-2 focus:ring-blue-200 outline-none"
                                   placeholder="PC $"
                                   title="AFS PC Premium ($)"
                                 />
+                                <span className="font-mono text-[10px] text-slate-400 font-semibold">
+                                  /{previewNt?.targets.afsPc ? (previewNt.targets.afsPc >= 1000 ? `${previewNt.targets.afsPc / 1000}k` : previewNt.targets.afsPc) : '10k'}
+                                </span>
+                              </div>
+                              <div className="w-full max-w-[70px] h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${editForm.afsPc >= (previewNt?.targets.afsPc || 10000) ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(100, Math.round((editForm.afsPc / (previewNt?.targets.afsPc || 10000)) * 100))}%` }} />
                               </div>
                             </div>
                           </td>
@@ -844,9 +862,13 @@ export default function RebelRewardsPage() {
                         <td className="py-2 px-3 text-center">
                           <PaceCell current={agent.autoItems} target={nt?.targets.autoItems} />
                         </td>
-                        {/* AFS — pacing toward next tier */}
+                        {/* IPS (Life) — pacing toward next tier */}
                         <td className="py-2 px-3 text-center">
-                          <PaceCell current={agent.ips} target={nt?.targets.ips} suffix={`$${Math.round(agent.afsPc/1000)}k`} />
+                          <PaceCell current={agent.ips} target={nt?.targets.ips} />
+                        </td>
+                        {/* AFS PC ($) — pacing toward next tier */}
+                        <td className="py-2 px-3 text-center">
+                          <PaceCell current={agent.afsPc} target={nt?.targets.afsPc} isCurrency />
                         </td>
                         {/* Ivan — pacing toward next tier */}
                         <td className="py-2 px-3 text-center">
@@ -1053,9 +1075,10 @@ export default function RebelRewardsPage() {
                         {agent.totalPayout > 0 && <span className="font-mono font-bold text-xs text-emerald-700">${agent.totalPayout.toLocaleString()}</span>}
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-1.5">
                       <MobilePace label="Auto" current={agent.autoItems} target={nt?.targets.autoItems} />
-                      <MobilePace label="AFS" current={agent.ips} target={nt?.targets.ips} />
+                      <MobilePace label="IPS" current={agent.ips} target={nt?.targets.ips} />
+                      <MobilePace label="AFS PC" current={agent.afsPc} target={nt?.targets.afsPc} isCurrency />
                       <MobilePace label="Ivan" current={agent.ivanNlItems} target={nt?.targets.ivanNlItems} />
                     </div>
                   </div>
@@ -1172,14 +1195,24 @@ export default function RebelRewardsPage() {
                       targetTier={activeTargetTier}
                     />
                     <MilestoneBar
-                      label="AFS (IPS)"
+                      label="IPS (Life Items)"
                       icon={<Heart className="w-4 h-4 text-rose-500" />}
                       current={selectedAgent.ips}
                       milestones={MILESTONES.ips}
                       tierLabels={TIER_LABELS}
                       color="rose"
                       agent={selectedAgent}
-                      altValue={`$${Math.round(selectedAgent.afsPc / 1000)}k PC`}
+                      targetTier={activeTargetTier}
+                    />
+                    <MilestoneBar
+                      label="AFS PC Premium ($)"
+                      icon={<DollarSign className="w-4 h-4 text-emerald-500" />}
+                      current={selectedAgent.afsPc}
+                      milestones={MILESTONES.afsPc}
+                      tierLabels={TIER_LABELS}
+                      color="emerald"
+                      agent={selectedAgent}
+                      isCurrency
                       targetTier={activeTargetTier}
                     />
                     <MilestoneBar
@@ -1330,23 +1363,47 @@ function FilterPill({ label, active, onClick, color }: { label: string; active: 
 }
 
 /** Table cell showing current/target pacing with a mini progress bar */
-function PaceCell({ current, target, suffix }: { current: number; target?: number; suffix?: string }) {
+function PaceCell({
+  current,
+  target,
+  suffix,
+  isCurrency,
+}: {
+  current: number
+  target?: number
+  suffix?: string
+  isCurrency?: boolean
+}) {
+  const formatVal = (val: number) => {
+    if (!isCurrency) return String(val)
+    if (val >= 1000) {
+      return `$${(val / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`
+    }
+    return `$${val.toLocaleString()}`
+  }
+
   if (!target) {
     // Grand Master — no next target
     return (
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="font-mono text-[11px] font-bold text-emerald-700">{current} ✓</span>
+      <div className="flex flex-col items-center gap-0.5 min-w-[65px]">
+        <span className="font-mono text-[11px] font-bold text-emerald-700">
+          {isCurrency ? `$${current.toLocaleString()}` : current} ✓
+        </span>
         {suffix && <span className="text-[9px] text-slate-400">{suffix}</span>}
       </div>
     )
   }
-  const pct = Math.min(100, Math.round((current / target) * 100))
+  const pct = Math.min(100, Math.round((Math.max(0, current) / target) * 100))
   const met = current >= target
   return (
-    <div className="flex flex-col items-center gap-0.5 min-w-[60px]">
-      <div className="font-mono text-[11px] font-bold">
-        <span className={met ? "text-emerald-700" : "text-slate-800"}>{current}</span>
-        <span className="text-slate-300">/{target}</span>
+    <div className="flex flex-col items-center gap-0.5 min-w-[65px]">
+      <div className="font-mono text-[11px] font-bold whitespace-nowrap">
+        <span className={met ? "text-emerald-700" : current < 0 ? "text-rose-600 font-semibold" : "text-slate-800"}>
+          {isCurrency ? `$${current.toLocaleString()}` : current}
+        </span>
+        <span className="text-slate-400 font-normal">
+          /{formatVal(target)}
+        </span>
       </div>
       <div className="w-full max-w-[56px] h-1 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${met ? 'bg-emerald-500' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
@@ -1357,14 +1414,29 @@ function PaceCell({ current, target, suffix }: { current: number; target?: numbe
 }
 
 /** Mobile pacing cell */
-function MobilePace({ label, current, target }: { label: string; current: number; target?: number }) {
-  const pct = target ? Math.min(100, Math.round((current / target) * 100)) : 100
+function MobilePace({
+  label,
+  current,
+  target,
+  isCurrency,
+}: {
+  label: string
+  current: number
+  target?: number
+  isCurrency?: boolean
+}) {
+  const pct = target ? Math.min(100, Math.round((Math.max(0, current) / target) * 100)) : 100
   const met = target ? current >= target : true
   return (
     <div className="text-center">
-      <div className="text-[9px] font-bold text-slate-400 uppercase">{label}</div>
-      <div className="font-mono font-bold text-xs text-slate-800">
-        {current}{target ? <span className="text-slate-300">/{target}</span> : null}
+      <div className="text-[9px] font-bold text-slate-400 uppercase truncate">{label}</div>
+      <div className="font-mono font-bold text-xs text-slate-800 whitespace-nowrap">
+        {isCurrency ? (current >= 1000 ? `$${Math.round(current / 1000)}k` : `$${current}`) : current}
+        {target ? (
+          <span className="text-slate-300 font-normal text-[10px]">
+            /{isCurrency ? (target >= 1000 ? `$${Math.round(target / 1000)}k` : `$${target}`) : target}
+          </span>
+        ) : null}
       </div>
       {target && (
         <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mt-0.5">
@@ -1376,7 +1448,7 @@ function MobilePace({ label, current, target }: { label: string; current: number
 }
 
 /** Multi-tier milestone progress bar for the modal */
-function MilestoneBar({ label, icon, current, milestones, tierLabels, color, agent, altValue, targetTier }: {
+function MilestoneBar({ label, icon, current, milestones, tierLabels, color, agent, altValue, targetTier, isCurrency }: {
   label: string
   icon: React.ReactNode
   current: number
@@ -1386,10 +1458,11 @@ function MilestoneBar({ label, icon, current, milestones, tierLabels, color, age
   agent: AgentRebelStandings
   altValue?: string
   targetTier?: RebelRewardTier | null
+  isCurrency?: boolean
 }) {
   const max = milestones[milestones.length - 1]
   const pct = Math.min(100, (current / max) * 100)
-  const fillColors: Record<string, string> = { blue: "bg-blue-500", rose: "bg-rose-500", amber: "bg-amber-500" }
+  const fillColors: Record<string, string> = { blue: "bg-blue-500", rose: "bg-rose-500", emerald: "bg-emerald-500", amber: "bg-amber-500" }
   const activeTier = targetTier || agent.nextTier
 
   return (
@@ -1397,7 +1470,7 @@ function MilestoneBar({ label, icon, current, milestones, tierLabels, color, age
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 font-bold text-xs text-slate-700 uppercase tracking-wide">{icon} {label}</div>
         <div className="flex items-center gap-2">
-          <span className="font-mono font-bold text-sm text-slate-900">{current}</span>
+          <span className="font-mono font-bold text-sm text-slate-900">{isCurrency ? `$${current.toLocaleString()}` : current}</span>
           {altValue && <span className="text-[10px] text-slate-400 font-mono">({altValue})</span>}
         </div>
       </div>
@@ -1419,13 +1492,13 @@ function MilestoneBar({ label, icon, current, milestones, tierLabels, color, age
               {/* Tooltip on hover */}
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/marker:flex flex-col items-center pointer-events-none z-40">
                 <div className="bg-slate-900 text-white text-[10px] font-mono px-2.5 py-1 rounded-md shadow-xl whitespace-nowrap border border-slate-700">
-                  <span className="font-bold text-slate-200">{tierName} ({ms}):</span>{" "}
+                  <span className="font-bold text-slate-200">{tierName} ({isCurrency ? `$${ms.toLocaleString()}` : ms}):</span>{" "}
                   {reached ? (
                     <span className="text-emerald-400 font-bold">✓ Achieved</span>
                   ) : current > 0 ? (
-                    <span className="text-amber-300 font-bold">{diff} more needed</span>
+                    <span className="text-amber-300 font-bold">{isCurrency ? `$${diff.toLocaleString()}` : diff} more needed</span>
                   ) : (
-                    <span className="text-slate-300">{ms} needed</span>
+                    <span className="text-slate-300">{isCurrency ? `$${ms.toLocaleString()}` : ms} needed</span>
                   )}
                 </div>
                 <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1" />
@@ -1442,7 +1515,9 @@ function MilestoneBar({ label, icon, current, milestones, tierLabels, color, age
           const reached = current >= ms
           return (
             <div key={idx} className="absolute -translate-x-1/2 text-center" style={{ left: `${msPct}%` }}>
-              <div className={`text-[8px] font-bold ${reached ? 'text-emerald-600' : 'text-slate-400'}`}>{ms}</div>
+              <div className={`text-[8px] font-bold ${reached ? 'text-emerald-600' : 'text-slate-400'}`}>
+                {isCurrency ? (ms >= 1000 ? `$${ms / 1000}k` : `$${ms}`) : ms}
+              </div>
             </div>
           )
         })}
@@ -1465,18 +1540,21 @@ function MilestoneBar({ label, icon, current, milestones, tierLabels, color, age
       {activeTier && (
         <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[10px]">
           <span className="text-slate-500">
-            {activeTier.character} Target: <span className="font-bold text-slate-700">{(activeTier.targets as any)[label === "Allstate Auto Items" ? "autoItems" : label === "AFS (IPS)" ? "ips" : "ivanNlItems"]}</span>
+            {activeTier.character} Target: <span className="font-bold text-slate-700">{(() => {
+              const targetKey = label === "Allstate Auto Items" ? "autoItems" : label.includes("AFS PC") ? "afsPc" : label.includes("IPS") ? "ips" : "ivanNlItems"
+              const val = (activeTier.targets as any)[targetKey]
+              return isCurrency ? `$${val.toLocaleString()}` : val
+            })()}</span>
           </span>
           {(() => {
-            const targetKey = label === "Allstate Auto Items" ? "autoItems" : label === "AFS (IPS)" ? "ips" : "ivanNlItems"
+            const targetKey = label === "Allstate Auto Items" ? "autoItems" : label.includes("AFS PC") ? "afsPc" : label.includes("IPS") ? "ips" : "ivanNlItems"
             const targetVal = (activeTier.targets as any)[targetKey]
             const needed = Math.max(0, targetVal - current)
-            if (current === 0 && needed > 0) {
-              // 0 progress in this category - show clean neutral target
-              return <span className="text-slate-400 font-mono">0 / {targetVal}</span>
+            if (current <= 0 && needed > 0) {
+              return <span className="text-slate-400 font-mono">{isCurrency ? "$0" : "0"} / {isCurrency ? `$${targetVal.toLocaleString()}` : targetVal}</span>
             }
             return needed > 0 ? (
-              <span className="text-slate-400">Need <span className="font-bold text-blue-600">{needed}</span> more</span>
+              <span className="text-slate-400">Need <span className="font-bold text-blue-600">{isCurrency ? `$${needed.toLocaleString()}` : needed}</span> more</span>
             ) : (
               <span className="text-emerald-600 font-bold">✓ Met</span>
             )
