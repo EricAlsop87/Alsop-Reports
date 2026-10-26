@@ -31,10 +31,8 @@ import {
 } from "./actions"
 
 const GIFT_PRESETS = [
-  "$10.00 Visa Card",
-  "Amazon",
+  "Zelle",
   "Target",
-  "Starbucks",
   "Visa Gift Card",
   "Cash / Check",
   "Other"
@@ -264,7 +262,7 @@ export default function ReferralsPage() {
   const [newPolicy, setNewPolicy] = useState("Standard Auto")
   const [newCarrier, setNewCarrier] = useState("Allstate")
   const [newAmount, setNewAmount] = useState("10.00")
-  const [newGiftType, setNewGiftType] = useState("$10.00 Visa Card")
+  const [newGiftType, setNewGiftType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Recipient Notes Drawer
@@ -488,17 +486,22 @@ export default function ReferralsPage() {
 
   const handleGiftTypeChange = async (entry: ReferralEntry, newType: string) => {
     setSavingId(entry.id)
+    const val = newType || null
     try {
-      const res = await updateReferralEntry(entry.id, { gift_type: newType }, currentAgent?.name)
+      const res = await updateReferralEntry(entry.id, { gift_type: val }, currentAgent?.name)
       if (res.success) {
         setEntries(prev =>
           prev.map(item =>
             item.id === entry.id
-              ? { ...item, gift_type: newType, updated_by: currentAgent?.name || "Manager" }
+              ? { ...item, gift_type: val, updated_by: currentAgent?.name || "Manager" }
               : item
           )
         )
-        showToast(`Gift set to ${newType}`)
+        if (val) {
+          showToast(`Gift set to ${val}`)
+        } else {
+          showToast("Gift type cleared")
+        }
       }
     } catch {
       showToast("Failed to update gift type", "error")
@@ -555,7 +558,7 @@ export default function ReferralsPage() {
           sold_date: today,
           is_referral: true,
           amount: parseFloat(newAmount) || 10.00,
-          gift_type: newGiftType,
+          gift_type: newGiftType || null,
           gift_status: "pending",
           date_sent: null,
           recipient_notes: null,
@@ -573,6 +576,7 @@ export default function ReferralsPage() {
         }))
         setAddModalOpen(false)
         setNewCustomer("")
+        setNewGiftType("")
         showToast(`Added referral for ${newCustomer}!`)
       }
     } catch {
@@ -1079,15 +1083,31 @@ export default function ReferralsPage() {
                       {/* Gift Type - Dropdown */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <select
-                          value={entry.gift_type || "$10.00 Visa Card"}
+                          value={
+                            !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
+                              ? ""
+                              : entry.gift_type
+                          }
                           onChange={e => handleGiftTypeChange(entry, e.target.value)}
-                          className="px-2 py-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
+                          className={`px-2 py-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none cursor-pointer transition-colors ${
+                            !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
+                              ? "text-slate-400 dark:text-slate-500 italic text-[11px]"
+                              : "text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          }`}
                         >
+                          <option value="" className="text-slate-400 italic text-[11px]">
+                            Click to choose Gift Type
+                          </option>
                           {GIFT_PRESETS.map(g => (
-                            <option key={g} value={g}>
+                            <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
                               {g}
                             </option>
                           ))}
+                          {entry.gift_type && !GIFT_PRESETS.includes(entry.gift_type) && entry.gift_type !== "$10.00 Visa Card" && entry.gift_type !== "$10 Visa Card" && (
+                            <option value={entry.gift_type} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
+                              {entry.gift_type}
+                            </option>
+                          )}
                         </select>
                       </td>
 
@@ -1274,10 +1294,15 @@ export default function ReferralsPage() {
                   <select
                     value={newGiftType}
                     onChange={e => setNewGiftType(e.target.value)}
-                    className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    className={`w-full px-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none cursor-pointer ${
+                      !newGiftType ? "text-slate-400 italic text-[11px]" : "text-xs font-semibold text-slate-900 dark:text-white"
+                    }`}
                   >
+                    <option value="" className="text-slate-400 italic text-[11px]">
+                      Click to choose Gift Type
+                    </option>
                     {GIFT_PRESETS.map(g => (
-                      <option key={g} value={g}>
+                      <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
                         {g}
                       </option>
                     ))}

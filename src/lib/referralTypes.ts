@@ -11,7 +11,7 @@ export interface ReferralEntry {
   carrier: string
   is_referral: boolean
   amount: number | null
-  gift_type: string
+  gift_type: string | null
   gift_status: "pending" | "sent" | "n/a"
   date_sent: string | null
   recipient_notes: string | null

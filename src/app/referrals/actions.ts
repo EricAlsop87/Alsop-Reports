@@ -148,7 +148,7 @@ export async function addReferralEntry(
       ...entry,
       id,
       amount: entry.amount ? Number(entry.amount) : 10.00,
-      gift_type: entry.gift_type || "$10.00 Visa Card",
+      gift_type: entry.gift_type || null,
       gift_status: entry.gift_status || "pending",
       updated_by: managerName || "Manager",
       updated_at: now,
