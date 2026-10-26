@@ -486,11 +486,16 @@ export default function ReferralsPage() {
     return pills
   }, [leadSourceStats.topSources, selectedLeadSource])
 
-  // Combined lead sources including presets and all sources in active data
+  // Combined lead sources including presets and all sources in active data (ensuring 'Other' is strictly unique at the end)
   const availableLeadSources = useMemo(() => {
-    const set = new Set<string>(LEAD_SOURCE_PRESETS.filter(s => s !== "Other"))
+    const set = new Set<string>(
+      LEAD_SOURCE_PRESETS.filter(s => s.toLowerCase().trim() !== "other")
+    )
     leadSourceStats.allSources.forEach(s => {
-      if (s) set.add(toTitleCase(s))
+      const trimmed = s?.trim()
+      if (trimmed && trimmed.toLowerCase() !== "other") {
+        set.add(toTitleCase(trimmed))
+      }
     })
     return [...Array.from(set).sort((a, b) => a.localeCompare(b)), "Other"]
   }, [leadSourceStats.allSources])
@@ -1352,8 +1357,8 @@ export default function ReferralsPage() {
                             onChange={e => setQuickSource(e.target.value)}
                             className="w-full px-1.5 py-1 text-[11px] font-medium text-purple-700 dark:text-purple-300 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-md cursor-pointer focus:outline-none"
                           >
-                            {availableLeadSources.map(src => (
-                              <option key={src} value={src}>{src}</option>
+                            {availableLeadSources.map((src, idx) => (
+                              <option key={`quick-src-${src}-${idx}`} value={src}>{src}</option>
                             ))}
                           </select>
                           {quickSource === "Other" && (
@@ -1789,8 +1794,8 @@ export default function ReferralsPage() {
                     onChange={e => setNewSource(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
                   >
-                    {availableLeadSources.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                    {availableLeadSources.map((s, idx) => (
+                      <option key={`modal-src-${s}-${idx}`} value={s}>{s}</option>
                     ))}
                   </select>
                   {newSource === "Other" && (
