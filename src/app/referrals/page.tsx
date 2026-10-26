@@ -32,7 +32,6 @@ import {
 
 const GIFT_PRESETS = [
   "Zelle",
-  "Target",
   "Visa Gift Card",
   "Cash / Check",
   "Other"
@@ -325,6 +324,7 @@ export default function ReferralsPage() {
   const [quickPolicy, setQuickPolicy] = useState("Standard Auto")
   const [quickCarrier, setQuickCarrier] = useState("Allstate")
   const [quickSource, setQuickSource] = useState("Customer Referral")
+  const [quickCustomSource, setQuickCustomSource] = useState("")
   const [quickSoldDate, setQuickSoldDate] = useState(() => getTodaySoldDate())
   const [quickAmount, setQuickAmount] = useState("10.00")
   const [quickGiftType, setQuickGiftType] = useState("")
@@ -442,6 +442,15 @@ export default function ReferralsPage() {
     }
     return pills
   }, [leadSourceStats.topSources, selectedLeadSource])
+
+  // Combined lead sources including presets and all sources in active data
+  const availableLeadSources = useMemo(() => {
+    const set = new Set<string>(LEAD_SOURCE_PRESETS.filter(s => s !== "Other"))
+    leadSourceStats.allSources.forEach(s => {
+      if (s) set.add(toTitleCase(s))
+    })
+    return [...Array.from(set).sort((a, b) => a.localeCompare(b)), "Other"]
+  }, [leadSourceStats.allSources])
 
   // Filtered rows
   const filteredEntries = useMemo(() => {
@@ -696,6 +705,8 @@ export default function ReferralsPage() {
       return
     }
 
+    const finalSource = (quickSource === "Other" ? quickCustomSource : quickSource).trim() || "Customer Referral"
+
     setIsQuickSubmitting(true)
     try {
       const res = await addReferralEntry(
@@ -703,7 +714,7 @@ export default function ReferralsPage() {
           month_key: selectedMonth,
           customer_name: cust,
           producer: prod,
-          lead_source: quickSource.trim() || "Customer Referral",
+          lead_source: finalSource,
           policy_type: quickPolicy.trim() || "Standard Auto",
           carrier: quickCarrier.trim() || "Allstate",
           sold_date: quickSoldDate.trim() || getTodaySoldDate(),
@@ -727,6 +738,7 @@ export default function ReferralsPage() {
         }))
         setQuickCustomer("")
         setQuickGiftType("")
+        setQuickCustomSource("")
         showToast(`Added referral for ${cust}!`)
       } else {
         showToast("Failed to add referral", "error")
@@ -1202,10 +1214,23 @@ export default function ReferralsPage() {
                             onChange={e => setQuickSource(e.target.value)}
                             className="w-full px-1.5 py-1 text-[11px] font-medium text-purple-700 dark:text-purple-300 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-md cursor-pointer focus:outline-none"
                           >
-                            {LEAD_SOURCE_PRESETS.map(src => (
+                            {availableLeadSources.map(src => (
                               <option key={src} value={src}>{src}</option>
                             ))}
                           </select>
+                          {quickSource === "Other" && (
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Type custom lead source..."
+                              value={quickCustomSource}
+                              onChange={e => setQuickCustomSource(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") handleQuickAdd()
+                              }}
+                              className="w-full px-1.5 py-1 text-[11px] font-medium text-purple-700 dark:text-purple-300 bg-white dark:bg-slate-900 border border-purple-400 dark:border-purple-600 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 placeholder:text-purple-400/60 shadow-inner"
+                            />
+                          )}
                         </div>
                       </td>
 
@@ -1569,7 +1594,7 @@ export default function ReferralsPage() {
                     onChange={e => setNewSource(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
                   >
-                    {LEAD_SOURCE_PRESETS.map(s => (
+                    {availableLeadSources.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
