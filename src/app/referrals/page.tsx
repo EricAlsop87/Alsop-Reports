@@ -23,7 +23,8 @@ import {
   X,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Trash2
 } from "lucide-react"
 import { ReferralEntry, ReferralSummary } from "@/lib/referralTypes"
 import {
@@ -373,6 +374,10 @@ export default function ReferralsPage() {
   const [sortKey, setSortKey] = useState<"sold_date" | "customer" | "producer" | "amount">("sold_date")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
+  // Delete Confirmation Modal State (Double Verification)
+  const [entryToDelete, setEntryToDelete] = useState<ReferralEntry | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Recipient Notes Drawer
   const [notesModalEntry, setNotesModalEntry] = useState<ReferralEntry | null>(null)
   const [notesDraft, setNotesDraft] = useState("")
@@ -699,6 +704,33 @@ export default function ReferralsPage() {
       showToast("Failed to save details", "error")
     } finally {
       setSavingId(null)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return
+    setIsDeleting(true)
+    try {
+      const res = await deleteReferralEntry(entryToDelete.id)
+      if (res.success) {
+        setEntries(prev => prev.filter(e => e.id !== entryToDelete.id))
+        setSummary(prev => ({
+          ...prev,
+          totalReferrals: Math.max(0, prev.totalReferrals - 1),
+          giftsSentCount: entryToDelete.gift_status === "sent" ? Math.max(0, prev.giftsSentCount - 1) : prev.giftsSentCount,
+          giftsPendingCount: entryToDelete.gift_status === "pending" ? Math.max(0, prev.giftsPendingCount - 1) : prev.giftsPendingCount,
+          totalAmountSent: entryToDelete.gift_status === "sent" && entryToDelete.amount ? Math.max(0, prev.totalAmountSent - entryToDelete.amount) : prev.totalAmountSent,
+          allPoliciesCount: Math.max(0, prev.allPoliciesCount - (entryToDelete.policy_count || 1)),
+        }))
+        showToast(`Deleted referral for ${entryToDelete.customer_name}`)
+        setEntryToDelete(null)
+      } else {
+        showToast(res.error || "Failed to delete referral", "error")
+      }
+    } catch {
+      showToast("Failed to delete referral", "error")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -1286,12 +1318,13 @@ export default function ReferralsPage() {
                 <th className="py-3 px-3 text-center whitespace-nowrap">Gift Status</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Date Sent</th>
                 <th className="py-3 px-3 text-center whitespace-nowrap">Notes</th>
+                <th className="py-3 px-3 text-center whitespace-nowrap w-16">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-slate-400">
+                  <td colSpan={10} className="py-16 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
                     <span>Loading referral list...</span>
                   </td>
@@ -1449,7 +1482,12 @@ export default function ReferralsPage() {
                         —
                       </td>
 
-                      {/* Action */}
+                      {/* Notes placeholder */}
+                      <td className="py-2.5 px-3 text-center text-slate-300 dark:text-slate-600 text-xs">
+                        —
+                      </td>
+
+                      {/* Action: Add Button */}
                       <td className="py-2.5 px-3 text-center whitespace-nowrap">
                         <button
                           type="button"
@@ -1471,7 +1509,7 @@ export default function ReferralsPage() {
 
                   {filteredEntries.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-12 text-center text-slate-400">
+                      <td colSpan={10} className="py-12 text-center text-slate-400">
                         <Gift className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                         <p className="font-semibold text-slate-600 dark:text-slate-300">
                           No records match the current filter
@@ -1695,6 +1733,18 @@ export default function ReferralsPage() {
                           title="Edit recipient details or delivery notes"
                         >
                           {entry.recipient_notes ? "Notes ✓" : "Notes"}
+                        </button>
+                      </td>
+
+                      {/* Action: Delete Button with double verification */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setEntryToDelete(entry)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                          title={`Delete referral for ${entry.customer_name}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
@@ -1938,6 +1988,83 @@ export default function ReferralsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal (Double Verification) */}
+      {entryToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Delete Customer Referral?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Double verification required
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 rounded-xl p-3.5 space-y-2">
+              <p className="text-sm font-semibold text-rose-950 dark:text-rose-200">
+                Are you sure you want to delete the customer{" "}
+                <span className="font-bold underline decoration-rose-400">{entryToDelete.customer_name}</span>?
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 pt-1.5 border-t border-rose-200/60 dark:border-rose-900/40">
+                <div>
+                  <span className="text-slate-400">Producer: </span>
+                  <span className="font-semibold">{entryToDelete.producer}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Sold Date: </span>
+                  <span className="font-semibold">{entryToDelete.sold_date}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-slate-400">Policy: </span>
+                  <span className="font-semibold">
+                    {entryToDelete.policy_type} ({entryToDelete.carrier || "Direct"})
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              This action cannot be undone. This record will be permanently deleted from the database.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setEntryToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/20 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Yes, Delete Customer</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
