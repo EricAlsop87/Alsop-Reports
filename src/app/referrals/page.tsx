@@ -38,6 +38,54 @@ const GIFT_PRESETS = [
   "Other"
 ]
 
+const POLICY_PRESETS = [
+  "Standard Auto",
+  "Homeowners (HO-3)",
+  "Renters",
+  "Commercial BOP",
+  "Dwelling Fire",
+  "Condo",
+  "Landlord",
+  "Commercial Auto",
+  "Motorcycle",
+  "Umbrella",
+  "Other"
+]
+
+const CARRIER_PRESETS = [
+  "Allstate",
+  "National General",
+  "Hartford",
+  "Foremost",
+  "Bamboo",
+  "Pacific Specialty",
+  "CA Fair Plan",
+  "Travelers",
+  "Berkshire Hathaway",
+  "Progressive",
+  "Other"
+]
+
+const LEAD_SOURCE_PRESETS = [
+  "Customer Referral",
+  "Personal Referral",
+  "Call in from advertising",
+  "Realtor Partner",
+  "Mortgage Partner",
+  "Client Referral",
+  "Instagram",
+  "Other"
+]
+
+function getTodaySoldDate(): string {
+  const d = new Date()
+  const day = d.getDate()
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const m = months[d.getMonth()]
+  const yr = String(d.getFullYear()).slice(-2)
+  return `${day}-${m}-${yr}`
+}
+
 export const OFFICE_DICT: Record<string, { code: string; name: string }> = {
   MC: { code: "MC", name: "Montclair" },
   MCM: { code: "MCM", name: "Montclair" },
@@ -258,12 +306,29 @@ export default function ReferralsPage() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [newCustomer, setNewCustomer] = useState("")
   const [newProducer, setNewProducer] = useState("")
+  const [customProducer, setCustomProducer] = useState("")
   const [newSource, setNewSource] = useState("Customer Referral")
+  const [customSource, setCustomSource] = useState("")
   const [newPolicy, setNewPolicy] = useState("Standard Auto")
+  const [customPolicy, setCustomPolicy] = useState("")
   const [newCarrier, setNewCarrier] = useState("Allstate")
+  const [customCarrier, setCustomCarrier] = useState("")
+  const [newSoldDate, setNewSoldDate] = useState(() => getTodaySoldDate())
   const [newAmount, setNewAmount] = useState("10.00")
   const [newGiftType, setNewGiftType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Quick Add Row (Inline table entry)
+  const [showQuickAddRow, setShowQuickAddRow] = useState(true)
+  const [quickCustomer, setQuickCustomer] = useState("")
+  const [quickProducer, setQuickProducer] = useState("")
+  const [quickPolicy, setQuickPolicy] = useState("Standard Auto")
+  const [quickCarrier, setQuickCarrier] = useState("Allstate")
+  const [quickSource, setQuickSource] = useState("Customer Referral")
+  const [quickSoldDate, setQuickSoldDate] = useState(() => getTodaySoldDate())
+  const [quickAmount, setQuickAmount] = useState("10.00")
+  const [quickGiftType, setQuickGiftType] = useState("")
+  const [isQuickSubmitting, setIsQuickSubmitting] = useState(false)
 
   // Recipient Notes Drawer
   const [notesModalEntry, setNotesModalEntry] = useState<ReferralEntry | null>(null)
@@ -321,6 +386,26 @@ export default function ReferralsPage() {
     })
     return Array.from(set).sort()
   }, [entries, selectedOffice])
+
+  // Comprehensive active producers list across all branches and entries
+  const allProducers = useMemo(() => {
+    const map = new Map<string, string>()
+    entries.forEach(e => {
+      if (e.producer && e.producer.trim()) {
+        const title = toTitleCase(e.producer.trim())
+        map.set(title.toLowerCase(), title)
+      }
+    })
+    Object.keys(PRODUCER_OFFICE_MAP).forEach(k => {
+      if (k.includes(" ")) {
+        const title = toTitleCase(k.trim())
+        if (!map.has(title.toLowerCase())) {
+          map.set(title.toLowerCase(), title)
+        }
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b))
+  }, [entries])
 
   // Lead sources list & frequency (filtered by selectedOffice if active)
   const leadSourceStats = useMemo(() => {
@@ -539,23 +624,28 @@ export default function ReferralsPage() {
 
   const handleCreateReferral = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newCustomer.trim() || !newProducer.trim()) {
-      showToast("Please enter Customer and Producer name", "error")
+    const producerVal = (newProducer === "__custom__" ? customProducer : newProducer).trim()
+    const customerVal = newCustomer.trim()
+    const sourceVal = (newSource === "Other" ? customSource : newSource).trim() || "Customer Referral"
+    const policyVal = (newPolicy === "Other" ? customPolicy : newPolicy).trim() || "Standard Auto"
+    const carrierVal = (newCarrier === "Other" ? customCarrier : newCarrier).trim() || "Allstate"
+
+    if (!customerVal || !producerVal) {
+      showToast("Please enter Customer and select Producer agent", "error")
       return
     }
 
     setIsSubmitting(true)
     try {
-      const today = new Date().toISOString().split("T")[0]
       const res = await addReferralEntry(
         {
           month_key: selectedMonth,
-          customer_name: newCustomer.trim(),
-          producer: newProducer.trim(),
-          lead_source: newSource.trim(),
-          policy_type: newPolicy.trim(),
-          carrier: newCarrier.trim(),
-          sold_date: today,
+          customer_name: customerVal,
+          producer: producerVal,
+          lead_source: sourceVal,
+          policy_type: policyVal,
+          carrier: carrierVal,
+          sold_date: newSoldDate.trim() || getTodaySoldDate(),
           is_referral: true,
           amount: parseFloat(newAmount) || 10.00,
           gift_type: newGiftType || null,
@@ -576,13 +666,75 @@ export default function ReferralsPage() {
         }))
         setAddModalOpen(false)
         setNewCustomer("")
+        setNewProducer("")
+        setCustomProducer("")
+        setCustomSource("")
+        setCustomPolicy("")
+        setCustomCarrier("")
         setNewGiftType("")
-        showToast(`Added referral for ${newCustomer}!`)
+        showToast(`Added referral for ${customerVal}!`)
+      } else {
+        showToast("Failed to add referral", "error")
       }
     } catch {
       showToast("Failed to add referral", "error")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleQuickAdd = async () => {
+    const cust = quickCustomer.trim()
+    const prod = quickProducer.trim()
+
+    if (!cust) {
+      showToast("Please enter customer name", "error")
+      return
+    }
+    if (!prod) {
+      showToast("Please select a producer agent", "error")
+      return
+    }
+
+    setIsQuickSubmitting(true)
+    try {
+      const res = await addReferralEntry(
+        {
+          month_key: selectedMonth,
+          customer_name: cust,
+          producer: prod,
+          lead_source: quickSource.trim() || "Customer Referral",
+          policy_type: quickPolicy.trim() || "Standard Auto",
+          carrier: quickCarrier.trim() || "Allstate",
+          sold_date: quickSoldDate.trim() || getTodaySoldDate(),
+          is_referral: true,
+          amount: parseFloat(quickAmount) || 10.00,
+          gift_type: quickGiftType || null,
+          gift_status: "pending",
+          date_sent: null,
+          recipient_notes: null,
+        },
+        currentAgent?.name
+      )
+
+      if (res.success && res.entry) {
+        setEntries(prev => [res.entry!, ...prev])
+        setSummary(prev => ({
+          ...prev,
+          totalReferrals: prev.totalReferrals + 1,
+          giftsPendingCount: prev.giftsPendingCount + 1,
+          allPoliciesCount: prev.allPoliciesCount + 1,
+        }))
+        setQuickCustomer("")
+        setQuickGiftType("")
+        showToast(`Added referral for ${cust}!`)
+      } else {
+        showToast("Failed to add referral", "error")
+      }
+    } catch {
+      showToast("Failed to add referral", "error")
+    } finally {
+      setIsQuickSubmitting(false)
     }
   }
 
@@ -714,6 +866,19 @@ export default function ReferralsPage() {
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={() => setShowQuickAddRow(prev => !prev)}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors border ${
+              showQuickAddRow
+                ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50"
+            }`}
+            title="Toggle inline quick add row in table"
+          >
+            <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>{showQuickAddRow ? "Hide Quick Row" : "Quick Add Row"}</span>
           </button>
 
           <button
@@ -976,20 +1141,165 @@ export default function ReferralsPage() {
                     <span>Loading referral list...</span>
                   </td>
                 </tr>
-              ) : filteredEntries.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <Gift className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-600 dark:text-slate-300">
-                      No records match the current filter
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Try clearing search filters
-                    </p>
-                  </td>
-                </tr>
               ) : (
-                filteredEntries.map(entry => {
+                <>
+                  {/* Quick Add Row (Inline Table Entry) */}
+                  {showQuickAddRow && (
+                    <tr className="bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-blue-50/80 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-blue-950/40 border-b-2 border-blue-200 dark:border-blue-800">
+                      {/* Customer */}
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          placeholder="+ New Customer (Press Enter to Save)..."
+                          value={quickCustomer}
+                          onChange={e => setQuickCustomer(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") handleQuickAdd()
+                          }}
+                          className="w-full px-2.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-lg shadow-inner placeholder:text-blue-400/80 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                        />
+                      </td>
+
+                      {/* Producer */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <select
+                          value={quickProducer}
+                          onChange={e => setQuickProducer(e.target.value)}
+                          className="w-full px-2 py-1.5 text-xs font-medium bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white"
+                        >
+                          <option value="" className="text-slate-400">Select Producer...</option>
+                          {allProducers.map(p => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Policy / Carrier / Lead Source */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex flex-col gap-1 min-w-[210px]">
+                          <div className="grid grid-cols-2 gap-1">
+                            <select
+                              value={quickPolicy}
+                              onChange={e => setQuickPolicy(e.target.value)}
+                              className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer focus:outline-none text-slate-800 dark:text-slate-200"
+                            >
+                              {POLICY_PRESETS.map(pol => (
+                                <option key={pol} value={pol}>{pol}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={quickCarrier}
+                              onChange={e => setQuickCarrier(e.target.value)}
+                              className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer focus:outline-none text-slate-800 dark:text-slate-200"
+                            >
+                              {CARRIER_PRESETS.map(car => (
+                                <option key={car} value={car}>{car}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <select
+                            value={quickSource}
+                            onChange={e => setQuickSource(e.target.value)}
+                            className="w-full px-1.5 py-1 text-[11px] font-medium text-purple-700 dark:text-purple-300 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 rounded-md cursor-pointer focus:outline-none"
+                          >
+                            {LEAD_SOURCE_PRESETS.map(src => (
+                              <option key={src} value={src}>{src}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+
+                      {/* Sold Date */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <input
+                          type="text"
+                          value={quickSoldDate}
+                          onChange={e => setQuickSoldDate(e.target.value)}
+                          className="w-20 px-2 py-1 text-center text-xs font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none text-slate-800 dark:text-slate-200"
+                        />
+                      </td>
+
+                      {/* Amount ($) */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <div className="relative inline-flex items-center">
+                          <span className="text-slate-400 text-xs absolute left-2 pointer-events-none">$</span>
+                          <input
+                            type="number"
+                            step="5"
+                            value={quickAmount}
+                            onChange={e => setQuickAmount(e.target.value)}
+                            className="w-16 pl-5 pr-2 py-1 text-center font-bold text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none text-slate-800 dark:text-slate-200"
+                          />
+                        </div>
+                      </td>
+
+                      {/* Gift Type */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <select
+                          value={quickGiftType}
+                          onChange={e => setQuickGiftType(e.target.value)}
+                          className={`w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer focus:outline-none ${
+                            !quickGiftType ? "text-slate-400 italic text-[11px]" : "text-xs font-semibold text-slate-800 dark:text-slate-200"
+                          }`}
+                        >
+                          <option value="" className="text-slate-400 italic text-[11px]">
+                            Click to choose Gift Type
+                          </option>
+                          {GIFT_PRESETS.map(g => (
+                            <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
+                              {g}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {/* Gift Status */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200/80">
+                          <Clock className="w-3 h-3" />
+                          <span>Pending</span>
+                        </span>
+                      </td>
+
+                      {/* Date Sent */}
+                      <td className="py-2.5 px-3 text-center text-slate-400 text-xs whitespace-nowrap font-medium">
+                        —
+                      </td>
+
+                      {/* Action */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={handleQuickAdd}
+                          disabled={isQuickSubmitting}
+                          className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                          title="Save new referral entry directly to table"
+                        >
+                          {isQuickSubmitting ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                          )}
+                          <span>Add</span>
+                        </button>
+                      </td>
+                    </tr>
+                  )}
+
+                  {filteredEntries.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-12 text-center text-slate-400">
+                        <Gift className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                        <p className="font-semibold text-slate-600 dark:text-slate-300">
+                          No records match the current filter
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Try clearing search filters or add a referral using the top row
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredEntries.map(entry => {
                   const isSent = entry.gift_status === "sent"
                   const isPending = entry.gift_status === "pending"
 
@@ -1166,7 +1476,9 @@ export default function ReferralsPage() {
                   )
                 })
               )}
-            </tbody>
+            </>
+          )}
+        </tbody>
           </table>
         </div>
 
@@ -1222,14 +1534,28 @@ export default function ReferralsPage() {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Producer (Agent) *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    placeholder="e.g. Frank Villalobos"
                     value={newProducer}
                     onChange={e => setNewProducer(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    <option value="">Select Producer...</option>
+                    {allProducers.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    <option value="__custom__">+ Other / Custom Agent...</option>
+                  </select>
+                  {newProducer === "__custom__" && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter agent name..."
+                      value={customProducer}
+                      onChange={e => setCustomProducer(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1238,42 +1564,91 @@ export default function ReferralsPage() {
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Lead Source
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newSource}
                     onChange={e => setNewSource(e.target.value)}
-                    placeholder="e.g. Customer Referral"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
-                  />
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {LEAD_SOURCE_PRESETS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  {newSource === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter lead source..."
+                      value={customSource}
+                      onChange={e => setCustomSource(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Policy Type
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newPolicy}
                     onChange={e => setNewPolicy(e.target.value)}
-                    placeholder="e.g. Standard Auto, Home"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {POLICY_PRESETS.map(pol => (
+                      <option key={pol} value={pol}>{pol}</option>
+                    ))}
+                  </select>
+                  {newPolicy === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter policy type..."
+                      value={customPolicy}
+                      onChange={e => setCustomPolicy(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Carrier
+                  </label>
+                  <select
+                    value={newCarrier}
+                    onChange={e => setNewCarrier(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {CARRIER_PRESETS.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  {newCarrier === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter carrier name..."
+                      value={customCarrier}
+                      onChange={e => setCustomCarrier(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Sold Date
+                  </label>
+                  <input
+                    type="text"
+                    value={newSoldDate}
+                    onChange={e => setNewSoldDate(e.target.value)}
+                    placeholder="e.g. 26-Oct-26"
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Carrier
-                  </label>
-                  <input
-                    type="text"
-                    value={newCarrier}
-                    onChange={e => setNewCarrier(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
-                  />
-                </div>
-
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Amount ($)
