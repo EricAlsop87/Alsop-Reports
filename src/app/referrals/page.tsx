@@ -316,6 +316,7 @@ export default function ReferralsPage() {
   const [newSoldDate, setNewSoldDate] = useState(() => getTodaySoldDate())
   const [newAmount, setNewAmount] = useState("10.00")
   const [newGiftType, setNewGiftType] = useState("")
+  const [customGiftType, setCustomGiftType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Quick Add Row (Inline table entry)
@@ -329,7 +330,11 @@ export default function ReferralsPage() {
   const [quickSoldDate, setQuickSoldDate] = useState(() => getTodaySoldDate())
   const [quickAmount, setQuickAmount] = useState("10.00")
   const [quickGiftType, setQuickGiftType] = useState("")
+  const [quickCustomGiftType, setQuickCustomGiftType] = useState("")
   const [isQuickSubmitting, setIsQuickSubmitting] = useState(false)
+
+  // Custom gift tracking for table rows
+  const [customGiftRows, setCustomGiftRows] = useState<Record<string, string>>({})
 
   // Recipient Notes Drawer
   const [notesModalEntry, setNotesModalEntry] = useState<ReferralEntry | null>(null)
@@ -639,6 +644,7 @@ export default function ReferralsPage() {
     const sourceVal = (newSource === "Other" ? customSource : newSource).trim() || "Customer Referral"
     const policyVal = (newPolicy === "Other" ? customPolicy : newPolicy).trim() || "Standard Auto"
     const carrierVal = (newCarrier === "Other" ? customCarrier : newCarrier).trim() || "Allstate"
+    const giftTypeVal = (newGiftType === "Other" ? customGiftType : newGiftType).trim() || null
 
     if (!customerVal || !producerVal) {
       showToast("Please enter Customer and select Producer agent", "error")
@@ -658,7 +664,7 @@ export default function ReferralsPage() {
           sold_date: newSoldDate.trim() || getTodaySoldDate(),
           is_referral: true,
           amount: parseFloat(newAmount) || 10.00,
-          gift_type: newGiftType || null,
+          gift_type: giftTypeVal,
           gift_status: "pending",
           date_sent: null,
           recipient_notes: null,
@@ -682,6 +688,7 @@ export default function ReferralsPage() {
         setCustomPolicy("")
         setCustomCarrier("")
         setNewGiftType("")
+        setCustomGiftType("")
         showToast(`Added referral for ${customerVal}!`)
       } else {
         showToast("Failed to add referral", "error")
@@ -707,6 +714,7 @@ export default function ReferralsPage() {
     }
 
     const finalSource = (quickSource === "Other" ? quickCustomSource : quickSource).trim() || "Customer Referral"
+    const finalGift = (quickGiftType === "Other" ? quickCustomGiftType : quickGiftType).trim() || null
 
     setIsQuickSubmitting(true)
     try {
@@ -721,7 +729,7 @@ export default function ReferralsPage() {
           sold_date: quickSoldDate.trim() || getTodaySoldDate(),
           is_referral: true,
           amount: parseFloat(quickAmount) || 10.00,
-          gift_type: quickGiftType || null,
+          gift_type: finalGift,
           gift_status: "pending",
           date_sent: null,
           recipient_notes: null,
@@ -739,6 +747,7 @@ export default function ReferralsPage() {
         }))
         setQuickCustomer("")
         setQuickGiftType("")
+        setQuickCustomGiftType("")
         setQuickCustomSource("")
         showToast(`Added referral for ${cust}!`)
       } else {
@@ -1261,22 +1270,37 @@ export default function ReferralsPage() {
 
                       {/* Gift Type */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <select
-                          value={quickGiftType}
-                          onChange={e => setQuickGiftType(e.target.value)}
-                          className={`w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer focus:outline-none ${
-                            !quickGiftType ? "text-slate-400 italic text-[11px]" : "text-xs font-semibold text-slate-800 dark:text-slate-200"
-                          }`}
-                        >
-                          <option value="" className="text-slate-400 italic text-[11px]">
-                            Click to choose Gift Type
-                          </option>
-                          {GIFT_PRESETS.map(g => (
-                            <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
-                              {g}
+                        <div className="flex flex-col gap-1 min-w-[150px]">
+                          <select
+                            value={quickGiftType}
+                            onChange={e => setQuickGiftType(e.target.value)}
+                            className={`w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer focus:outline-none ${
+                              !quickGiftType ? "text-slate-400 italic text-[11px]" : "text-xs font-semibold text-slate-800 dark:text-slate-200"
+                            }`}
+                          >
+                            <option value="" className="text-slate-400 italic text-[11px]">
+                              Click to choose Gift Type
                             </option>
-                          ))}
-                        </select>
+                            {GIFT_PRESETS.map(g => (
+                              <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
+                                {g}
+                              </option>
+                            ))}
+                          </select>
+                          {quickGiftType === "Other" && (
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Type custom gift..."
+                              value={quickCustomGiftType}
+                              onChange={e => setQuickCustomGiftType(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") handleQuickAdd()
+                              }}
+                              className="w-full px-2 py-1 text-xs font-semibold bg-white dark:bg-slate-900 border border-blue-400 dark:border-blue-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400 placeholder:font-normal placeholder:italic shadow-xs text-slate-900 dark:text-white"
+                            />
+                          )}
+                        </div>
                       </td>
 
                       {/* Gift Status */}
@@ -1416,35 +1440,77 @@ export default function ReferralsPage() {
                         </div>
                       </td>
 
-                      {/* Gift Type - Dropdown */}
+                      {/* Gift Type - Dropdown & Custom Type */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <select
-                          value={
-                            !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
-                              ? ""
-                              : entry.gift_type
-                          }
-                          onChange={e => handleGiftTypeChange(entry, e.target.value)}
-                          className={`px-2 py-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none cursor-pointer transition-colors ${
-                            !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
-                              ? "text-slate-400 dark:text-slate-500 italic text-[11px]"
-                              : "text-xs font-semibold text-slate-800 dark:text-slate-200"
-                          }`}
-                        >
-                          <option value="" className="text-slate-400 italic text-[11px]">
-                            Click to choose Gift Type
-                          </option>
-                          {GIFT_PRESETS.map(g => (
-                            <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
-                              {g}
+                        <div className="flex flex-col gap-1 min-w-[150px]">
+                          <select
+                            value={
+                              !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
+                                ? ""
+                                : ["Zelle", "Target", "Visa Gift Card", "Cash / Check"].includes(entry.gift_type)
+                                ? entry.gift_type
+                                : "Other"
+                            }
+                            onChange={e => {
+                              const val = e.target.value
+                              if (val === "Other") {
+                                setCustomGiftRows(prev => ({
+                                  ...prev,
+                                  [entry.id]: entry.gift_type === "Other" ? "" : (entry.gift_type || "")
+                                }))
+                                handleGiftTypeChange(entry, "Other")
+                              } else {
+                                setCustomGiftRows(prev => {
+                                  const next = { ...prev }
+                                  delete next[entry.id]
+                                  return next
+                                })
+                                handleGiftTypeChange(entry, val)
+                              }
+                            }}
+                            className={`px-2 py-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none cursor-pointer transition-colors ${
+                              !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
+                                ? "text-slate-400 dark:text-slate-500 italic text-[11px]"
+                                : "text-xs font-semibold text-slate-800 dark:text-slate-200"
+                            }`}
+                          >
+                            <option value="" className="text-slate-400 italic text-[11px]">
+                              Click to choose Gift Type
                             </option>
-                          ))}
-                          {entry.gift_type && !GIFT_PRESETS.includes(entry.gift_type) && entry.gift_type !== "$10.00 Visa Card" && entry.gift_type !== "$10 Visa Card" && (
-                            <option value={entry.gift_type} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
-                              {entry.gift_type}
-                            </option>
+                            {GIFT_PRESETS.map(g => (
+                              <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
+                                {g}
+                              </option>
+                            ))}
+                          </select>
+
+                          {(entry.gift_type === "Other" ||
+                            customGiftRows[entry.id] !== undefined ||
+                            (entry.gift_type && !["Zelle", "Target", "Visa Gift Card", "Cash / Check", "$10.00 Visa Card", "$10 Visa Card"].includes(entry.gift_type))) && (
+                            <input
+                              type="text"
+                              autoFocus={entry.gift_type === "Other" && !customGiftRows[entry.id]}
+                              placeholder="Type custom gift..."
+                              defaultValue={entry.gift_type === "Other" ? (customGiftRows[entry.id] || "") : entry.gift_type || ""}
+                              onBlur={e => {
+                                const customVal = e.target.value.trim()
+                                if (customVal && customVal !== "Other") {
+                                  handleGiftTypeChange(entry, customVal)
+                                }
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                  const customVal = e.currentTarget.value.trim()
+                                  if (customVal && customVal !== "Other") {
+                                    handleGiftTypeChange(entry, customVal)
+                                  }
+                                  e.currentTarget.blur()
+                                }
+                              }}
+                              className="w-full px-2 py-1 text-xs font-semibold bg-white dark:bg-slate-900 border border-blue-400 dark:border-blue-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400 placeholder:font-normal placeholder:italic shadow-xs text-slate-900 dark:text-white"
+                            />
                           )}
-                        </select>
+                        </div>
                       </td>
 
                       {/* Gift Status - 1-Click Interactive Toggle */}
@@ -1708,6 +1774,16 @@ export default function ReferralsPage() {
                       </option>
                     ))}
                   </select>
+                  {newGiftType === "Other" && (
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Type custom gift..."
+                      value={customGiftType}
+                      onChange={e => setCustomGiftType(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
+                    />
+                  )}
                 </div>
               </div>
 
