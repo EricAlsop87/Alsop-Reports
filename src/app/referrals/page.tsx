@@ -32,6 +32,7 @@ import {
 
 const GIFT_PRESETS = [
   "Zelle",
+  "Target",
   "Visa Gift Card",
   "Cash / Check",
   "Other"
