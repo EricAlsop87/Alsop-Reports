@@ -53,6 +53,7 @@ const POLICY_PRESETS = [
   "Commercial Auto",
   "Motorcycle",
   "Umbrella",
+  "Quote Only",
   "Other"
 ]
 
@@ -67,6 +68,7 @@ const CARRIER_PRESETS = [
   "Travelers",
   "Berkshire Hathaway",
   "Progressive",
+  "Quote Only",
   "Other"
 ]
 
@@ -865,7 +867,7 @@ export default function ReferralsPage() {
       "Lead Source",
       "Policy Type",
       "Customer",
-      "Sold Date",
+      "Sold / Quote Date",
       "Carrier",
       "Is Referral",
       "Amount$",
@@ -1282,10 +1284,10 @@ export default function ReferralsPage() {
                     if (sortKey === "sold_date") setSortDir(d => d === "desc" ? "asc" : "desc")
                     else { setSortKey("sold_date"); setSortDir("desc"); }
                   }}
-                  title="Click to sort: Recent date to first date of the month"
+                  title="Click to sort by Sold / Quote Date: Recent date to first date of the month"
                 >
                   <div className="inline-flex items-center gap-1 justify-center">
-                    <span>Sold Date</span>
+                    <span>Sold / Quote Date</span>
                     {sortKey === "sold_date" ? (
                       sortDir === "desc" ? (
                         <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -1368,7 +1370,17 @@ export default function ReferralsPage() {
                           <div className="grid grid-cols-2 gap-1">
                             <select
                               value={quickPolicy}
-                              onChange={e => setQuickPolicy(e.target.value)}
+                              onChange={e => {
+                                const val = e.target.value
+                                setQuickPolicy(val)
+                                if (val === "Quote Only") {
+                                  setQuickAmount("5.00")
+                                  setQuickCarrier("Quote Only")
+                                } else if (quickAmount === "5.00") {
+                                  setQuickAmount("10.00")
+                                  if (quickCarrier === "Quote Only") setQuickCarrier("Allstate")
+                                }
+                              }}
                               className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer focus:outline-none text-slate-800 dark:text-slate-200"
                             >
                               {POLICY_PRESETS.map(pol => (
@@ -1377,7 +1389,13 @@ export default function ReferralsPage() {
                             </select>
                             <select
                               value={quickCarrier}
-                              onChange={e => setQuickCarrier(e.target.value)}
+                              onChange={e => {
+                                const val = e.target.value
+                                setQuickCarrier(val)
+                                if (val === "Quote Only") {
+                                  setQuickAmount("5.00")
+                                }
+                              }}
                               className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md cursor-pointer focus:outline-none text-slate-800 dark:text-slate-200"
                             >
                               {CARRIER_PRESETS.map(car => (
@@ -1566,7 +1584,11 @@ export default function ReferralsPage() {
                             <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">
                               {toTitleCase(entry.policy_type)}
                             </span>
-                            {entry.policy_count && entry.policy_count > 1 ? (
+                            {entry.policy_type?.toLowerCase() === "quote only" || entry.carrier?.toLowerCase() === "quote only" ? (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                Quote Only ($5)
+                              </span>
+                            ) : entry.policy_count && entry.policy_count > 1 ? (
                               <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                 {entry.policy_count} policies
                               </span>
@@ -1865,7 +1887,17 @@ export default function ReferralsPage() {
                   </label>
                   <select
                     value={newPolicy}
-                    onChange={e => setNewPolicy(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value
+                      setNewPolicy(val)
+                      if (val === "Quote Only") {
+                        setNewAmount("5.00")
+                        setNewCarrier("Quote Only")
+                      } else if (newAmount === "5.00") {
+                        setNewAmount("10.00")
+                        if (newCarrier === "Quote Only") setNewCarrier("Allstate")
+                      }
+                    }}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
                   >
                     {POLICY_PRESETS.map(pol => (
@@ -1891,7 +1923,13 @@ export default function ReferralsPage() {
                   </label>
                   <select
                     value={newCarrier}
-                    onChange={e => setNewCarrier(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value
+                      setNewCarrier(val)
+                      if (val === "Quote Only") {
+                        setNewAmount("5.00")
+                      }
+                    }}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
                   >
                     {CARRIER_PRESETS.map(c => (
@@ -1911,7 +1949,7 @@ export default function ReferralsPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Sold Date
+                    Sold / Quote Date
                   </label>
                   <input
                     type="text"
@@ -2021,7 +2059,7 @@ export default function ReferralsPage() {
                   <span className="font-semibold">{entryToDelete.producer}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Sold Date: </span>
+                  <span className="text-slate-400">Sold / Quote Date: </span>
                   <span className="font-semibold">{entryToDelete.sold_date}</span>
                 </div>
                 <div className="col-span-2">
