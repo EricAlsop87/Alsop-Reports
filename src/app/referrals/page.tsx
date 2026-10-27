@@ -1585,7 +1585,8 @@ export default function ReferralsPage() {
                               {toTitleCase(entry.policy_type)}
                             </span>
                             {entry.policy_type?.toLowerCase() === "quote only" || entry.carrier?.toLowerCase() === "quote only" ? (
-                              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-300 dark:border-teal-700 shadow-2xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                                 Quote Only ($5)
                               </span>
                             ) : entry.policy_count && entry.policy_count > 1 ? (
