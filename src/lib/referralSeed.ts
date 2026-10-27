@@ -3163,30 +3163,6 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
   {
     "id": "ref_2026_10_0004",
     "month_key": "2026-10",
-    "producer": "Lori Ohlhauser",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Miriam Recinos",
-    "sold_date": "22-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "PASADENA",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0005",
-    "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "WCRCA - Taffy Mauer - eXp Realty",
     "policy_type": "Commercial BOP",
@@ -3209,31 +3185,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0006",
-    "month_key": "2026-10",
-    "producer": "Maila Castro",
-    "lead_source": "Change HO3/HO5 to DP (Landlord)",
-    "policy_type": "DP3 - Property",
-    "policies": [
-      "DP3 - Property"
-    ],
-    "policy_count": 1,
-    "customer_name": "Beverly Lafeen",
-    "sold_date": "21-Oct-26",
-    "carrier": "Bamboo",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0007",
+    "id": "ref_2026_10_0005",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Rosalba Lozano",
@@ -3257,7 +3209,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0008",
+    "id": "ref_2026_10_0006",
     "month_key": "2026-10",
     "producer": "Claudia Sambrano",
     "lead_source": "Customer Referral",
@@ -3281,7 +3233,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0009",
+    "id": "ref_2026_10_0007",
     "month_key": "2026-10",
     "producer": "Alexandra Quintana",
     "lead_source": "Other",
@@ -3305,7 +3257,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0010",
+    "id": "ref_2026_10_0008",
     "month_key": "2026-10",
     "producer": "Jerome Delfin",
     "lead_source": "AL- Jerome M",
@@ -3329,7 +3281,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0011",
+    "id": "ref_2026_10_0009",
     "month_key": "2026-10",
     "producer": "Charmaine Carrillo",
     "lead_source": "Customer Referral",
@@ -3353,33 +3305,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0012",
-    "month_key": "2026-10",
-    "producer": "Jerome Delfin",
-    "lead_source": "Call in from advertising or unknown",
-    "policy_type": "Home + Landlord + Landlord",
-    "policies": [
-      "Home",
-      "Landlord",
-      "Landlord"
-    ],
-    "policy_count": 3,
-    "customer_name": "RICHARD LOPEZ",
-    "sold_date": "21-Oct-26",
-    "carrier": "Bamboo",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0013",
+    "id": "ref_2026_10_0010",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "JP - ML Mortgage Team",
@@ -3403,7 +3329,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0014",
+    "id": "ref_2026_10_0011",
     "month_key": "2026-10",
     "producer": "Christine Lansing",
     "lead_source": "Ahron Zilberstein",
@@ -3427,7 +3353,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0015",
+    "id": "ref_2026_10_0012",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Facebook",
@@ -3452,7 +3378,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0016",
+    "id": "ref_2026_10_0013",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Maila Castro",
@@ -3476,7 +3402,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0017",
+    "id": "ref_2026_10_0014",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Danyelle Deason - BHGRE Haven Properties",
@@ -3501,7 +3427,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0018",
+    "id": "ref_2026_10_0015",
     "month_key": "2026-10",
     "producer": "Eddie Sanchez",
     "lead_source": "Customer Referral",
@@ -3525,7 +3451,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0019",
+    "id": "ref_2026_10_0016",
     "month_key": "2026-10",
     "producer": "Eddie Sanchez",
     "lead_source": "Customer Referral",
@@ -3549,7 +3475,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0020",
+    "id": "ref_2026_10_0017",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Savannah Hurst - WCRCA",
@@ -3573,31 +3499,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0021",
-    "month_key": "2026-10",
-    "producer": "Misty Torrez",
-    "lead_source": "Personal Referral",
-    "policy_type": "Commercial BOP",
-    "policies": [
-      "Commercial BOP"
-    ],
-    "policy_count": 1,
-    "customer_name": "Sadia Shokorri",
-    "sold_date": "20-Oct-26",
-    "carrier": "Hartford",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0022",
+    "id": "ref_2026_10_0018",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Customer Referral",
@@ -3621,7 +3523,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0023",
+    "id": "ref_2026_10_0019",
     "month_key": "2026-10",
     "producer": "Chris Elliott",
     "lead_source": "Customer Referral",
@@ -3645,7 +3547,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0024",
+    "id": "ref_2026_10_0020",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "True Results Realty- Candy Torres",
@@ -3669,7 +3571,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0025",
+    "id": "ref_2026_10_0021",
     "month_key": "2026-10",
     "producer": "Jose Huerta",
     "lead_source": "JH - Elisa Trejo - Keller Williams",
@@ -3693,7 +3595,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0026",
+    "id": "ref_2026_10_0022",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "SB Home Loans- Suky M",
@@ -3717,7 +3619,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0027",
+    "id": "ref_2026_10_0023",
     "month_key": "2026-10",
     "producer": "Claudia Sambrano",
     "lead_source": "Liliana Morales",
@@ -3741,31 +3643,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0028",
-    "month_key": "2026-10",
-    "producer": "Maila Castro",
-    "lead_source": "Personal Referral",
-    "policy_type": "Non-standard Auto",
-    "policies": [
-      "Non-standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Sayeeda Mostafa",
-    "sold_date": "19-Oct-26",
-    "carrier": "National General",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0029",
+    "id": "ref_2026_10_0024",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "Cisco Sanchez",
@@ -3789,7 +3667,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0030",
+    "id": "ref_2026_10_0025",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "AFN Mort.: Jim Thiel",
@@ -3813,7 +3691,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0031",
+    "id": "ref_2026_10_0026",
     "month_key": "2026-10",
     "producer": "Rosalba Lozano",
     "lead_source": "Customer Referral",
@@ -3837,7 +3715,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0032",
+    "id": "ref_2026_10_0027",
     "month_key": "2026-10",
     "producer": "Claudia Sambrano",
     "lead_source": "Customer Referral",
@@ -3861,7 +3739,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0033",
+    "id": "ref_2026_10_0028",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "JP - ML Mortgage Team",
@@ -3885,7 +3763,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0034",
+    "id": "ref_2026_10_0029",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice - Alan",
@@ -3909,7 +3787,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0035",
+    "id": "ref_2026_10_0030",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Kenneth A (TMG)",
@@ -3933,7 +3811,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0036",
+    "id": "ref_2026_10_0031",
     "month_key": "2026-10",
     "producer": "Ric Becerra",
     "lead_source": "RB - Ken Tran EXP Realty",
@@ -3957,7 +3835,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0037",
+    "id": "ref_2026_10_0032",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Esmeralda Cervantes",
@@ -3981,7 +3859,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0038",
+    "id": "ref_2026_10_0033",
     "month_key": "2026-10",
     "producer": "Juanita Calderon",
     "lead_source": "Customer Referral",
@@ -4005,7 +3883,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0039",
+    "id": "ref_2026_10_0034",
     "month_key": "2026-10",
     "producer": "Roxana Topete",
     "lead_source": "Debbie Early",
@@ -4029,7 +3907,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0040",
+    "id": "ref_2026_10_0035",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Jerome Martir- JRM Auto Broker",
@@ -4053,7 +3931,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0041",
+    "id": "ref_2026_10_0036",
     "month_key": "2026-10",
     "producer": "Alex Clancy",
     "lead_source": "Customer Referral",
@@ -4077,7 +3955,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0042",
+    "id": "ref_2026_10_0037",
     "month_key": "2026-10",
     "producer": "Jose Huerta",
     "lead_source": "JH - Andrea Terran",
@@ -4101,31 +3979,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0043",
-    "month_key": "2026-10",
-    "producer": "Rosalba Lozano",
-    "lead_source": "SureQuote Pro",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Lynnette Olynick",
-    "sold_date": "15-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "ONTARIO",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0044",
+    "id": "ref_2026_10_0038",
     "month_key": "2026-10",
     "producer": "Sylvia Duran",
     "lead_source": "Customer Referral",
@@ -4150,7 +4004,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0045",
+    "id": "ref_2026_10_0039",
     "month_key": "2026-10",
     "producer": "Chris Elliott",
     "lead_source": "Customer Referral",
@@ -4175,7 +4029,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0046",
+    "id": "ref_2026_10_0040",
     "month_key": "2026-10",
     "producer": "Rosie Delgado",
     "lead_source": "Customer Referral",
@@ -4199,7 +4053,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0047",
+    "id": "ref_2026_10_0041",
     "month_key": "2026-10",
     "producer": "Sylvia Duran",
     "lead_source": "Liliana Morales",
@@ -4223,55 +4077,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0048",
-    "month_key": "2026-10",
-    "producer": "Eddie Sanchez",
-    "lead_source": "SureQuote Pro",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Sonia Castillo",
-    "sold_date": "15-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0049",
-    "month_key": "2026-10",
-    "producer": "Frank Villalobos",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Tommy Salvador",
-    "sold_date": "15-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "PACOIMA",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0050",
+    "id": "ref_2026_10_0042",
     "month_key": "2026-10",
     "producer": "Gilda Aquino",
     "lead_source": "Martinez Realty- Edith Martinez",
@@ -4295,7 +4101,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0051",
+    "id": "ref_2026_10_0043",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "Lucy G - OneMain Financial",
@@ -4320,7 +4126,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0052",
+    "id": "ref_2026_10_0044",
     "month_key": "2026-10",
     "producer": "Gilda Aquino",
     "lead_source": "Statewide Funding: Richard Rodriguez",
@@ -4344,7 +4150,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0053",
+    "id": "ref_2026_10_0045",
     "month_key": "2026-10",
     "producer": "Roxana Topete",
     "lead_source": "Jorge - Prosperity Realty",
@@ -4368,127 +4174,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0054",
-    "month_key": "2026-10",
-    "producer": "Jose Huerta",
-    "lead_source": "Call in from advertising or unknown",
-    "policy_type": "Commercial GL",
-    "policies": [
-      "Commercial GL"
-    ],
-    "policy_count": 1,
-    "customer_name": "MG cleaning",
-    "sold_date": "14-Oct-26",
-    "carrier": "NEXT",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0055",
-    "month_key": "2026-10",
-    "producer": "Maila Castro",
-    "lead_source": "Change HO3/HO5 to DP (Landlord)",
-    "policy_type": "DP3 - Property",
-    "policies": [
-      "DP3 - Property"
-    ],
-    "policy_count": 1,
-    "customer_name": "OMAR TALLA and MARIA TALLA",
-    "sold_date": "14-Oct-26",
-    "carrier": "American Modern",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0056",
-    "month_key": "2026-10",
-    "producer": "Lori Ohlhauser",
-    "lead_source": "Purchase New Home",
-    "policy_type": "HO-3",
-    "policies": [
-      "HO-3"
-    ],
-    "policy_count": 1,
-    "customer_name": "Dennis Alex",
-    "sold_date": "13-Oct-26",
-    "carrier": "Bamboo",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0057",
-    "month_key": "2026-10",
-    "producer": "Christine Lansing",
-    "lead_source": "Calendry - Cross Sale",
-    "policy_type": "Earthquake",
-    "policies": [
-      "Earthquake"
-    ],
-    "policy_count": 1,
-    "customer_name": "Erminia Melchor",
-    "sold_date": "13-Oct-26",
-    "carrier": "Palomar",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0058",
-    "month_key": "2026-10",
-    "producer": "Jose Huerta",
-    "lead_source": "Call in from advertising or unknown",
-    "policy_type": "Commercial GL",
-    "policies": [
-      "Commercial GL"
-    ],
-    "policy_count": 1,
-    "customer_name": "Kui Kei and S.D. Incorporated Dba Regal Greetings and Gifts Co.",
-    "sold_date": "13-Oct-26",
-    "carrier": "NEXT",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0059",
+    "id": "ref_2026_10_0046",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "C21 Citrus- Albert Rodriguez",
@@ -4512,31 +4198,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0060",
-    "month_key": "2026-10",
-    "producer": "Frank Villalobos",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Tonya Connors and Jeffers Kevin",
-    "sold_date": "13-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "ADELANTO",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0061",
+    "id": "ref_2026_10_0047",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "ES - Upgrade Auto",
@@ -4560,7 +4222,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0062",
+    "id": "ref_2026_10_0048",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "True Results Realty- Candy Torres",
@@ -4584,7 +4246,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0063",
+    "id": "ref_2026_10_0049",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Merla San Pedro - MRP Auto Broker",
@@ -4609,7 +4271,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0064",
+    "id": "ref_2026_10_0050",
     "month_key": "2026-10",
     "producer": "Jenna Zazueta",
     "lead_source": "Customer Referral",
@@ -4633,7 +4295,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0065",
+    "id": "ref_2026_10_0051",
     "month_key": "2026-10",
     "producer": "Sylvia Duran",
     "lead_source": "Claudia Sambrano",
@@ -4657,7 +4319,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0066",
+    "id": "ref_2026_10_0052",
     "month_key": "2026-10",
     "producer": "Nancy Gutierrez",
     "lead_source": "Walk-In",
@@ -4681,7 +4343,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0067",
+    "id": "ref_2026_10_0053",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Jerome Martir- JRM Auto Broker",
@@ -4705,7 +4367,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0068",
+    "id": "ref_2026_10_0054",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Nestor San Pedro - LAcarGUY",
@@ -4730,7 +4392,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0069",
+    "id": "ref_2026_10_0055",
     "month_key": "2026-10",
     "producer": "Claudia Sambrano",
     "lead_source": "Other",
@@ -4755,7 +4417,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0070",
+    "id": "ref_2026_10_0056",
     "month_key": "2026-10",
     "producer": "Jenna Zazueta",
     "lead_source": "Other",
@@ -4780,7 +4442,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0071",
+    "id": "ref_2026_10_0057",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "IRWIN ENRIQUEZ - RSD AUTO BROKER",
@@ -4805,7 +4467,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0072",
+    "id": "ref_2026_10_0058",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Christine Lansing",
@@ -4829,55 +4491,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0073",
-    "month_key": "2026-10",
-    "producer": "Christian Reyes",
-    "lead_source": "Personal Referral",
-    "policy_type": "Renters",
-    "policies": [
-      "Renters"
-    ],
-    "policy_count": 1,
-    "customer_name": "Yerania Choto",
-    "sold_date": "12-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "HUNTINGTON PARK",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0074",
-    "month_key": "2026-10",
-    "producer": "Eddie Sanchez",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Albert Hernandez.",
-    "sold_date": "11-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0075",
+    "id": "ref_2026_10_0059",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "ES - Georgette G.",
@@ -4901,7 +4515,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0076",
+    "id": "ref_2026_10_0060",
     "month_key": "2026-10",
     "producer": "Jerome Delfin",
     "lead_source": "Customer Referral",
@@ -4925,7 +4539,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0077",
+    "id": "ref_2026_10_0061",
     "month_key": "2026-10",
     "producer": "Rosie Delgado",
     "lead_source": "Customer Referral",
@@ -4949,32 +4563,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0078",
-    "month_key": "2026-10",
-    "producer": "Edwin Sernas",
-    "lead_source": "Personal Referral",
-    "policy_type": "Private Passenger Auto + Renters",
-    "policies": [
-      "Private Passenger Auto",
-      "Renters"
-    ],
-    "policy_count": 2,
-    "customer_name": "Iveth Romero",
-    "sold_date": "9-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0079",
+    "id": "ref_2026_10_0062",
     "month_key": "2026-10",
     "producer": "Sylvia Duran",
     "lead_source": "Liliana Morales",
@@ -4998,7 +4587,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0080",
+    "id": "ref_2026_10_0063",
     "month_key": "2026-10",
     "producer": "Ariana Crawford",
     "lead_source": "Walk-In",
@@ -5022,7 +4611,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0081",
+    "id": "ref_2026_10_0064",
     "month_key": "2026-10",
     "producer": "Chris Elliott",
     "lead_source": "Walk-In",
@@ -5046,7 +4635,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0082",
+    "id": "ref_2026_10_0065",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "Daisy Torres",
@@ -5070,7 +4659,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0083",
+    "id": "ref_2026_10_0066",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Ernan Ebreo - JAM Auto Broker",
@@ -5094,7 +4683,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0084",
+    "id": "ref_2026_10_0067",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "US Capitol Group: Rafael Vargas",
@@ -5118,7 +4707,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0085",
+    "id": "ref_2026_10_0068",
     "month_key": "2026-10",
     "producer": "Gilda Aquino",
     "lead_source": "Customer Referral",
@@ -5142,7 +4731,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0086",
+    "id": "ref_2026_10_0069",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "April (Cartime)",
@@ -5166,7 +4755,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0087",
+    "id": "ref_2026_10_0070",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "Cisco Sanchez",
@@ -5190,7 +4779,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0088",
+    "id": "ref_2026_10_0071",
     "month_key": "2026-10",
     "producer": "Roxana Topete",
     "lead_source": "Jorge - Prosperity Realty",
@@ -5214,7 +4803,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0089",
+    "id": "ref_2026_10_0072",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "JP - ML Mortgage Team",
@@ -5240,7 +4829,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0090",
+    "id": "ref_2026_10_0073",
     "month_key": "2026-10",
     "producer": "Claudia Sambrano",
     "lead_source": "Customer Referral",
@@ -5264,7 +4853,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0091",
+    "id": "ref_2026_10_0074",
     "month_key": "2026-10",
     "producer": "Rosie Delgado",
     "lead_source": "Customer Referral",
@@ -5288,7 +4877,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0092",
+    "id": "ref_2026_10_0075",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Joel Macaspac - Joel Auto Broker",
@@ -5312,56 +4901,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0093",
-    "month_key": "2026-10",
-    "producer": "Robert Lewis Jr",
-    "lead_source": "SureQuote Pro",
-    "policy_type": "Standard Auto + Renters",
-    "policies": [
-      "Standard Auto",
-      "Renters"
-    ],
-    "policy_count": 2,
-    "customer_name": "Shawn Hansen",
-    "sold_date": "7-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "TURLOCK",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0094",
-    "month_key": "2026-10",
-    "producer": "Myles Vinluan",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Teresa Grzywa",
-    "sold_date": "7-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "NORWALK",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0095",
+    "id": "ref_2026_10_0076",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "C21 Citrus- Oscar Rodriguez",
@@ -5385,7 +4925,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0096",
+    "id": "ref_2026_10_0077",
     "month_key": "2026-10",
     "producer": "Gilda Aquino",
     "lead_source": "Martinez Realty- Edith Martinez",
@@ -5409,7 +4949,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0097",
+    "id": "ref_2026_10_0078",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "Christine Lansing",
@@ -5433,7 +4973,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0098",
+    "id": "ref_2026_10_0079",
     "month_key": "2026-10",
     "producer": "Christine Lansing",
     "lead_source": "Ahron Zilberstein",
@@ -5457,55 +4997,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0099",
-    "month_key": "2026-10",
-    "producer": "Denice Santos",
-    "lead_source": "Transfer-In",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "ANDREA SANCHEZ",
-    "sold_date": "6-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "CHINO",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0100",
-    "month_key": "2026-10",
-    "producer": "Jose Huerta",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Ariana Ali",
-    "sold_date": "6-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "Ontario",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0101",
+    "id": "ref_2026_10_0080",
     "month_key": "2026-10",
     "producer": "Christian Reyes",
     "lead_source": "Customer Referral",
@@ -5529,7 +5021,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0102",
+    "id": "ref_2026_10_0081",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "ES - Georgette G.",
@@ -5553,32 +5045,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0103",
-    "month_key": "2026-10",
-    "producer": "Danny Bonilla",
-    "lead_source": "SureQuote Pro",
-    "policy_type": "Standard Auto + Motorclub",
-    "policies": [
-      "Standard Auto",
-      "Motorclub"
-    ],
-    "policy_count": 2,
-    "customer_name": "Luis Hernandez",
-    "sold_date": "6-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "VICTORVILLE",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0104",
+    "id": "ref_2026_10_0082",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Jerome Martir- JRM Auto Broker",
@@ -5602,31 +5069,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0105",
-    "month_key": "2026-10",
-    "producer": "Frank Villalobos",
-    "lead_source": "Personal Referral",
-    "policy_type": "Non-standard Auto",
-    "policies": [
-      "Non-standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "RAYMOND GONZALEZ",
-    "sold_date": "6-Oct-26",
-    "carrier": "National General",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0106",
+    "id": "ref_2026_10_0083",
     "month_key": "2026-10",
     "producer": "Gilda Aquino",
     "lead_source": "Statewide Funding: Richard Rodriguez",
@@ -5650,7 +5093,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0107",
+    "id": "ref_2026_10_0084",
     "month_key": "2026-10",
     "producer": "Christine Lansing",
     "lead_source": "Ahron Zilberstein",
@@ -5674,7 +5117,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0108",
+    "id": "ref_2026_10_0085",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "ES - Georgette G.",
@@ -5698,7 +5141,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0109",
+    "id": "ref_2026_10_0086",
     "month_key": "2026-10",
     "producer": "Jerome Delfin",
     "lead_source": "Walk-In",
@@ -5722,7 +5165,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0110",
+    "id": "ref_2026_10_0087",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Ernan Ebreo - JAM Auto Broker",
@@ -5746,7 +5189,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0111",
+    "id": "ref_2026_10_0088",
     "month_key": "2026-10",
     "producer": "Edwin Sernas",
     "lead_source": "ES - Georgette G.",
@@ -5770,79 +5213,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0112",
-    "month_key": "2026-10",
-    "producer": "Frank Villalobos",
-    "lead_source": "Personal Referral",
-    "policy_type": "Non-standard Auto",
-    "policies": [
-      "Non-standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "ERIC RUIZ",
-    "sold_date": "2-Oct-26",
-    "carrier": "National General",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0113",
-    "month_key": "2026-10",
-    "producer": "Claudia Sambrano",
-    "lead_source": "ALM: Live Transfer",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Joshua Jules",
-    "sold_date": "2-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "APPLE VALLEY",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0114",
-    "month_key": "2026-10",
-    "producer": "Roxana Topete",
-    "lead_source": "Personal Referral",
-    "policy_type": "Specialty Auto",
-    "policies": [
-      "Specialty Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Keneisha Stanley",
-    "sold_date": "2-Oct-26",
-    "carrier": "National General",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0115",
+    "id": "ref_2026_10_0089",
     "month_key": "2026-10",
     "producer": "Sylvia Duran",
     "lead_source": "Claudia Sambrano",
@@ -5866,31 +5237,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0116",
-    "month_key": "2026-10",
-    "producer": "Rosalba Lozano",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Roberto Acosta",
-    "sold_date": "2-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "MONTEBELLO",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0117",
+    "id": "ref_2026_10_0090",
     "month_key": "2026-10",
     "producer": "TAYLOR DAVIS",
     "lead_source": "Walk-In",
@@ -5914,7 +5261,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0118",
+    "id": "ref_2026_10_0091",
     "month_key": "2026-10",
     "producer": "Christine Lansing",
     "lead_source": "Ahron Zilberstein",
@@ -5950,31 +5297,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0119",
-    "month_key": "2026-10",
-    "producer": "Christine Lansing",
-    "lead_source": "Personal Referral",
-    "policy_type": "DP3 - Property",
-    "policies": [
-      "DP3 - Property"
-    ],
-    "policy_count": 1,
-    "customer_name": "AHRON ZILBERSTEIN",
-    "sold_date": "1-Oct-26",
-    "carrier": "Foremost",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0120",
+    "id": "ref_2026_10_0092",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice- Leobardo Perez",
@@ -5998,7 +5321,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0121",
+    "id": "ref_2026_10_0093",
     "month_key": "2026-10",
     "producer": "Giselle Ramos",
     "lead_source": "GR - Ang (TMG)",
@@ -6022,31 +5345,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0122",
-    "month_key": "2026-10",
-    "producer": "Robert Lewis Jr",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Brittany Olivares",
-    "sold_date": "1-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "SAN DIEGO",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0123",
+    "id": "ref_2026_10_0094",
     "month_key": "2026-10",
     "producer": "Rosalba Lozano",
     "lead_source": "Customer Referral",
@@ -6070,7 +5369,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0124",
+    "id": "ref_2026_10_0095",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "WCR- Lisa McDaniel - Remax",
@@ -6094,7 +5393,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0125",
+    "id": "ref_2026_10_0096",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice - Alan",
@@ -6118,7 +5417,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0126",
+    "id": "ref_2026_10_0097",
     "month_key": "2026-10",
     "producer": "Suzanne Yniguez",
     "lead_source": "Christine Lansing",
@@ -6142,7 +5441,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0127",
+    "id": "ref_2026_10_0098",
     "month_key": "2026-10",
     "producer": "Christine Lansing",
     "lead_source": "Lance Hunter",
@@ -6166,7 +5465,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0128",
+    "id": "ref_2026_10_0099",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice- Leobardo Perez",
@@ -6190,55 +5489,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0129",
-    "month_key": "2026-10",
-    "producer": "Claudia Sambrano",
-    "lead_source": "AWL",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Isaac Oluoch",
-    "sold_date": "1-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "GLENDALE",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0130",
-    "month_key": "2026-10",
-    "producer": "Denice Santos",
-    "lead_source": "ALM",
-    "policy_type": "HO-3",
-    "policies": [
-      "HO-3"
-    ],
-    "policy_count": 1,
-    "customer_name": "John Hughes",
-    "sold_date": "1-Oct-26",
-    "carrier": "Delos",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0131",
+    "id": "ref_2026_10_0100",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Tricia (TMG)",
@@ -6262,7 +5513,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0132",
+    "id": "ref_2026_10_0101",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Other",
@@ -6286,7 +5537,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0133",
+    "id": "ref_2026_10_0102",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice- Leobardo Perez",
@@ -6310,7 +5561,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0134",
+    "id": "ref_2026_10_0103",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Customer Referral",
@@ -6334,7 +5585,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0135",
+    "id": "ref_2026_10_0104",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Barbara Mills-Dubois - WCR",
@@ -6359,31 +5610,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0136",
-    "month_key": "2026-10",
-    "producer": "Jerome Delfin",
-    "lead_source": "Personal Referral",
-    "policy_type": "Earthquake",
-    "policies": [
-      "Earthquake"
-    ],
-    "policy_count": 1,
-    "customer_name": "LISA VANEGAS",
-    "sold_date": "1-Oct-26",
-    "carrier": "Geovera",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0137",
+    "id": "ref_2026_10_0105",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Melissa Maldonado \u2013 Ameritrust Mortgage",
@@ -6407,7 +5634,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0138",
+    "id": "ref_2026_10_0106",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Toni Luna - Emerge Mortgage",
@@ -6431,7 +5658,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0139",
+    "id": "ref_2026_10_0107",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice- Leobardo Perez",
@@ -6455,7 +5682,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0140",
+    "id": "ref_2026_10_0108",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Kenneth A (TMG)",
@@ -6479,7 +5706,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0141",
+    "id": "ref_2026_10_0109",
     "month_key": "2026-10",
     "producer": "Giselle Ramos",
     "lead_source": "Angelica (TMG-LB)",
@@ -6503,7 +5730,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0142",
+    "id": "ref_2026_10_0110",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "JP - ML Mortgage Team",
@@ -6527,55 +5754,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0143",
-    "month_key": "2026-10",
-    "producer": "Jose Huerta",
-    "lead_source": "Personal Referral",
-    "policy_type": "HO-3",
-    "policies": [
-      "HO-3"
-    ],
-    "policy_count": 1,
-    "customer_name": "Ruben Gutierrez",
-    "sold_date": "1-Oct-26",
-    "carrier": "SageSure",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0144",
-    "month_key": "2026-10",
-    "producer": "Frank Villalobos",
-    "lead_source": "Personal Referral",
-    "policy_type": "Standard Auto",
-    "policies": [
-      "Standard Auto"
-    ],
-    "policy_count": 1,
-    "customer_name": "Sakina Aylen",
-    "sold_date": "1-Oct-26",
-    "carrier": "Allstate",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": "JURUPA VALLEY",
-    "state": "California",
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0145",
+    "id": "ref_2026_10_0111",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Brenda Perez",
@@ -6599,7 +5778,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0146",
+    "id": "ref_2026_10_0112",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Kenneth A (TMG)",
@@ -6623,7 +5802,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0147",
+    "id": "ref_2026_10_0113",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
     "lead_source": "Dawn Ippolito - Coldwell Banker",
@@ -6647,7 +5826,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0148",
+    "id": "ref_2026_10_0114",
     "month_key": "2026-10",
     "producer": "Denice Santos",
     "lead_source": "Denice- Leobardo Perez",
@@ -6671,7 +5850,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0149",
+    "id": "ref_2026_10_0115",
     "month_key": "2026-10",
     "producer": "Maila Castro",
     "lead_source": "Nennette Agbay - Berkshire Hathaway",
