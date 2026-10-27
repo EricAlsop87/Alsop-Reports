@@ -35,14 +35,16 @@ import {
 } from "./actions"
 
 const GIFT_PRESETS = [
+  "Other",
   "Zelle",
   "Target",
   "Visa Gift Card",
-  "Cash / Check",
-  "Other"
+  "Cash / Check"
 ]
 
 const POLICY_PRESETS = [
+  "Other",
+  "Quote Only",
   "Standard Auto",
   "Homeowners (HO-3)",
   "Renters",
@@ -52,12 +54,12 @@ const POLICY_PRESETS = [
   "Landlord",
   "Commercial Auto",
   "Motorcycle",
-  "Umbrella",
-  "Quote Only",
-  "Other"
+  "Umbrella"
 ]
 
 const CARRIER_PRESETS = [
+  "Other",
+  "Quote Only",
   "Allstate",
   "National General",
   "Hartford",
@@ -67,9 +69,7 @@ const CARRIER_PRESETS = [
   "CA Fair Plan",
   "Travelers",
   "Berkshire Hathaway",
-  "Progressive",
-  "Quote Only",
-  "Other"
+  "Progressive"
 ]
 
 const LEAD_SOURCE_PRESETS = [
@@ -361,6 +361,8 @@ export default function ReferralsPage() {
   const [quickProducer, setQuickProducer] = useState("")
   const [quickPolicy, setQuickPolicy] = useState("Standard Auto")
   const [quickCarrier, setQuickCarrier] = useState("Allstate")
+  const [quickCustomPolicy, setQuickCustomPolicy] = useState("")
+  const [quickCustomCarrier, setQuickCustomCarrier] = useState("")
   const [quickSource, setQuickSource] = useState("Customer Referral")
   const [quickCustomSource, setQuickCustomSource] = useState("")
   const [quickSoldDate, setQuickSoldDate] = useState(() => getTodaySoldDate())
@@ -504,7 +506,7 @@ export default function ReferralsPage() {
         set.add(toTitleCase(trimmed))
       }
     })
-    return [...Array.from(set).sort((a, b) => a.localeCompare(b)), "Other"]
+    return ["Other", ...Array.from(set).sort((a, b) => a.localeCompare(b))]
   }, [leadSourceStats.allSources])
 
   // Filtered and sorted rows
@@ -813,6 +815,8 @@ export default function ReferralsPage() {
     }
 
     const finalSource = (quickSource === "Other" ? quickCustomSource : quickSource).trim() || "Customer Referral"
+    const finalPolicy = (quickPolicy === "Other" ? quickCustomPolicy : quickPolicy).trim() || "Standard Auto"
+    const finalCarrier = (quickCarrier === "Other" ? quickCustomCarrier : quickCarrier).trim() || "Allstate"
     const finalGift = (quickGiftType === "Other" ? quickCustomGiftType : quickGiftType).trim() || null
 
     setIsQuickSubmitting(true)
@@ -823,8 +827,8 @@ export default function ReferralsPage() {
           customer_name: cust,
           producer: prod,
           lead_source: finalSource,
-          policy_type: quickPolicy.trim() || "Standard Auto",
-          carrier: quickCarrier.trim() || "Allstate",
+          policy_type: finalPolicy,
+          carrier: finalCarrier,
           sold_date: quickSoldDate.trim() || getTodaySoldDate(),
           is_referral: true,
           amount: parseFloat(quickAmount) || 10.00,
@@ -848,6 +852,8 @@ export default function ReferralsPage() {
         setQuickGiftType("")
         setQuickCustomGiftType("")
         setQuickCustomSource("")
+        setQuickCustomPolicy("")
+        setQuickCustomCarrier("")
         showToast(`Added referral for ${cust}!`)
       } else {
         showToast("Failed to add referral", "error")
@@ -1403,6 +1409,31 @@ export default function ReferralsPage() {
                               ))}
                             </select>
                           </div>
+                          {quickPolicy === "Other" && (
+                            <input
+                              type="text"
+                              autoFocus
+                              placeholder="Type custom policy (e.g. Home + Auto)..."
+                              value={quickCustomPolicy}
+                              onChange={e => setQuickCustomPolicy(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") handleQuickAdd()
+                              }}
+                              className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-blue-400 dark:border-blue-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400 shadow-xs"
+                            />
+                          )}
+                          {quickCarrier === "Other" && (
+                            <input
+                              type="text"
+                              placeholder="Type custom carrier..."
+                              value={quickCustomCarrier}
+                              onChange={e => setQuickCustomCarrier(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === "Enter") handleQuickAdd()
+                              }}
+                              className="w-full px-1.5 py-1 text-[11px] font-medium bg-white dark:bg-slate-900 border border-blue-400 dark:border-blue-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400 shadow-xs"
+                            />
+                          )}
                           <select
                             value={quickSource}
                             onChange={e => setQuickSource(e.target.value)}
