@@ -26,7 +26,7 @@ import {
   ArrowDown,
   Trash2
 } from "lucide-react"
-import { ReferralEntry, ReferralSummary } from "@/lib/referralTypes"
+import { ReferralEntry, ReferralSummary, isNonReferralLeadSource } from "@/lib/referralTypes"
 import {
   getReferralsData,
   updateReferralEntry,
@@ -321,7 +321,7 @@ export default function ReferralsPage() {
     totalAmountSent: 0,
     allPoliciesCount: 0,
   })
-  const [selectedMonth, setSelectedMonth] = useState("2026-09")
+  const [selectedMonth, setSelectedMonth] = useState("2026-10")
   const [availableMonths, setAvailableMonths] = useState<string[]>(["2026-09", "2026-10"])
 
   // Filters
@@ -468,7 +468,7 @@ export default function ReferralsPage() {
         )
         if (matchOffice) {
         const src = (e.lead_source || "Direct").trim()
-        if (src) {
+        if (src && !isNonReferralLeadSource(src)) {
           counts[src] = (counts[src] || 0) + 1
         }
       }
@@ -491,14 +491,14 @@ export default function ReferralsPage() {
     return pills
   }, [leadSourceStats.topSources, selectedLeadSource])
 
-  // Combined lead sources including presets and all sources in active data (ensuring 'Other' is strictly unique at the end)
+  // Combined lead sources including presets and active data (strictly excluding any company lead provider sources)
   const availableLeadSources = useMemo(() => {
     const set = new Set<string>(
-      LEAD_SOURCE_PRESETS.filter(s => s.toLowerCase().trim() !== "other")
+      LEAD_SOURCE_PRESETS.filter(s => s.toLowerCase().trim() !== "other" && !isNonReferralLeadSource(s))
     )
     leadSourceStats.allSources.forEach(s => {
       const trimmed = s?.trim()
-      if (trimmed && trimmed.toLowerCase() !== "other") {
+      if (trimmed && trimmed.toLowerCase() !== "other" && !isNonReferralLeadSource(trimmed)) {
         set.add(toTitleCase(trimmed))
       }
     })
@@ -1027,7 +1027,7 @@ export default function ReferralsPage() {
               {summary.totalReferrals}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              in {selectedMonth === "2026-09" ? "September" : selectedMonth}
+              in {selectedMonth === "2026-09" ? "September 2026" : selectedMonth === "2026-10" ? "October 2026" : selectedMonth}
             </span>
           </div>
         </div>

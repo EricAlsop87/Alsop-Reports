@@ -30,6 +30,31 @@ export interface ReferralSummary {
 }
 
 /**
+ * Exact list of company lead provider sources, internet aggregators,
+ * cross-sales, rewrites, and internal call-ins that are tagged as "Remove"
+ * in the Alsop Referral Program Google Sheet and must NOT be counted as referrals.
+ */
+export const REMOVED_COMPANY_LEAD_SOURCES = [
+  "#pivot",
+  "allstate auto to natgen",
+  "bristol to allstate",
+  "burke - digital auto",
+  "burke - digital homes",
+  "call in existing customer",
+  "cfp to bamboo",
+  "cfp to ivantage",
+  "cross-sale",
+  "datalot",
+  "goal",
+  "m3",
+  "media alpha",
+  "mwi - cross-sale",
+  "quinstreet",
+  "smartfinancial",
+  "winback",
+] as const
+
+/**
  * Checks if a lead source represents general non-referral sales channels
  * (internet leads, cross-sales, winbacks, rewrites, internal campaigns)
  * that should not be tracked as customer/partner referrals.
@@ -38,26 +63,20 @@ export function isNonReferralLeadSource(source: string | null | undefined): bool
   if (!source) return false
   const s = source.toLowerCase().trim()
 
-  if (s === "quinstreet" || s.startsWith("quinstreet")) return true
-  if (s === "datalot" || s === "data lot" || s.startsWith("datalot")) return true
-  if (s === "cross-sale" || s === "cross sale") return true
-  if (s === "m3") return true
-  if (s === "surequote pro" || s === "surequote" || s.startsWith("surequote")) return true
-  if (s === "goal") return true
-  if (s === "personal referral") return true
-  if (s === "smartfinancial" || s === "smart financial") return true
-  if (s === "winback" || s.startsWith("winback")) return true
-  if (s === "#pivot" || s === "pivot") return true
-  if (s.includes("allstate auto to natgen") || s.includes("natgen auto to allstate") || s.includes("allstae auto natgen") || s.includes("natgen")) return true
-  if (s.includes("builders risk") || s === "builders") return true
+  for (const rm of REMOVED_COMPANY_LEAD_SOURCES) {
+    if (s === rm || s.startsWith(rm)) return true
+  }
+
+  // Common formatting variations
+  if (s === "data lot" || s.startsWith("datalot")) return true
+  if (s === "smart financial" || s.startsWith("smartfinancial")) return true
   if (s.includes("burke - digital") || s.includes("burke digital")) return true
-  if (s.includes("cfp to ivantage") || s.includes("cft to ivantage")) return true
-  if (s.includes("dp to ho3") || s.includes("ho3 to dp") || s.includes("change dp to ho") || s.includes("change ho3")) return true
-  if (s === "gmb") return true
-  if (s === "media alpha" || s.startsWith("media alpha")) return true
+  if (s.includes("existing customer")) return true
+  if (s.includes("allstate auto to natgen") || s.includes("natgen auto to allstate")) return true
+  if (s.includes("bristol to allstate")) return true
+  if (s.includes("cfp to bamboo") || s.includes("cfp to ivantage") || s.includes("cft to ivantage")) return true
   if (s.includes("mwi - cross-sale") || s.includes("mwi cross sale")) return true
-  if (s.includes("call in existing customer / cross-sale") || s.includes("yelp / cross-sale")) return true
-  if (s === "call in existing customer" || s.includes("existing customer")) return true
+  if (s.includes("cross-sale") || s === "cross sale") return true
 
   return false
 }

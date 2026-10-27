@@ -3,12 +3,18 @@
 import { revalidatePath } from "next/cache"
 import { createSupabaseAdmin } from "@/lib/supabaseServer"
 import { ReferralEntry, ReferralSummary, isNonReferralLeadSource } from "@/lib/referralTypes"
-import { REFERRAL_PROGRAM_SEPTEMBER_2026_SEED } from "@/lib/referralSeed"
+import {
+  REFERRAL_PROGRAM_SEPTEMBER_2026_SEED,
+  REFERRAL_PROGRAM_OCTOBER_2026_SEED
+} from "@/lib/referralSeed"
 
 // Fallback in-memory storage for local dev / when DB table is not yet created
-let memoryStore: ReferralEntry[] = [...REFERRAL_PROGRAM_SEPTEMBER_2026_SEED]
+let memoryStore: ReferralEntry[] = [
+  ...REFERRAL_PROGRAM_OCTOBER_2026_SEED,
+  ...REFERRAL_PROGRAM_SEPTEMBER_2026_SEED
+]
 
-export async function getReferralsData(monthKey: string = "2026-09"): Promise<{
+export async function getReferralsData(monthKey: string = "2026-10"): Promise<{
   success: boolean
   entries: ReferralEntry[]
   summary: ReferralSummary
