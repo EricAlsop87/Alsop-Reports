@@ -61,6 +61,10 @@ export const REMOVED_COMPANY_LEAD_SOURCES = [
   "surequote pro",
   "transfer-in",
   "winback",
+  "re-write",
+  "rewrite",
+  "carrier change",
+  "broker of record",
 ] as const
 
 /**
@@ -69,7 +73,7 @@ export const REMOVED_COMPANY_LEAD_SOURCES = [
  * that should not be tracked as customer/partner referrals.
  */
 export function isNonReferralLeadSource(source: string | null | undefined): boolean {
-  if (!source) return false
+  if (!source || !source.trim()) return false
   const s = source.toLowerCase().trim()
 
   for (const rm of REMOVED_COMPANY_LEAD_SOURCES) {
@@ -88,6 +92,10 @@ export function isNonReferralLeadSource(source: string | null | undefined): bool
   if (s.includes("cfp to bamboo") || s.includes("cfp to ivantage") || s.includes("cft to ivantage")) return true
   if (s.includes("dp to ho") || s.includes("ho to dp") || s.includes("change dp") || s.includes("change ho")) return true
   if (s.includes("cross-sale") || s.includes("cross sale")) return true
+  if (s.includes("re-write") || s.includes("rewrite")) return true
+  if (s.includes("carrier change")) return true
+  if (s.includes("broker of record")) return true
+  if (s.includes("ivantage to") || s.includes("allstate to ivantage")) return true
 
   return false
 }
