@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const GIPHY_API_KEY = process.env.GIPHY_API_KEY
+const GIPHY_API_KEY = process.env.GIPHY_API_KEY || 'sXpGFDGZs0Dv1mmNFvYaGUvYwKX0PWIh'
 
 export async function GET(req: NextRequest) {
   if (!GIPHY_API_KEY) {
