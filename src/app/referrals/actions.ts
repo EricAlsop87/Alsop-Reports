@@ -25,20 +25,29 @@ export async function getReferralsData(monthKey: string = "2026-10"): Promise<{
     const supabase = createSupabaseAdmin()
     
     // Try querying Supabase
-    const { data, error } = await supabase
+    let query = supabase
       .from("referral_program_entries")
       .select("*")
-      .eq("month_key", monthKey)
       .order("is_referral", { ascending: false })
       .order("sold_date", { ascending: false })
+
+    if (monthKey !== "all") {
+      query = query.eq("month_key", monthKey)
+    }
+
+    const { data, error } = await query
 
     let entries: ReferralEntry[] = []
 
     if (error || !data || data.length === 0) {
       // Table does not exist yet or no rows for this month: use memory store
-      entries = memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
-      if (entries.length === 0 && monthKey === "2026-09") {
+      if (monthKey === "all") {
         entries = memoryStore.filter(e => !isNonReferralLeadSource(e.lead_source))
+      } else {
+        entries = memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
+        if (entries.length === 0 && monthKey === "2026-09") {
+          entries = memoryStore.filter(e => !isNonReferralLeadSource(e.lead_source))
+        }
       }
     } else {
       entries = (data as ReferralEntry[]).filter(e => !isNonReferralLeadSource(e.lead_source))
@@ -57,7 +66,7 @@ export async function getReferralsData(monthKey: string = "2026-10"): Promise<{
       allPoliciesCount: entries.length,
     }
 
-    const availableMonths = ["2026-09", "2026-10", "2026-11"]
+    const availableMonths = ["all", "2026-11", "2026-10", "2026-09"]
 
     return {
       success: true,
@@ -68,7 +77,9 @@ export async function getReferralsData(monthKey: string = "2026-10"): Promise<{
   } catch (err: any) {
     console.error("Error in getReferralsData:", err)
     // Fallback gracefully
-    const entries = memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
+    const entries = monthKey === "all"
+      ? memoryStore.filter(e => !isNonReferralLeadSource(e.lead_source))
+      : memoryStore.filter(e => e.month_key === monthKey && !isNonReferralLeadSource(e.lead_source))
     const giftsSent = entries.filter(e => e.gift_status === "sent")
     const giftsPending = entries.filter(e => e.gift_status === "pending")
     const totalAmount = giftsSent.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
@@ -83,7 +94,7 @@ export async function getReferralsData(monthKey: string = "2026-10"): Promise<{
         totalAmountSent: totalAmount,
         allPoliciesCount: entries.length,
       },
-      availableMonths: ["2026-09", "2026-10"],
+      availableMonths: ["all", "2026-11", "2026-10", "2026-09"],
     }
   }
 }

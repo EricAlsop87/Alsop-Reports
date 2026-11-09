@@ -93,6 +93,29 @@ function getTodaySoldDate(): string {
 }
 
 /**
+ * Extract YYYY-MM key from a sold date string (e.g. "17-Sep-26" -> "2026-09", "9-Nov-26" -> "2026-11").
+ */
+export function parseMonthKeyFromSoldDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "2026-11"
+  const s = dateStr.trim()
+  const dMmmYyMatch = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/)
+  if (dMmmYyMatch) {
+    const monthStr = dMmmYyMatch[2].toLowerCase()
+    let year = parseInt(dMmmYyMatch[3], 10)
+    if (year < 100) year += 2000
+    const months: Record<string, string> = {
+      jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+      jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12"
+    }
+    const monthNum = months[monthStr] || "11"
+    return `${year}-${monthNum}`
+  }
+  const isoMatch = s.match(/^(\d{4})-(\d{2})/)
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}`
+  return "2026-11"
+}
+
+/**
  * Parses sold dates like "17-Sep-26", "4-Sep-26", "30-Sep-26" into epoch timestamps for sorting.
  */
 export function parseSoldDate(dateStr: string | null | undefined): number {
@@ -756,7 +779,7 @@ export default function ReferralsPage() {
     try {
       const res = await addReferralEntry(
         {
-          month_key: selectedMonth,
+          month_key: selectedMonth === "all" ? parseMonthKeyFromSoldDate(newSoldDate) : selectedMonth,
           customer_name: customerVal,
           producer: producerVal,
           lead_source: sourceVal,
@@ -823,7 +846,7 @@ export default function ReferralsPage() {
     try {
       const res = await addReferralEntry(
         {
-          month_key: selectedMonth,
+          month_key: selectedMonth === "all" ? parseMonthKeyFromSoldDate(quickSoldDate) : selectedMonth,
           customer_name: cust,
           producer: prod,
           lead_source: finalSource,
@@ -902,7 +925,7 @@ export default function ReferralsPage() {
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement("a")
     link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `alsop_referral_program_${selectedMonth}.csv`)
+    link.setAttribute("download", `alsop_referral_program_${selectedMonth === "all" ? "all_months" : selectedMonth}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -981,6 +1004,7 @@ export default function ReferralsPage() {
               onChange={e => setSelectedMonth(e.target.value)}
               className="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
+              <option value="all">All Months</option>
               <option value="2026-09">September 2026</option>
               <option value="2026-10">October 2026</option>
               <option value="2026-11">November 2026</option>
@@ -1035,7 +1059,9 @@ export default function ReferralsPage() {
               {summary.totalReferrals}
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              in {selectedMonth === "2026-09" ? "September 2026" : selectedMonth === "2026-10" ? "October 2026" : selectedMonth}
+              {selectedMonth === "all"
+                ? "across All Months"
+                : `in ${selectedMonth === "2026-09" ? "September 2026" : selectedMonth === "2026-10" ? "October 2026" : selectedMonth === "2026-11" ? "November 2026" : selectedMonth}`}
             </span>
           </div>
         </div>
@@ -1814,7 +1840,7 @@ export default function ReferralsPage() {
         {/* Footer info */}
         <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            Showing <strong>{filteredEntries.length}</strong> of <strong>{entries.length}</strong> records for {selectedMonth}
+            Showing <strong>{filteredEntries.length}</strong> of <strong>{entries.length}</strong> records for {selectedMonth === "all" ? "All Months" : selectedMonth}
           </span>
           <span className="text-[11px]">
             Changes save automatically in real-time.
