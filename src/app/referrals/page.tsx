@@ -24,7 +24,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Trash2
+  Trash2,
+  Pencil
 } from "lucide-react"
 import { ReferralEntry, ReferralSummary, isNonReferralLeadSource } from "@/lib/referralTypes"
 import {
@@ -405,6 +406,26 @@ export default function ReferralsPage() {
   const [entryToDelete, setEntryToDelete] = useState<ReferralEntry | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Edit Referral Modal State
+  const [editModalEntry, setEditModalEntry] = useState<ReferralEntry | null>(null)
+  const [editCustomer, setEditCustomer] = useState("")
+  const [editProducer, setEditProducer] = useState("")
+  const [editCustomProducer, setEditCustomProducer] = useState("")
+  const [editSource, setEditSource] = useState("Customer Referral")
+  const [editCustomSource, setEditCustomSource] = useState("")
+  const [editPolicy, setEditPolicy] = useState("Standard Auto")
+  const [editCustomPolicy, setEditCustomPolicy] = useState("")
+  const [editCarrier, setEditCarrier] = useState("Allstate")
+  const [editCustomCarrier, setEditCustomCarrier] = useState("")
+  const [editSoldDate, setEditSoldDate] = useState("")
+  const [editAmount, setEditAmount] = useState("10.00")
+  const [editGiftType, setEditGiftType] = useState("")
+  const [editCustomGiftType, setEditCustomGiftType] = useState("")
+  const [editGiftStatus, setEditGiftStatus] = useState<"pending" | "sent" | "n/a">("pending")
+  const [editDateSent, setEditDateSent] = useState("")
+  const [editRecipientNotes, setEditRecipientNotes] = useState("")
+  const [isUpdating, setIsUpdating] = useState(false)
+
   // Recipient Notes Drawer
   const [notesModalEntry, setNotesModalEntry] = useState<ReferralEntry | null>(null)
   const [notesDraft, setNotesDraft] = useState("")
@@ -731,6 +752,163 @@ export default function ReferralsPage() {
       showToast("Failed to save details", "error")
     } finally {
       setSavingId(null)
+    }
+  }
+
+  const handleOpenEditModal = (entry: ReferralEntry) => {
+    setEditModalEntry(entry)
+    setEditCustomer(entry.customer_name || "")
+
+    // Producer
+    if (allProducers.includes(entry.producer)) {
+      setEditProducer(entry.producer)
+      setEditCustomProducer("")
+    } else if (entry.producer) {
+      setEditProducer("__custom__")
+      setEditCustomProducer(entry.producer)
+    } else {
+      setEditProducer("")
+      setEditCustomProducer("")
+    }
+
+    // Lead source
+    if (availableLeadSources.includes(entry.lead_source)) {
+      setEditSource(entry.lead_source)
+      setEditCustomSource("")
+    } else if (entry.lead_source) {
+      setEditSource("Other")
+      setEditCustomSource(entry.lead_source)
+    } else {
+      setEditSource("Customer Referral")
+      setEditCustomSource("")
+    }
+
+    // Policy
+    if (POLICY_PRESETS.includes(entry.policy_type)) {
+      setEditPolicy(entry.policy_type)
+      setEditCustomPolicy("")
+    } else if (entry.policy_type) {
+      setEditPolicy("Other")
+      setEditCustomPolicy(entry.policy_type)
+    } else {
+      setEditPolicy("Standard Auto")
+      setEditCustomPolicy("")
+    }
+
+    // Carrier
+    if (CARRIER_PRESETS.includes(entry.carrier)) {
+      setEditCarrier(entry.carrier)
+      setEditCustomCarrier("")
+    } else if (entry.carrier) {
+      setEditCarrier("Other")
+      setEditCustomCarrier(entry.carrier)
+    } else {
+      setEditCarrier("Allstate")
+      setEditCustomCarrier("")
+    }
+
+    setEditSoldDate(entry.sold_date || getTodaySoldDate())
+    setEditAmount(entry.amount != null ? String(entry.amount) : "10.00")
+
+    // Gift Type
+    if (entry.gift_type && GIFT_PRESETS.includes(entry.gift_type)) {
+      setEditGiftType(entry.gift_type)
+      setEditCustomGiftType("")
+    } else if (entry.gift_type) {
+      setEditGiftType("Other")
+      setEditCustomGiftType(entry.gift_type)
+    } else {
+      setEditGiftType("")
+      setEditCustomGiftType("")
+    }
+
+    setEditGiftStatus(entry.gift_status || "pending")
+    setEditDateSent(entry.date_sent || "")
+    setEditRecipientNotes(entry.recipient_notes || "")
+  }
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editModalEntry) return
+
+    const customerVal = editCustomer.trim()
+    const producerVal = (editProducer === "__custom__" ? editCustomProducer : editProducer).trim()
+    const sourceVal = (editSource === "Other" ? editCustomSource : editSource).trim() || "Customer Referral"
+    const policyVal = (editPolicy === "Other" ? editCustomPolicy : editPolicy).trim() || "Standard Auto"
+    const carrierVal = (editCarrier === "Other" ? editCustomCarrier : editCarrier).trim() || "Allstate"
+    const giftVal = (editGiftType === "Other" ? editCustomGiftType : editGiftType).trim() || null
+    const amountVal = editAmount !== "" ? parseFloat(editAmount) : null
+    const soldDateVal = editSoldDate.trim() || editModalEntry.sold_date
+
+    if (!customerVal) {
+      showToast("Customer name is required", "error")
+      return
+    }
+    if (!producerVal) {
+      showToast("Producer is required", "error")
+      return
+    }
+
+    setIsUpdating(true)
+    try {
+      const updates: Partial<ReferralEntry> = {
+        customer_name: customerVal,
+        producer: producerVal,
+        lead_source: sourceVal,
+        policy_type: policyVal,
+        carrier: carrierVal,
+        sold_date: soldDateVal,
+        amount: amountVal,
+        gift_type: giftVal,
+        gift_status: editGiftStatus,
+        date_sent: editGiftStatus === "sent" ? (editDateSent.trim() || getTodaySoldDate()) : null,
+        recipient_notes: editRecipientNotes.trim() || null,
+        month_key: parseMonthKeyFromSoldDate(soldDateVal),
+      }
+
+      const res = await updateReferralEntry(editModalEntry.id, updates, currentAgent?.name)
+      if (res.success) {
+        const updatedItem: ReferralEntry = {
+          ...editModalEntry,
+          ...updates,
+          updated_by: currentAgent?.name || "Manager",
+          updated_at: new Date().toISOString(),
+        }
+
+        setEntries(prev => prev.map(item => item.id === editModalEntry.id ? updatedItem : item))
+
+        // Recalculate summary totals accurately
+        setSummary(prev => {
+          const wasSent = editModalEntry.gift_status === "sent"
+          const isSent = editGiftStatus === "sent"
+          const wasPending = editModalEntry.gift_status === "pending"
+          const isPending = editGiftStatus === "pending"
+
+          const sentDiff = (isSent ? 1 : 0) - (wasSent ? 1 : 0)
+          const pendingDiff = (isPending ? 1 : 0) - (wasPending ? 1 : 0)
+
+          const oldSentAmount = wasSent && editModalEntry.amount ? Number(editModalEntry.amount) : 0
+          const newSentAmount = isSent && amountVal ? Number(amountVal) : 0
+          const amountDiff = newSentAmount - oldSentAmount
+
+          return {
+            ...prev,
+            giftsSentCount: Math.max(0, prev.giftsSentCount + sentDiff),
+            giftsPendingCount: Math.max(0, prev.giftsPendingCount + pendingDiff),
+            totalAmountSent: Math.max(0, prev.totalAmountSent + amountDiff),
+          }
+        })
+
+        setEditModalEntry(null)
+        showToast(`Updated referral for ${customerVal}!`)
+      } else {
+        showToast(res.error || "Failed to update referral", "error")
+      }
+    } catch (err) {
+      console.error("Failed to update referral:", err)
+      showToast("Failed to update referral", "error")
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -1816,16 +1994,26 @@ export default function ReferralsPage() {
                         </button>
                       </td>
 
-                      {/* Action: Delete Button with double verification */}
+                      {/* Actions: Edit & Delete Buttons */}
                       <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => setEntryToDelete(entry)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-                          title={`Delete referral for ${entry.customer_name}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(entry)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors cursor-pointer"
+                            title={`Edit referral for ${entry.customer_name}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEntryToDelete(entry)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                            title={`Delete referral for ${entry.customer_name}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -2081,6 +2269,301 @@ export default function ReferralsPage() {
                 >
                   {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Referral</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Referral Modal */}
+      {editModalEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white">
+                    Edit Customer Referral
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Modify details for {editModalEntry.customer_name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditModalEntry(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4 pt-1">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. John Doe"
+                    value={editCustomer}
+                    onChange={e => setEditCustomer(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Producer (Agent) *
+                  </label>
+                  <select
+                    required
+                    value={editProducer}
+                    onChange={e => setEditProducer(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    <option value="">Select Producer...</option>
+                    {allProducers.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    <option value="__custom__">+ Other / Custom Agent...</option>
+                  </select>
+                  {editProducer === "__custom__" && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter agent name..."
+                      value={editCustomProducer}
+                      onChange={e => setEditCustomProducer(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Lead Source
+                  </label>
+                  <select
+                    value={editSource}
+                    onChange={e => setEditSource(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {availableLeadSources.map((s, idx) => (
+                      <option key={`edit-src-${s}-${idx}`} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  {editSource === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter lead source..."
+                      value={editCustomSource}
+                      onChange={e => setEditCustomSource(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Policy Type
+                  </label>
+                  <select
+                    value={editPolicy}
+                    onChange={e => {
+                      const val = e.target.value
+                      setEditPolicy(val)
+                      if (val === "Quote Only") {
+                        setEditAmount("5.00")
+                        setEditCarrier("Quote Only")
+                      } else if (editAmount === "5.00") {
+                        setEditAmount("10.00")
+                        if (editCarrier === "Quote Only") setEditCarrier("Allstate")
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {POLICY_PRESETS.map(pol => (
+                      <option key={pol} value={pol}>{pol}</option>
+                    ))}
+                  </select>
+                  {editPolicy === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter policy type..."
+                      value={editCustomPolicy}
+                      onChange={e => setEditCustomPolicy(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Carrier
+                  </label>
+                  <select
+                    value={editCarrier}
+                    onChange={e => {
+                      const val = e.target.value
+                      setEditCarrier(val)
+                      if (val === "Quote Only") {
+                        setEditAmount("5.00")
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    {CARRIER_PRESETS.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  {editCarrier === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter carrier name..."
+                      value={editCustomCarrier}
+                      onChange={e => setEditCustomCarrier(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Sold / Quote Date
+                  </label>
+                  <input
+                    type="text"
+                    value={editSoldDate}
+                    onChange={e => setEditSoldDate(e.target.value)}
+                    placeholder="e.g. 26-Oct-26"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Amount ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="5"
+                    value={editAmount}
+                    onChange={e => setEditAmount(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Gift Type
+                  </label>
+                  <select
+                    value={editGiftType}
+                    onChange={e => setEditGiftType(e.target.value)}
+                    className={`w-full px-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none cursor-pointer ${
+                      !editGiftType ? "text-slate-400 italic text-[11px]" : "text-xs font-semibold text-slate-900 dark:text-white"
+                    }`}
+                  >
+                    <option value="" className="text-slate-400 italic text-[11px]">
+                      Click to choose Gift Type
+                    </option>
+                    {GIFT_PRESETS.map(g => (
+                      <option key={g} value={g} className="text-slate-800 dark:text-slate-200 font-normal not-italic text-xs">
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                  {editGiftType === "Other" && (
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Type custom gift..."
+                      value={editCustomGiftType}
+                      onChange={e => setEditCustomGiftType(e.target.value)}
+                      className="mt-1.5 w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-blue-300 dark:border-blue-600 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editGiftStatus}
+                    onChange={e => {
+                      const next = e.target.value as "pending" | "sent" | "n/a"
+                      setEditGiftStatus(next)
+                      if (next === "sent" && !editDateSent) {
+                        setEditDateSent(getTodaySoldDate())
+                      }
+                    }}
+                    className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="sent">Sent</option>
+                    <option value="n/a">N/A</option>
+                  </select>
+                </div>
+              </div>
+
+              {editGiftStatus === "sent" && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Date Sent
+                  </label>
+                  <input
+                    type="text"
+                    value={editDateSent}
+                    onChange={e => setEditDateSent(e.target.value)}
+                    placeholder="e.g. 26-Oct-26"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Recipient Notes / Contact / Delivery Details
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Recipient phone, address, email, or special delivery instructions..."
+                  value={editRecipientNotes}
+                  onChange={e => setEditRecipientNotes(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setEditModalEntry(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-md transition-colors flex items-center gap-1.5"
+                >
+                  {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Save Changes</span>
                 </button>
               </div>
             </form>
