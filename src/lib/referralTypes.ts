@@ -68,13 +68,76 @@ export const REMOVED_COMPANY_LEAD_SOURCES = [
 ] as const
 
 /**
+ * Agency staff and producers are internal team members and not eligible for referral fees.
+ */
+export const INTERNAL_AGENCY_STAFF_NAMES = [
+  "christine lansing",
+  "claudia sambrano",
+  "dawn zenor",
+  "esmeralda cervantes",
+  "liliana morales",
+  "maila castro",
+  "rosalba lozano",
+  "suzanne yniguez",
+  "denice santos",
+  "misty torrez",
+  "alexandra quintana",
+  "charmaine carrillo",
+  "andrea alpine",
+  "chris elliott",
+  "frank villalobos",
+  "frank a villalobos",
+  "jennifer martinez",
+  "sylvia duran",
+  "eddie sanchez",
+  "isabel torres",
+  "taylor davis",
+  "john paul dizon",
+  "giselle ramos",
+  "edwin sernas",
+  "roxana topete",
+  "roxanna topete",
+  "jerome delfin",
+  "alex clancy",
+  "danny bonilla",
+  "ricardo becerra",
+  "ric becerra",
+  "juanita calderon",
+  "rosario delgado",
+  "jose huerta",
+  "christian reyes",
+  "jenna zazueta",
+  "nancy gutierrez",
+  "robert lewis",
+  "myles vinluan",
+  "nancy maldonado",
+  "eric alsop",
+  "greg alsop",
+  "diane bedard",
+  "cynthia romero-larias",
+  "ariana crawford",
+  "olga soto",
+  "donna priddy",
+  "teyssy espino",
+  "diana ramirez",
+  "zypher schnakenberg",
+  "valerie granados",
+  "valeria granados",
+] as const
+
+/**
  * Checks if a lead source represents general non-referral sales channels
- * (internet leads, cross-sales, winbacks, rewrites, internal campaigns)
+ * (internet leads, cross-sales, winbacks, rewrites, internal campaigns, internal agent transfers)
  * that should not be tracked as customer/partner referrals.
  */
 export function isNonReferralLeadSource(source: string | null | undefined): boolean {
   if (!source || !source.trim()) return false
   const s = source.toLowerCase().trim()
+
+  // Internal agency staff / agents are not eligible for referral fees
+  for (const staff of INTERNAL_AGENCY_STAFF_NAMES) {
+    if (s === staff) return true
+  }
 
   for (const rm of REMOVED_COMPANY_LEAD_SOURCES) {
     if (s === rm || s.startsWith(rm) || s.includes(rm)) return true
