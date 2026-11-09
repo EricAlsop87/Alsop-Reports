@@ -3232,31 +3232,6 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "updated_at": null
   },
   {
-    "id": "ref_2026_10_0122",
-    "month_key": "2026-10",
-    "producer": "Christine Lansing",
-    "lead_source": "Christine Lansing",
-    "policy_type": "DP3 - Property + Earthquake",
-    "policies": [
-      "DP3 - Property",
-      "Earthquake"
-],
-    "policy_count": 2,
-    "customer_name": "360 DONNA LLC",
-    "sold_date": "29-Oct-26",
-    "carrier": "Foremost / Palomar",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
     "id": "ref_2026_10_0123",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
@@ -3509,30 +3484,6 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "customer_name": "Richard Ramos",
     "sold_date": "27-Oct-26",
     "carrier": "National General",
-    "is_referral": true,
-    "amount": 10,
-    "gift_type": null,
-    "gift_status": "pending",
-    "date_sent": null,
-    "recipient_notes": null,
-    "city": null,
-    "state": null,
-    "updated_by": null,
-    "updated_at": null
-  },
-  {
-    "id": "ref_2026_10_0134",
-    "month_key": "2026-10",
-    "producer": "Suzanne Yniguez",
-    "lead_source": "Christine Lansing",
-    "policy_type": "Commercial Property",
-    "policies": [
-      "Commercial Property"
-],
-    "policy_count": 1,
-    "customer_name": "VN PARTNERSHIP",
-    "sold_date": "27-Oct-26",
-    "carrier": "Century Surety Company",
     "is_referral": true,
     "amount": 10,
     "gift_type": null,
@@ -3818,7 +3769,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Don Nevels",
     "sold_date": "22-Oct-26",
@@ -3842,7 +3793,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jocelyn Gomez",
     "sold_date": "22-Oct-26",
@@ -3867,7 +3818,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Landlord",
       "Landlord"
-    ],
+],
     "policy_count": 2,
     "customer_name": "JOSE DE JESUS LOERA",
     "sold_date": "22-Oct-26",
@@ -3891,7 +3842,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial BOP",
     "policies": [
       "Commercial BOP"
-    ],
+],
     "policy_count": 1,
     "customer_name": "The Darcie Stratton and Taffy Maurer Real Estate Team",
     "sold_date": "22-Oct-26",
@@ -3915,7 +3866,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Carmen Guerradegomez",
     "sold_date": "21-Oct-26",
@@ -3939,7 +3890,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Gagandeep Singh",
     "sold_date": "21-Oct-26",
@@ -3963,7 +3914,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DP3 - Property",
     "policies": [
       "DP3 - Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Geno Diaz",
     "sold_date": "21-Oct-26",
@@ -3987,7 +3938,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Renters",
     "policies": [
       "Renters"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Janet Nguyen",
     "sold_date": "21-Oct-26",
@@ -4011,7 +3962,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Pablo Guzmanmonzon",
     "sold_date": "21-Oct-26",
@@ -4035,7 +3986,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Zondalyn NOble",
     "sold_date": "21-Oct-26",
@@ -4059,7 +4010,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Earthquake",
     "policies": [
       "Earthquake"
-    ],
+],
     "policy_count": 1,
     "customer_name": "AHRON ZILBERSTEIN",
     "sold_date": "20-Oct-26",
@@ -4084,7 +4035,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Fire Policy",
       "DIC"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Alaina Manuel",
     "sold_date": "20-Oct-26",
@@ -4108,7 +4059,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial BOP",
     "policies": [
       "Commercial BOP"
-    ],
+],
     "policy_count": 1,
     "customer_name": "CHI HENG CHAU",
     "sold_date": "20-Oct-26",
@@ -4133,7 +4084,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Fire Policy",
       "Manufactured Home"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Hope Lindau",
     "sold_date": "20-Oct-26",
@@ -4157,7 +4108,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Ivan Londono",
     "sold_date": "20-Oct-26",
@@ -4181,7 +4132,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Kayla Reyes",
     "sold_date": "20-Oct-26",
@@ -4205,7 +4156,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Lydia Faulk",
     "sold_date": "20-Oct-26",
@@ -4229,7 +4180,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Dwelling Fire",
     "policies": [
       "Dwelling Fire"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Bryan Shoemate",
     "sold_date": "19-Oct-26",
@@ -4253,7 +4204,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Donnetta Harris",
     "sold_date": "19-Oct-26",
@@ -4277,7 +4228,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DP3 - Property",
     "policies": [
       "DP3 - Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "JAIME DE JESUS VAZQUEZ",
     "sold_date": "19-Oct-26",
@@ -4301,7 +4252,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Josue NATHAM mENDOZA MARTINEZ",
     "sold_date": "19-Oct-26",
@@ -4325,7 +4276,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "MARGARITA INOSTROZ",
     "sold_date": "19-Oct-26",
@@ -4349,7 +4300,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Pedro Portales",
     "sold_date": "19-Oct-26",
@@ -4373,7 +4324,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Seth Lere",
     "sold_date": "19-Oct-26",
@@ -4397,7 +4348,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "VERNON REED JR",
     "sold_date": "19-Oct-26",
@@ -4421,7 +4372,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Yeimi Rodriguez and Garces Angel and Molina Trujillo",
     "sold_date": "19-Oct-26",
@@ -4445,7 +4396,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jorge Rodriguez",
     "sold_date": "17-Oct-26",
@@ -4469,7 +4420,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "grecia sepulveda",
     "sold_date": "16-Oct-26",
@@ -4493,7 +4444,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "jose pizza",
     "sold_date": "16-Oct-26",
@@ -4517,7 +4468,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "masooing thao",
     "sold_date": "16-Oct-26",
@@ -4541,7 +4492,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DP3 - Property",
     "policies": [
       "DP3 - Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Nina Phan",
     "sold_date": "16-Oct-26",
@@ -4565,7 +4516,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Dwelling Fire",
     "policies": [
       "Dwelling Fire"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Robert Valley",
     "sold_date": "16-Oct-26",
@@ -4589,7 +4540,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Sarali Sanchez-balderas",
     "sold_date": "16-Oct-26",
@@ -4613,7 +4564,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Andres fonseca",
     "sold_date": "15-Oct-26",
@@ -4637,7 +4588,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Janina Ella Cruz",
     "sold_date": "15-Oct-26",
@@ -4661,7 +4612,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Trailer",
     "policies": [
       "Trailer"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Juan Luna rios",
     "sold_date": "15-Oct-26",
@@ -4685,7 +4636,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "larry Rodriguez",
     "sold_date": "15-Oct-26",
@@ -4710,7 +4661,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Fire Policy",
       "DIC"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Maria Carbajal",
     "sold_date": "15-Oct-26",
@@ -4735,7 +4686,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "RV"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Mauricio Lopez",
     "sold_date": "15-Oct-26",
@@ -4759,7 +4710,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "MELODY LANGIN",
     "sold_date": "15-Oct-26",
@@ -4783,7 +4734,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "ROMULO ANCHO",
     "sold_date": "15-Oct-26",
@@ -4807,7 +4758,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Dwelling Fire",
     "policies": [
       "Dwelling Fire"
-    ],
+],
     "policy_count": 1,
     "customer_name": "EDGAR URENDA",
     "sold_date": "14-Oct-26",
@@ -4832,7 +4783,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Renters",
       "Standard Auto"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Jesus Rodriguez and Lucy Garcia",
     "sold_date": "14-Oct-26",
@@ -4856,7 +4807,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Dwelling Fire",
     "policies": [
       "Dwelling Fire"
-    ],
+],
     "policy_count": 1,
     "customer_name": "JUAN GUILLERMO PEREZ",
     "sold_date": "14-Oct-26",
@@ -4880,7 +4831,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Landlord",
     "policies": [
       "Landlord"
-    ],
+],
     "policy_count": 1,
     "customer_name": "MarNie Aquisitions LLC",
     "sold_date": "14-Oct-26",
@@ -4904,7 +4855,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "The Yorba Trust",
     "sold_date": "13-Oct-26",
@@ -4928,7 +4879,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Arnold Cruz",
     "sold_date": "12-Oct-26",
@@ -4952,7 +4903,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "BASILIA CERNA",
     "sold_date": "12-Oct-26",
@@ -4977,7 +4928,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "Renters"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Charles Bautista",
     "sold_date": "12-Oct-26",
@@ -5001,7 +4952,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Erika Hill",
     "sold_date": "12-Oct-26",
@@ -5025,7 +4976,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Landlord",
     "policies": [
       "Landlord"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Francisco Javiergarcia and Lilia Javier",
     "sold_date": "12-Oct-26",
@@ -5049,7 +5000,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "IVAN D GUERRERO",
     "sold_date": "12-Oct-26",
@@ -5073,7 +5024,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Joanna Linares",
     "sold_date": "12-Oct-26",
@@ -5098,7 +5049,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "Renters"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Jojit Mateo",
     "sold_date": "12-Oct-26",
@@ -5123,7 +5074,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "Renters"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Lilibeth Galvancervantes",
     "sold_date": "12-Oct-26",
@@ -5148,7 +5099,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "Umbrella"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Miguel Leal",
     "sold_date": "12-Oct-26",
@@ -5173,7 +5124,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Standard Auto",
       "Renters"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Ruth Cabarles and Apoli Erwin",
     "sold_date": "12-Oct-26",
@@ -5197,7 +5148,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Sheila Talansky",
     "sold_date": "12-Oct-26",
@@ -5221,7 +5172,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Juan Cena and Miriam Cena",
     "sold_date": "10-Oct-26",
@@ -5245,7 +5196,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "paul broccolina",
     "sold_date": "10-Oct-26",
@@ -5269,7 +5220,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "EDWARD GARCIA",
     "sold_date": "9-Oct-26",
@@ -5293,7 +5244,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Landlord",
     "policies": [
       "Landlord"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jacqueline Villareal",
     "sold_date": "9-Oct-26",
@@ -5317,7 +5268,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Maria Delgado-Ortiz",
     "sold_date": "9-Oct-26",
@@ -5341,7 +5292,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Monica Carranza",
     "sold_date": "9-Oct-26",
@@ -5365,7 +5316,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Obdulia Loeza",
     "sold_date": "9-Oct-26",
@@ -5389,7 +5340,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Francis Louie Donato",
     "sold_date": "8-Oct-26",
@@ -5413,7 +5364,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DP3 - Property",
     "policies": [
       "DP3 - Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "PAMELA CRANE",
     "sold_date": "8-Oct-26",
@@ -5437,7 +5388,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Sol Patnugot",
     "sold_date": "8-Oct-26",
@@ -5461,7 +5412,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "elsa rico",
     "sold_date": "7-Oct-26",
@@ -5485,7 +5436,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Estela Garcia",
     "sold_date": "7-Oct-26",
@@ -5509,7 +5460,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Faviola Nieves and Jorge Govea",
     "sold_date": "7-Oct-26",
@@ -5535,7 +5486,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
       "Fire Policy",
       "DP3 - Property",
       "DIC"
-    ],
+],
     "policy_count": 3,
     "customer_name": "Gerardo Olazabal",
     "sold_date": "7-Oct-26",
@@ -5559,7 +5510,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jamie Chambers",
     "sold_date": "7-Oct-26",
@@ -5583,7 +5534,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "REBECCA ANNE GUTIERREZ",
     "sold_date": "7-Oct-26",
@@ -5607,7 +5558,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Shane Mopera",
     "sold_date": "7-Oct-26",
@@ -5631,7 +5582,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DP3 - Property",
     "policies": [
       "DP3 - Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "The Beserra Family Trust",
     "sold_date": "7-Oct-26",
@@ -5655,7 +5606,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "TIFFANY JO SCOTT",
     "sold_date": "7-Oct-26",
@@ -5679,7 +5630,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial BOP Property",
     "policies": [
       "Commercial BOP Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "15 DONNA LLC",
     "sold_date": "6-Oct-26",
@@ -5703,7 +5654,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial BOP Property",
     "policies": [
       "Commercial BOP Property"
-    ],
+],
     "policy_count": 1,
     "customer_name": "15 DONNA LLC",
     "sold_date": "6-Oct-26",
@@ -5727,7 +5678,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Deanna Rene and Munoz Liana",
     "sold_date": "6-Oct-26",
@@ -5751,7 +5702,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Isa Trmirkulov",
     "sold_date": "6-Oct-26",
@@ -5775,7 +5726,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Myrna Cruz and Regina Esguerra",
     "sold_date": "6-Oct-26",
@@ -5799,7 +5750,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "ADRIANA RODARTE and EDGAR RODARTE",
     "sold_date": "5-Oct-26",
@@ -5823,7 +5774,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Landlord",
     "policies": [
       "Landlord"
-    ],
+],
     "policy_count": 1,
     "customer_name": "AHRON ZILBERSTEIN",
     "sold_date": "5-Oct-26",
@@ -5847,7 +5798,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Gullermo Olvera",
     "sold_date": "5-Oct-26",
@@ -5871,7 +5822,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "JANUARY WEBB",
     "sold_date": "5-Oct-26",
@@ -5895,7 +5846,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Non-standard Auto",
     "policies": [
       "Non-standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "JIEGO JUDGE",
     "sold_date": "5-Oct-26",
@@ -5919,7 +5870,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Vanessa Cruzata",
     "sold_date": "5-Oct-26",
@@ -5943,7 +5894,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Raquel Lopez",
     "sold_date": "2-Oct-26",
@@ -5967,7 +5918,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Renters",
     "policies": [
       "Renters"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Vivian Rodriguez-pimentel",
     "sold_date": "2-Oct-26",
@@ -6003,7 +5954,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
       "Dwelling Fire",
       "Dwelling Fire",
       "Dwelling Fire"
-    ],
+],
     "policy_count": 13,
     "customer_name": "17 OAKDALE LLC",
     "sold_date": "1-Oct-26",
@@ -6027,7 +5978,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Analy Gonzalez",
     "sold_date": "1-Oct-26",
@@ -6051,7 +6002,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DIC",
     "policies": [
       "DIC"
-    ],
+],
     "policy_count": 1,
     "customer_name": "BRENDA PENA SANCHEZ",
     "sold_date": "1-Oct-26",
@@ -6075,7 +6026,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Charlene Velazquez",
     "sold_date": "1-Oct-26",
@@ -6099,7 +6050,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Manufactured Home",
     "policies": [
       "Manufactured Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Connor Tucholski",
     "sold_date": "1-Oct-26",
@@ -6123,7 +6074,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Landlord",
     "policies": [
       "Landlord"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Delmi Bonilla",
     "sold_date": "1-Oct-26",
@@ -6147,7 +6098,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial Auto",
     "policies": [
       "Commercial Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "EASTWOOD RANCH FOUNDATION",
     "sold_date": "1-Oct-26",
@@ -6171,7 +6122,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Commercial Auto",
     "policies": [
       "Commercial Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "EASTWOOD RANCH FOUNDATION",
     "sold_date": "1-Oct-26",
@@ -6195,7 +6146,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Ingrid Liseth Chavez",
     "sold_date": "1-Oct-26",
@@ -6219,7 +6170,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jorge Gaspar Horta",
     "sold_date": "1-Oct-26",
@@ -6243,7 +6194,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Jose Villa b",
     "sold_date": "1-Oct-26",
@@ -6267,7 +6218,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Juan Carlos Aragon Hernandez",
     "sold_date": "1-Oct-26",
@@ -6291,7 +6242,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Standard Auto",
     "policies": [
       "Standard Auto"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Katy Herrera",
     "sold_date": "1-Oct-26",
@@ -6316,7 +6267,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policies": [
       "Manufactured Home",
       "DP3 - Property"
-    ],
+],
     "policy_count": 2,
     "customer_name": "Leslie Gudmundson",
     "sold_date": "1-Oct-26",
@@ -6336,11 +6287,11 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "id": "ref_2026_10_0105",
     "month_key": "2026-10",
     "producer": "Misty Torrez",
-    "lead_source": "Melissa Maldonado \u2013 Ameritrust Mortgage",
+    "lead_source": "Melissa Maldonado – Ameritrust Mortgage",
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Melissa Aguayo",
     "sold_date": "1-Oct-26",
@@ -6364,7 +6315,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Michael Luna",
     "sold_date": "1-Oct-26",
@@ -6388,7 +6339,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Condo",
     "policies": [
       "Condo"
-    ],
+],
     "policy_count": 1,
     "customer_name": "mohana llc",
     "sold_date": "1-Oct-26",
@@ -6412,7 +6363,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "nicholas sanchez",
     "sold_date": "1-Oct-26",
@@ -6436,7 +6387,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "rosalina jaramillo",
     "sold_date": "1-Oct-26",
@@ -6460,7 +6411,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DIC",
     "policies": [
       "DIC"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Rosalinda Martinez",
     "sold_date": "1-Oct-26",
@@ -6484,7 +6435,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Santiago Garcia Ortiz",
     "sold_date": "1-Oct-26",
@@ -6508,7 +6459,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "Home",
     "policies": [
       "Home"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Stephanie NG",
     "sold_date": "1-Oct-26",
@@ -6532,7 +6483,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Tamara Sanders",
     "sold_date": "1-Oct-26",
@@ -6556,7 +6507,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "HO-3",
     "policies": [
       "HO-3"
-    ],
+],
     "policy_count": 1,
     "customer_name": "Ulises Arias Palomino",
     "sold_date": "1-Oct-26",
@@ -6580,7 +6531,7 @@ export const REFERRAL_PROGRAM_OCTOBER_2026_SEED: ReferralEntry[] = [
     "policy_type": "DIC",
     "policies": [
       "DIC"
-    ],
+],
     "policy_count": 1,
     "customer_name": "VENUS MARIE RAMOS HERAS",
     "sold_date": "1-Oct-26",
