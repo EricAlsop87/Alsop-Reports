@@ -37,9 +37,10 @@ import {
 
 const GIFT_PRESETS = [
   "Other",
-  "Zelle",
+  "Amazon Gift Card",
   "Target",
   "Visa Gift Card",
+  "Zelle",
   "Cash / Check"
 ]
 
@@ -811,7 +812,10 @@ export default function ReferralsPage() {
     setEditAmount(entry.amount != null ? String(entry.amount) : "10.00")
 
     // Gift Type
-    if (entry.gift_type && GIFT_PRESETS.includes(entry.gift_type)) {
+    if (entry.gift_type === "Amazon" || entry.gift_type === "Amazon Gift Card") {
+      setEditGiftType("Amazon Gift Card")
+      setEditCustomGiftType("")
+    } else if (entry.gift_type && GIFT_PRESETS.includes(entry.gift_type)) {
       setEditGiftType(entry.gift_type)
       setEditCustomGiftType("")
     } else if (entry.gift_type) {
@@ -1876,7 +1880,9 @@ export default function ReferralsPage() {
                             value={
                               !entry.gift_type || entry.gift_type === "$10.00 Visa Card" || entry.gift_type === "$10 Visa Card"
                                 ? ""
-                                : ["Zelle", "Target", "Visa Gift Card", "Cash / Check"].includes(entry.gift_type)
+                                : entry.gift_type === "Amazon"
+                                ? "Amazon Gift Card"
+                                : GIFT_PRESETS.filter(g => g !== "Other").includes(entry.gift_type)
                                 ? entry.gift_type
                                 : "Other"
                             }
@@ -1915,7 +1921,11 @@ export default function ReferralsPage() {
 
                           {(entry.gift_type === "Other" ||
                             customGiftRows[entry.id] !== undefined ||
-                            (entry.gift_type && !["Zelle", "Target", "Visa Gift Card", "Cash / Check", "$10.00 Visa Card", "$10 Visa Card"].includes(entry.gift_type))) && (
+                            (entry.gift_type &&
+                              entry.gift_type !== "Amazon" &&
+                              !GIFT_PRESETS.filter(g => g !== "Other").includes(entry.gift_type) &&
+                              entry.gift_type !== "$10.00 Visa Card" &&
+                              entry.gift_type !== "$10 Visa Card")) && (
                             <input
                               type="text"
                               autoFocus={entry.gift_type === "Other" && !customGiftRows[entry.id]}
