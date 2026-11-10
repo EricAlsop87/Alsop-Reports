@@ -15,6 +15,7 @@ import { FilterBar, FilterState } from "@/components/ui/FilterBar"
 import { WeeklyManualModal } from "@/components/reports/WeeklyManualModal"
 import AgencyMTDPacing from "@/components/ui/AgencyMTDPacing"
 import { toHolidaySet, getBusinessDaysInMonth, getElapsedBusinessDays } from "@/lib/businessDays"
+import { matchesOfficeFilter } from "@/lib/utils"
 
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Clock, DollarSign, Package, TrendingUp, Trophy, Edit, RefreshCw, Loader2, Calendar, Database, Phone, MessageSquare, FileText, ShieldCheck, Zap, Megaphone, Car } from "lucide-react"
 import Link from "next/link"
@@ -436,7 +437,7 @@ export default function WeeklyReport() {
   const filteredMetrics = useMemo(() => {
     return metrics.filter(m => {
       const agent = m.agents || {}
-      return (filters.offices.length === 0 || filters.offices.includes(agent.office)) &&
+      return matchesOfficeFilter(agent.office, filters.offices) &&
              (filters.teams.length === 0 || filters.teams.includes(agent.team)) &&
              (filters.agents.length === 0 || filters.agents.includes(agent.name)) &&
              (filters.meetings.length === 0 || filters.meetings.includes(agent.meeting_time))

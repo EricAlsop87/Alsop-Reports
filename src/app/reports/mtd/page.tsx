@@ -6,6 +6,7 @@ import { getMTDData } from "./actions"
 import { formatValue } from "@/lib/formatters"
 import AgencyMTDPacing from "@/components/ui/AgencyMTDPacing"
 import { toHolidaySet, getBusinessDaysInMonth, getElapsedBusinessDays } from "@/lib/businessDays"
+import { matchesOfficeFilter } from "@/lib/utils"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
@@ -324,7 +325,7 @@ export default function MTDReport() {
   const filteredMetrics = useMemo(() => {
     return metrics.filter(m => {
       const agent = m.agents || {}
-      return (filters.offices.length === 0 || filters.offices.includes(agent.office)) &&
+      return matchesOfficeFilter(agent.office, filters.offices) &&
              (filters.teams.length === 0 || filters.teams.includes(agent.team)) &&
              (filters.agents.length === 0 || filters.agents.includes(agent.name)) &&
              (filters.meetings.length === 0 || filters.meetings.includes(agent.meeting_time))

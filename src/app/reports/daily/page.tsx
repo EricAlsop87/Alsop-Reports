@@ -18,6 +18,7 @@ import { LeadsModal } from "@/components/reports/LeadsModal"
 import AgencyMTDPacing from "@/components/ui/AgencyMTDPacing"
 import { runDataSyncPipeline } from "@/app/admin/sync/actions"
 import { toHolidaySet, getBusinessDaysInMonth, getElapsedBusinessDays } from "@/lib/businessDays"
+import { matchesOfficeFilter } from "@/lib/utils"
 
 function getYesterday() {
   const d = new Date();
@@ -448,7 +449,7 @@ export default function DailyReport() {
     return metrics
       .map(m => m.agents).filter(Boolean)
       .filter(a => {
-        const matchOffice = filters.offices.length === 0 || filters.offices.includes(a.office);
+        const matchOffice = matchesOfficeFilter(a.office, filters.offices);
         const matchTeam = filters.teams.length === 0 || filters.teams.includes(a.team);
         const matchMeeting = filters.meetings.length === 0 || filters.meetings.includes(a.meeting_time);
         return matchOffice && matchTeam && matchMeeting;
@@ -461,7 +462,7 @@ export default function DailyReport() {
   const filteredMetrics = useMemo(() => {
     return metrics.filter(m => {
       const agent = m.agents || {};
-      const matchOffice = filters.offices.length === 0 || filters.offices.includes(agent.office);
+      const matchOffice = matchesOfficeFilter(agent.office, filters.offices);
       const matchTeam = filters.teams.length === 0 || filters.teams.includes(agent.team);
       const matchAgent = filters.agents.length === 0 || filters.agents.includes(agent.name);
       const matchMeeting = filters.meetings.length === 0 || filters.meetings.includes(agent.meeting_time);
@@ -1231,7 +1232,7 @@ export default function DailyReport() {
               {(() => {
                 // Filter streaks by current filters
                 const filtered = streaks.filter(s => {
-                  const matchOffice = filters.offices.length === 0 || filters.offices.includes(s.office);
+                  const matchOffice = matchesOfficeFilter(s.office, filters.offices);
                   const matchTeam = filters.teams.length === 0 || filters.teams.includes(s.team);
                   const matchAgent = filters.agents.length === 0 || filters.agents.includes(s.name);
                   const matchMeeting = filters.meetings.length === 0 || filters.meetings.includes(s.meeting_time);

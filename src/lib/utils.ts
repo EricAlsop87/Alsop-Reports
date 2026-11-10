@@ -4,3 +4,23 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Checks whether an agent's office matches the selected office filter(s).
+ * Treats "MC" and "MCM" (and full "Montclair") interchangeably.
+ */
+export function matchesOfficeFilter(agentOffice: string | null | undefined, selectedOffices: string[]): boolean {
+  if (!selectedOffices || selectedOffices.length === 0) return true;
+  if (!agentOffice) return false;
+
+  const normAgent = agentOffice.trim().toUpperCase();
+  return selectedOffices.some(sel => {
+    const normSel = sel.trim().toUpperCase();
+    if (normAgent === normSel) return true;
+    if ((normSel === "MCM" || normSel === "MC") && (normAgent === "MCM" || normAgent === "MC" || normAgent.includes("MONTCLAIR"))) {
+      return true;
+    }
+    return false;
+  });
+}
+

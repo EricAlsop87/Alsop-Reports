@@ -28,6 +28,7 @@ import { TrendChart } from "@/components/charts/TrendChart";
 import { OfficeBreakdownChart } from "@/components/charts/OfficeBreakdownChart";
 import { FilterBar, FilterState } from "@/components/ui/FilterBar";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
+import { matchesOfficeFilter } from "@/lib/utils";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -271,7 +272,7 @@ export default function Home() {
     return metrics
       .map(m => m.agents).filter(Boolean)
       .filter(a => {
-        const matchOffice = filters.offices.length === 0 || filters.offices.includes(a.office);
+        const matchOffice = matchesOfficeFilter(a.office, filters.offices);
         const matchTeam = filters.teams.length === 0 || filters.teams.includes(a.team);
         return matchOffice && matchTeam;
       })
@@ -282,7 +283,7 @@ export default function Home() {
 
   const filteredActiveAgents = useMemo(() => {
     return allActiveAgents.filter(a => {
-      const matchOffice = filters.offices.length === 0 || filters.offices.includes(a.office);
+      const matchOffice = matchesOfficeFilter(a.office, filters.offices);
       const matchTeam = filters.teams.length === 0 || filters.teams.includes(a.team);
       const matchAgent = filters.agents.length === 0 || filters.agents.includes(a.name);
       return matchOffice && matchTeam && matchAgent;
@@ -292,7 +293,7 @@ export default function Home() {
   const filteredMetrics = useMemo(() => {
     return metrics.filter(m => {
       const agent = m.agents || {};
-      const matchOffice = filters.offices.length === 0 || filters.offices.includes(agent.office);
+      const matchOffice = matchesOfficeFilter(agent.office, filters.offices);
       const matchTeam = filters.teams.length === 0 || filters.teams.includes(agent.team);
       const matchAgent = filters.agents.length === 0 || filters.agents.includes(agent.name);
       return matchOffice && matchTeam && matchAgent;

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { FilterBar, FilterState } from "@/components/ui/FilterBar"
 import { TableSkeleton } from "@/components/ui/Skeleton"
 import { Badge } from "@/components/ui/Badge"
+import { matchesOfficeFilter } from "@/lib/utils"
 import {
   BarChart3, Flame, Calendar, Phone, Clock, FileText, Package, DollarSign, Percent,
   TrendingUp, TrendingDown, Users, Activity, Sparkles, ArrowUpDown, ChevronRight, Zap, Target, Award, AlertCircle
@@ -118,7 +119,7 @@ export default function AgentHeatmapPage() {
   const filteredRows = useMemo(() => {
     if (!heatmapData) return []
     const rows = heatmapData.rows.filter(r => {
-      if (filters.offices.length > 0 && r.office && !filters.offices.includes(r.office)) return false
+      if (!matchesOfficeFilter(r.office, filters.offices)) return false
       if (filters.teams.length > 0 && r.team && !filters.teams.includes(r.team)) return false
       return true
     })
