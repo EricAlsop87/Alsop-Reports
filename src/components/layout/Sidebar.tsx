@@ -26,7 +26,8 @@ import {
   Flame,
   Users,
   Trophy,
-  Gift
+  Gift,
+  PhoneForwarded
 } from "lucide-react"
 
 /* ── Letter icon for D / W / M reports ─────────────────────────────── */
@@ -87,6 +88,7 @@ const navGroups: NavGroup[] = [
       { name: 'MTD Report',     href: '/reports/mtd',     isLetter: true, letter: 'M' },
       { name: 'Quotes Report',  href: '/reports/quotes',  icon: Percent },
       { name: 'Agent Heatmap',  href: '/reports/heatmap', icon: Flame,       pageKey: 'heatmap' },
+      { name: 'Lead Transfers', href: '/reports/transfers', icon: PhoneForwarded, pageKey: 'transfers' },
     ],
   },
   {
