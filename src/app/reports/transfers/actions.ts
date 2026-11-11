@@ -2,7 +2,7 @@
 
 import fs from "fs"
 import path from "path"
-import xlsx from "xlsx"
+import * as xlsx from "xlsx"
 
 export interface TransferRecord {
   id: string
@@ -95,7 +95,8 @@ export async function getTransfersData(): Promise<TransfersPayload> {
   files.forEach((file, fIdx) => {
     try {
       const filePath = path.join(reportsDir, file)
-      const wb = xlsx.readFile(filePath)
+      const fileBuffer = fs.readFileSync(filePath)
+      const wb = xlsx.read(fileBuffer, { type: "buffer" })
       const reportDate = getReportDate(file)
 
       const detailSheet = wb.Sheets["Detail by LIA"]
