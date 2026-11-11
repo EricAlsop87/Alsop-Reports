@@ -161,11 +161,18 @@ function LeaderboardCard({
     const agentOffice = m.agents?.office;
     const agentTeam = m.agents?.team;
 
-    const teamAndOffice = matching.find((g: any) => g.team === agentTeam && g.office === agentOffice);
+    const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
+      if (!gOff || !aOff) return false;
+      if (gOff === aOff) return true;
+      if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
+      return false;
+    };
+
+    const teamAndOffice = matching.find((g: any) => g.team === agentTeam && matchesOfficeGoal(g.office, agentOffice));
     if (teamAndOffice) return teamAndOffice.target_value;
     const teamOnly = matching.find((g: any) => g.team === agentTeam && !g.office);
     if (teamOnly) return teamOnly.target_value;
-    const officeOnly = matching.find((g: any) => g.office === agentOffice && !g.team);
+    const officeOnly = matching.find((g: any) => matchesOfficeGoal(g.office, agentOffice) && !g.team);
     if (officeOnly) return officeOnly.target_value;
     const globalGoal = matching.find((g: any) => !g.office && !g.team);
     return globalGoal ? globalGoal.target_value : 40;
@@ -939,8 +946,15 @@ export default function DailyReport() {
                   const agentOffice = item.agents?.office;
                   const agentTeam = item.agents?.team;
 
+                  const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
+                    if (!gOff || !aOff) return false;
+                    if (gOff === aOff) return true;
+                    if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
+                    return false;
+                  };
+
                   // 1. Team + Office match (most specific)
-                  const teamAndOffice = matching.find((g: any) => g.team === agentTeam && g.office === agentOffice);
+                  const teamAndOffice = matching.find((g: any) => g.team === agentTeam && matchesOfficeGoal(g.office, agentOffice));
                   if (teamAndOffice) return teamAndOffice;
 
                   // 2. Team match only
@@ -948,7 +962,7 @@ export default function DailyReport() {
                   if (teamOnly) return teamOnly;
 
                   // 3. Office match only
-                  const officeOnly = matching.find((g: any) => g.office === agentOffice && !g.team);
+                  const officeOnly = matching.find((g: any) => matchesOfficeGoal(g.office, agentOffice) && !g.team);
                   if (officeOnly) return officeOnly;
 
                   // 4. Default (agency-wide)
@@ -966,11 +980,18 @@ export default function DailyReport() {
                   const agentOffice = item.agents?.office;
                   const agentTeam = item.agents?.team;
 
-                  const teamAndOffice = matching.find((g: any) => g.team === agentTeam && g.office === agentOffice);
+                  const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
+                    if (!gOff || !aOff) return false;
+                    if (gOff === aOff) return true;
+                    if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
+                    return false;
+                  };
+
+                  const teamAndOffice = matching.find((g: any) => g.team === agentTeam && matchesOfficeGoal(g.office, agentOffice));
                   if (teamAndOffice) return teamAndOffice;
                   const teamOnly = matching.find((g: any) => g.team === agentTeam && !g.office);
                   if (teamOnly) return teamOnly;
-                  const officeOnly = matching.find((g: any) => g.office === agentOffice && !g.team);
+                  const officeOnly = matching.find((g: any) => matchesOfficeGoal(g.office, agentOffice) && !g.team);
                   if (officeOnly) return officeOnly;
                   return matching.find((g: any) => !g.office && !g.team) || null;
                 };
