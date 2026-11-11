@@ -3,6 +3,7 @@
 import fs from "fs"
 import path from "path"
 import * as xlsx from "xlsx"
+import { createSupabaseAdmin } from "@/lib/supabaseServer"
 
 export interface TransferRecord {
   id: string
@@ -14,6 +15,32 @@ export interface TransferRecord {
   leadName: string
   message: string
   tryCount: number
+}
+
+export interface AgentStat {
+  name: string
+  office: string
+  team: string
+  total: number
+  dailyAvg: number
+  topTm: { name: string; count: number }
+  firstTryCount: number
+  multiTryCount: number
+  multiTryRate: number
+  activeDays: number
+  tmBreakdown: Record<string, number>
+  dateBreakdown: Record<string, number>
+}
+
+export interface TmStat {
+  name: string
+  total: number
+  dailyAvg: number
+  topAgent: { name: string; count: number }
+  activeDays: number
+  sharePercent: number
+  agentBreakdown: Record<string, number>
+  dateBreakdown: Record<string, number>
 }
 
 export interface TransfersPayload {
@@ -30,6 +57,11 @@ export interface TransfersPayload {
   byTm: Record<string, number>
   byAgent: Record<string, number>
   routingMatrix: Record<string, Record<string, number>> // tm -> { agent -> count }
+  tmDailyMatrix: Record<string, Record<string, number>> // tm -> { date -> count }
+  agentDailyMatrix: Record<string, Record<string, number>> // agent -> { date -> count }
+  agentMeta: Record<string, { office: string; team: string }>
+  agentStats: Record<string, AgentStat>
+  tmStats: Record<string, TmStat>
   byDayOfWeek: Record<string, { count: number; days: number; avg: number }>
 }
 
@@ -89,6 +121,23 @@ export async function getTransfersData(): Promise<TransfersPayload> {
     fs.mkdirSync(reportsDir, { recursive: true })
   }
 
+  // Fetch agents from database for office and team metadata
+  const agentMeta: Record<string, { office: string; team: string }> = {}
+  try {
+    const supabase = createSupabaseAdmin()
+    const { data: dbAgents } = await supabase
+      .from("agents")
+      .select("name, office, team")
+    if (dbAgents) {
+      dbAgents.forEach((a: any) => {
+        const norm = normalizeAgent(a.name)
+        agentMeta[norm] = { office: a.office || "Unknown", team: a.team || "Sales" }
+      })
+    }
+  } catch (e) {
+    console.error("Could not fetch agents metadata:", e)
+  }
+
   const files = fs.readdirSync(reportsDir).filter(f => f.endsWith(".xlsx"))
   const records: TransferRecord[] = []
 
@@ -143,6 +192,8 @@ export async function getTransfersData(): Promise<TransfersPayload> {
   const byTm: Record<string, number> = {}
   const byAgent: Record<string, number> = {}
   const routingMatrix: Record<string, Record<string, number>> = {}
+  const tmDailyMatrix: Record<string, Record<string, number>> = {}
+  const agentDailyMatrix: Record<string, Record<string, number>> = {}
 
   let multiTryCount = 0
 
@@ -154,8 +205,19 @@ export async function getTransfersData(): Promise<TransfersPayload> {
     routingMatrix[r.tm] = routingMatrix[r.tm] || {}
     routingMatrix[r.tm][r.lia] = (routingMatrix[r.tm][r.lia] || 0) + 1
 
+    tmDailyMatrix[r.tm] = tmDailyMatrix[r.tm] || {}
+    tmDailyMatrix[r.tm][r.date] = (tmDailyMatrix[r.tm][r.date] || 0) + 1
+
+    agentDailyMatrix[r.lia] = agentDailyMatrix[r.lia] || {}
+    agentDailyMatrix[r.lia][r.date] = (agentDailyMatrix[r.lia][r.date] || 0) + 1
+
     if (r.tryCount > 1) multiTryCount++
   })
+
+  const totalTransfers = records.length
+  const totalDays = dates.length || 1
+  const avgPerDay = Math.round((totalTransfers / totalDays) * 10) / 10
+  const multitryRate = totalTransfers ? Math.round((multiTryCount / totalTransfers) * 1000) / 10 : 0
 
   // Top TM
   const sortedTms = Object.entries(byTm).sort((a, b) => b[1] - a[1])
@@ -164,10 +226,6 @@ export async function getTransfersData(): Promise<TransfersPayload> {
   // Top Agent
   const sortedAgents = Object.entries(byAgent).sort((a, b) => b[1] - a[1])
   const topAgent = sortedAgents.length ? { name: sortedAgents[0][0], count: sortedAgents[0][1] } : { name: "None", count: 0 }
-
-  const totalTransfers = records.length
-  const avgPerDay = dates.length ? Math.round((totalTransfers / dates.length) * 10) / 10 : 0
-  const multitryRate = totalTransfers ? Math.round((multiTryCount / totalTransfers) * 1000) / 10 : 0
 
   // Day of week analysis
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -185,6 +243,75 @@ export async function getTransfersData(): Promise<TransfersPayload> {
     byDayOfWeek[dow].avg = Math.round((byDayOfWeek[dow].count / byDayOfWeek[dow].days) * 10) / 10
   })
 
+  // Build granular Agent stats
+  const agentStats: Record<string, AgentStat> = {}
+  agents.forEach(agent => {
+    const agentRecords = records.filter(r => r.lia === agent)
+    const total = agentRecords.length
+    const firstTryCount = agentRecords.filter(r => r.tryCount === 1).length
+    const mCount = total - firstTryCount
+    const mRate = total ? Math.round((mCount / total) * 1000) / 10 : 0
+
+    const tmBreakdown: Record<string, number> = {}
+    const dateBreakdown: Record<string, number> = {}
+
+    agentRecords.forEach(r => {
+      tmBreakdown[r.tm] = (tmBreakdown[r.tm] || 0) + 1
+      dateBreakdown[r.date] = (dateBreakdown[r.date] || 0) + 1
+    })
+
+    const sortedTmFeeder = Object.entries(tmBreakdown).sort((a, b) => b[1] - a[1])
+    const topFeeder = sortedTmFeeder.length ? { name: sortedTmFeeder[0][0], count: sortedTmFeeder[0][1] } : { name: "None", count: 0 }
+    const activeDays = Object.keys(dateBreakdown).length
+    const dailyAvg = Math.round((total / totalDays) * 10) / 10
+
+    agentStats[agent] = {
+      name: agent,
+      office: agentMeta[agent]?.office || "MCM",
+      team: agentMeta[agent]?.team || "Sales",
+      total,
+      dailyAvg,
+      topTm: topFeeder,
+      firstTryCount,
+      multiTryCount: mCount,
+      multiTryRate: mRate,
+      activeDays,
+      tmBreakdown,
+      dateBreakdown
+    }
+  })
+
+  // Build granular TM stats
+  const tmStats: Record<string, TmStat> = {}
+  telemarketers.forEach(tm => {
+    const tmRecords = records.filter(r => r.tm === tm)
+    const total = tmRecords.length
+    const agentBreakdown: Record<string, number> = {}
+    const dateBreakdown: Record<string, number> = {}
+
+    tmRecords.forEach(r => {
+      agentBreakdown[r.lia] = (agentBreakdown[r.lia] || 0) + 1
+      dateBreakdown[r.date] = (dateBreakdown[r.date] || 0) + 1
+    })
+
+    const sortedRecipients = Object.entries(agentBreakdown).sort((a, b) => b[1] - a[1])
+    const topRecipient = sortedRecipients.length ? { name: sortedRecipients[0][0], count: sortedRecipients[0][1] } : { name: "None", count: 0 }
+    const activeDays = Object.keys(dateBreakdown).length
+    const dailyAvg = Math.round((total / totalDays) * 10) / 10
+    const sharePercent = totalTransfers ? Math.round((total / totalTransfers) * 1000) / 10 : 0
+
+    tmStats[tm] = {
+      name: tm,
+      total,
+      dailyAvg,
+      topAgent: topRecipient,
+      activeDays,
+      sharePercent,
+      agentBreakdown,
+      dateBreakdown
+    }
+  })
+
   return {
     records,
     dates,
@@ -199,6 +326,11 @@ export async function getTransfersData(): Promise<TransfersPayload> {
     byTm,
     byAgent,
     routingMatrix,
+    tmDailyMatrix,
+    agentDailyMatrix,
+    agentMeta,
+    agentStats,
+    tmStats,
     byDayOfWeek
   }
 }
