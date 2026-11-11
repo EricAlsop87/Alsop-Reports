@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useChat } from "@/lib/chat/chatContext"
 import { PageGuard } from "@/components/layout/PageGuard"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
@@ -23,6 +25,7 @@ import {
   ChevronDown,
   ArrowUpRight,
   ShieldCheck,
+  ShieldAlert,
   CheckCircle2,
   Clock,
   ArrowRight,
@@ -45,8 +48,15 @@ function formatDisplayDate(dateStr: string) {
 }
 
 export default function TransfersPage() {
+  const router = useRouter()
+  const { currentAgent } = useChat()
   const [data, setData] = useState<TransfersPayload | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const isManagerOrAdmin = useMemo(() => {
+    if (!currentAgent) return false
+    return currentAgent.role === "admin" || currentAgent.team === "Managers" || currentAgent.team === "Support"
+  }, [currentAgent])
 
   // Navigation & Drilldown State
   const [activeTab, setActiveTab] = useState<"deepdive" | "matrix" | "telemarketers" | "leaderboard" | "log">("deepdive")
@@ -146,6 +156,28 @@ export default function TransfersPage() {
           </div>
         </div>
       </PageGuard>
+    )
+  }
+
+  // Authorization check (restrict to managers and admins)
+  if (currentAgent && !isManagerOrAdmin) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center mb-5">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">
+            Manager Access Required
+          </h2>
+          <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+            The <strong>Lead Transfers & Telemarketer Tracker</strong> dashboard is restricted to agency managers and administrators.
+          </p>
+          <Button onClick={() => router.push("/")} className="w-full">
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
     )
   }
 

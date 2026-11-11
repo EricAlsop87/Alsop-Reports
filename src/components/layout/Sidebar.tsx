@@ -321,6 +321,7 @@ export function Sidebar() {
             const visibleItems = group.items.filter(item => {
               if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
               if (item.pageKey === 'referrals' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'transfers' && !isManagerOrAdmin) return false
               if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
               if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
               if (!item.pageKey) return true
@@ -536,6 +537,7 @@ export function Sidebar() {
             const visibleItems = group.items.filter(item => {
               if (item.pageKey === 'agent_portal' && !isManagerOrAdmin) return false
               if (item.pageKey === 'referrals' && !isManagerOrAdmin) return false
+              if (item.pageKey === 'transfers' && !isManagerOrAdmin) return false
               if (item.pageKey === 'heatmap') return currentAgent?.role === 'admin'
               if (currentAgent?.role === 'admin' || currentAgent?.team === 'Managers') return true
               if (!item.pageKey) return true
