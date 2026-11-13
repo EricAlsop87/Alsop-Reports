@@ -31,8 +31,8 @@ export default function RebelRewardsPage() {
     totalAgents: 0, prizeEarnersCount: 0, totalAgencyPayout: 0,
     anakinCount: 0, reyCount: 0, lukeCount: 0, obiwanCount: 0,
   })
-  const [periodLabel, setPeriodLabel] = useState("YTD July 2026")
-  const [lastUpdated, setLastUpdated] = useState("2026-07-31")
+  const [periodLabel, setPeriodLabel] = useState("YTD October 2026 (as of 11/06/26)")
+  const [lastUpdated, setLastUpdated] = useState("2026-11-06")
   const [lastUpdatedBy, setLastUpdatedBy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentAgent, setCurrentAgent] = useState<any>(null)

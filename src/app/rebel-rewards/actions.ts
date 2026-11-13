@@ -9,8 +9,8 @@ import * as XLSX from "xlsx"
 
 // In-memory / dynamic cache for uploaded snapshots in current server lifetime
 let customUploadedRows: RawRebelAgentRow[] | null = null
-let customPeriodLabel = "YTD September 2026"
-let customLastUpdated = "2026-10-19"
+let customPeriodLabel = "YTD October 2026 (as of 11/06/26)"
+let customLastUpdated = "2026-11-06"
 
 export async function getRebelRewardsStandings(): Promise<{
   success: boolean
@@ -74,7 +74,7 @@ export async function getRebelRewardsStandings(): Promise<{
         const matchedAgent = resolveContestAgentMatch(row.name, agentsList)
         const customRR = (matchedAgent?.system_variants as any)?.rebel_rewards
 
-        // Only prefer manual DB edits if they occurred AFTER the active snapshot date (2026-10-19)
+        // Only prefer manual DB edits if they occurred AFTER the active snapshot date (2026-11-06)
         const snapshotThreshold = new Date(`${customLastUpdated}T00:00:00Z`)
         const isManualNewer = customRR?.updated_at && new Date(customRR.updated_at) > snapshotThreshold
 
@@ -378,7 +378,7 @@ export async function syncRebelRewardsFromGoogleSheet(
     }
     const buffer = Buffer.from(await res.arrayBuffer())
     const wb = XLSX.read(buffer, { type: "buffer" })
-    const targetSheet = wb.SheetNames.find(s => s.toLowerCase() === "data") || wb.SheetNames[0]
+    const targetSheet = wb.SheetNames.find(s => s === "11-06") || wb.SheetNames.find(s => s.toLowerCase() === "data") || wb.SheetNames[0]
     const ws = wb.Sheets[targetSheet]
     const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 })
 
@@ -407,8 +407,8 @@ export async function syncRebelRewardsFromGoogleSheet(
     }
 
     customUploadedRows = parsedAgents
-    customPeriodLabel = "YTD September 2026"
-    customLastUpdated = "2026-10-19"
+    customPeriodLabel = "YTD October 2026 (as of 11/06/26)"
+    customLastUpdated = "2026-11-06"
 
     return {
       success: true,
