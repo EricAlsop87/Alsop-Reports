@@ -242,7 +242,13 @@ export default function StaffPage() {
     ring_central_phone: "",
     ricochet_phone: "",
     notes: "",
+    speaks_spanish: false,
   })
+
+  const currentModalGroup = useMemo(() => groups.find(g => g.id === formData.group_id), [groups, formData.group_id])
+  const isCarrierMode = currentModalGroup?.group_type === "carriers" || (!formData.id && activeTab === "Carriers")
+  const isHelpfulMode = currentModalGroup?.group_type === "helpful_numbers" || (!formData.id && activeTab === "Helpful Numbers")
+  const modalTargetType = isCarrierMode ? "Carrier Contact" : isHelpfulMode ? "Helpful Number" : "Employee"
 
   // ── Reusable Data loading ──
   const loadDirectory = useCallback(async () => {
@@ -281,7 +287,10 @@ export default function StaffPage() {
 
       const validEntries = (ents || []).filter(e => {
         if (!e.is_active) return false
-        if (archivedNames.has((e.name || "").trim().toLowerCase())) return false
+        const clean = (e.name || "").trim().toLowerCase()
+        if (archivedNames.has(clean)) return false
+        const first = clean.split(" ")[0]
+        if (archivedNames.has(first)) return false
         return true
       })
 
@@ -313,7 +322,16 @@ export default function StaffPage() {
 
   // ── Open Add Modal ──
   const handleOpenAddModal = useCallback(() => {
-    const defaultGroup = groups.find(g => g.group_type === "office") || groups[0]
+    let defaultGroup: DirectoryGroup | undefined
+    if (activeTab === "Helpful Numbers") {
+      defaultGroup = groups.find(g => g.group_type === "helpful_numbers")
+    } else if (activeTab === "Carriers") {
+      defaultGroup = groups.find(g => g.group_type === "carriers")
+    }
+    if (!defaultGroup) {
+      defaultGroup = groups.find(g => g.group_type === "office") || groups[0]
+    }
+
     setFormData({
       id: "",
       group_id: defaultGroup?.id || "",
@@ -324,13 +342,14 @@ export default function StaffPage() {
       ring_central_phone: "",
       ricochet_phone: "",
       notes: "",
+      speaks_spanish: false,
     })
     setFormError(null)
     setModalOpen(true)
-  }, [groups])
+  }, [groups, activeTab])
 
   // ── Open Edit Modal ──
-  const handleOpenEditModal = useCallback((entry: FlatEntry) => {
+  const handleOpenEditModal = useCallback((entry: DirectoryEntry | FlatEntry) => {
     setFormData({
       id: entry.id,
       group_id: entry.group_id,
@@ -338,13 +357,14 @@ export default function StaffPage() {
       position: entry.position || "",
       role: entry.role || "",
       email: entry.email || "",
-      ring_central_phone: entry.ring_central_phone || "",
-      ricochet_phone: entry.ricochet_phone || "",
+      ring_central_phone: entry.ring_central_phone || entry.primary_phone || "",
+      ricochet_phone: entry.ricochet_phone || entry.secondary_phone || "",
       notes: entry.notes || "",
+      speaks_spanish: isSpanishSpeaker(entry, spanishAgentNames),
     })
     setFormError(null)
     setModalOpen(true)
-  }, [])
+  }, [spanishAgentNames])
 
   // ── Form Submit (Save / Reassign) ──
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -371,13 +391,14 @@ export default function StaffPage() {
         ring_central_phone: formData.ring_central_phone || null,
         ricochet_phone: formData.ricochet_phone || null,
         notes: formData.notes || null,
+        speaks_spanish: formData.speaks_spanish,
       })
 
       if (res.success) {
         setModalOpen(false)
         setToastMsg({
           type: "success",
-          text: formData.id ? "Employee updated and office reassigned!" : "Employee added to directory!"
+          text: formData.id ? `${modalTargetType} updated!` : `${modalTargetType} added to directory!`
         })
         setTimeout(() => setToastMsg(null), 4000)
         await loadDirectory()
@@ -820,10 +841,12 @@ export default function StaffPage() {
             type="button"
             onClick={handleOpenAddModal}
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto"
-            title="Add a new employee to the directory"
+            title={activeTab === "Helpful Numbers" ? "Add a new helpful phone number" : (activeTab === "Carriers" ? "Add a new carrier contact" : "Add a new employee to the directory")}
           >
             <Plus className="w-4 h-4" />
-            <span>Add Employee</span>
+            <span>
+              {activeTab === "Helpful Numbers" ? "Add Number" : (activeTab === "Carriers" ? "Add Carrier Contact" : "Add Employee")}
+            </span>
           </button>
         )}
       </div>
@@ -1048,6 +1071,7 @@ export default function StaffPage() {
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Secondary Phone</th>
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Email</th>
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Notes</th>
+                        {isManagerOrAdmin && <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Actions</th>}
                       </>
                     ) : (
                       <>
@@ -1056,6 +1080,7 @@ export default function StaffPage() {
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Secondary Phone</th>
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Email</th>
                         <th className="px-4 py-3 font-semibold whitespace-nowrap">Notes</th>
+                        {isManagerOrAdmin && <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Actions</th>}
                       </>
                     )}
                   </tr>
@@ -1063,7 +1088,7 @@ export default function StaffPage() {
                 <tbody>
                   {filteredGroups.map(group => {
                     const GroupIcon = isCarriers ? Hash : PhoneForwarded
-                    const colSpan = isCarriers ? 6 : 5
+                    const colSpan = isCarriers ? (isManagerOrAdmin ? 7 : 6) : (isManagerOrAdmin ? 6 : 5)
                     return (
                       <React.Fragment key={group.id}>
                         <tr className="bg-[#EAF3FF] border-b border-[#D6E2F0]">
@@ -1128,6 +1153,18 @@ export default function StaffPage() {
                                     <CopyableItem text={entry.email} id={`c-${entry.id}-e`} copiedId={copiedId} onCopy={handleCopy} isMono={false} highlightQuery={search} />
                                   </td>
                                   <td className="px-4 py-2.5 text-slate-600">{entry.notes}</td>
+                                  {isManagerOrAdmin && (
+                                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenEditModal(entry)}
+                                        className="inline-flex items-center justify-center p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                        title={`Edit ${entry.name}`}
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                    </td>
+                                  )}
                                 </>
                               ) : (
                                 <>
@@ -1142,6 +1179,18 @@ export default function StaffPage() {
                                     <CopyableItem text={entry.email} id={`h-${entry.id}-e`} copiedId={copiedId} onCopy={handleCopy} isMono={false} highlightQuery={search} />
                                   </td>
                                   <td className="px-4 py-2.5 text-slate-600">{entry.notes}</td>
+                                  {isManagerOrAdmin && (
+                                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenEditModal(entry)}
+                                        className="inline-flex items-center justify-center p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                        title={`Edit ${entry.name}`}
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                    </td>
+                                  )}
                                 </>
                               )}
                             </tr>
@@ -1166,7 +1215,7 @@ export default function StaffPage() {
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-300" />
                 <h3 className="text-base font-semibold">
-                  {formData.id ? "Edit Employee & Office Assignment" : "Add Employee to Directory"}
+                  {formData.id ? `Edit ${modalTargetType}` : `Add ${modalTargetType}`}
                 </h3>
               </div>
               <button
@@ -1187,25 +1236,25 @@ export default function StaffPage() {
                 </div>
               )}
 
-              {/* Full Name */}
+              {/* Full Name / Contact Name */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Full Name <span className="text-red-500">*</span>
+                  {isCarrierMode ? "Contact / Carrier Name" : isHelpfulMode ? "Contact / Service Name" : "Full Name"} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g. Jane Doe"
+                  placeholder={isCarrierMode ? "e.g. Kim - Broker Underwriter" : isHelpfulMode ? "e.g. Building Security" : "e.g. Jane Doe"}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
-              {/* Office / Location Dropdown (Reassign office) */}
+              {/* Office / Location Dropdown */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Office Location <span className="text-red-500">*</span>
+                  {isCarrierMode || isHelpfulMode ? "Category / Group" : "Office Location"} <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
@@ -1231,9 +1280,29 @@ export default function StaffPage() {
                         </option>
                       ))}
                   </optgroup>
+                  <optgroup label="Helpful Numbers">
+                    {groups
+                      .filter(g => g.group_type === "helpful_numbers")
+                      .map(g => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Carriers">
+                    {groups
+                      .filter(g => g.group_type === "carriers")
+                      .map(g => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                  </optgroup>
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Reassigning office automatically moves this listing and updates the agent's assigned office.
+                  {isCarrierMode || isHelpfulMode
+                    ? "Specifies which category or carrier section this contact belongs to."
+                    : "Reassigning office automatically moves this listing and updates the agent's assigned office."}
                 </p>
               </div>
 
@@ -1246,7 +1315,7 @@ export default function StaffPage() {
                   type="text"
                   value={formData.position}
                   onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value, role: e.target.value }))}
-                  placeholder="e.g. CSR, Sales Producer, Manager"
+                  placeholder={isCarrierMode ? "e.g. Underwriter, Broker Support" : isHelpfulMode ? "e.g. IT Helpdesk, Emergency" : "e.g. CSR, Sales Producer, Manager"}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -1260,7 +1329,7 @@ export default function StaffPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="e.g. employee@farmersagent.com"
+                  placeholder="e.g. contact@domain.com"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -1269,25 +1338,25 @@ export default function StaffPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    RingCentral Phone
+                    {isCarrierMode || isHelpfulMode ? "Phone 1 (Primary)" : "RingCentral Phone"}
                   </label>
                   <input
                     type="text"
                     value={formData.ring_central_phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, ring_central_phone: e.target.value }))}
-                    placeholder="(909) 555-0100 x101"
+                    placeholder={isCarrierMode || isHelpfulMode ? "(800) 555-0199" : "(909) 555-0100 x101"}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Ricochet Phone
+                    {isCarrierMode || isHelpfulMode ? "Phone 2 (Secondary / Fax)" : "Ricochet Phone"}
                   </label>
                   <input
                     type="text"
                     value={formData.ricochet_phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, ricochet_phone: e.target.value }))}
-                    placeholder="(909) 555-0102"
+                    placeholder={isCarrierMode || isHelpfulMode ? "(800) 555-0198" : "(909) 555-0102"}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -1302,10 +1371,26 @@ export default function StaffPage() {
                   type="text"
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="e.g. *S – CSR; Spanish Speaking"
+                  placeholder={isCarrierMode ? "e.g. Direct underwriter line, M-F 8am-5pm" : "e.g. *S – CSR; Spanish Speaking"}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+
+              {/* Speaks Spanish (Bilingual) Checkbox */}
+              {!isCarrierMode && !isHelpfulMode && (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="speaks_spanish_checkbox"
+                    checked={formData.speaks_spanish}
+                    onChange={(e) => setFormData(prev => ({ ...prev, speaks_spanish: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="speaks_spanish_checkbox" className="text-xs font-medium text-slate-700 cursor-pointer select-none">
+                    Speaks Spanish (Bilingual badge in directory)
+                  </label>
+                </div>
+              )}
 
               {/* Modal Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-slate-200 mt-2">
@@ -1341,7 +1426,7 @@ export default function StaffPage() {
                         <span>Saving...</span>
                       </>
                     ) : (
-                      <span>{formData.id ? "Save Changes" : "Add Employee"}</span>
+                      <span>{formData.id ? "Save Changes" : `Add ${modalTargetType}`}</span>
                     )}
                   </button>
                 </div>

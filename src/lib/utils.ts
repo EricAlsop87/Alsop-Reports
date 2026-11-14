@@ -18,17 +18,11 @@ export function matchesOfficeFilter(agentOffice: string | null | undefined, sele
     const normSel = sel.trim().toUpperCase();
     if (normAgent === normSel) return true;
 
-    // MCM encompasses both Montclair (MC) and Claremont (CM / CL)
+    // MCM encompasses both Montclair (MC) and Claremont (CM / CL) as one combined hub
     const isMcmFamily = (code: string) =>
       code === "MCM" || code === "MC" || code === "CM" || code === "CL" || code.includes("MONTCLAIR") || code.includes("CLAREMONT");
 
-    if (normSel === "MCM" && isMcmFamily(normAgent)) {
-      return true;
-    }
-    if ((normSel === "MC" || normSel.includes("MONTCLAIR")) && (normAgent === "MC" || normAgent === "MCM" || normAgent.includes("MONTCLAIR"))) {
-      return true;
-    }
-    if ((normSel === "CM" || normSel === "CL" || normSel.includes("CLAREMONT")) && (normAgent === "CM" || normAgent === "CL" || normAgent === "MCM" || normAgent.includes("CLAREMONT"))) {
+    if (isMcmFamily(normSel) && isMcmFamily(normAgent)) {
       return true;
     }
     return false;

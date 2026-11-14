@@ -4,6 +4,7 @@ import { createSupabaseAdmin } from "@/lib/supabaseServer"
 const supabase = createSupabaseAdmin()
 import { unstable_noStore as noStore } from "next/cache"
 import { toHolidaySet, getBusinessDaysInMonth, getElapsedBusinessDays } from "@/lib/businessDays"
+import { matchesOfficeFilter } from "@/lib/utils"
 
 const PAGE_SIZE = 1000
 
@@ -399,11 +400,11 @@ export async function getAgentMonthlyData(
       if (!goals) return null
       const matching = goals.filter((g: any) => g.metric_name === metricName && g.timeframe === timeframe)
       if (!matching.length) return null
-      const teamAndOffice = matching.find((g: any) => g.team === agentData.team && g.office === agentData.office)
+      const teamAndOffice = matching.find((g: any) => g.team === agentData.team && matchesOfficeFilter(agentData.office, [g.office]))
       if (teamAndOffice) return teamAndOffice.target_value
       const teamOnly = matching.find((g: any) => g.team === agentData.team && !g.office)
       if (teamOnly) return teamOnly.target_value
-      const officeOnly = matching.find((g: any) => g.office === agentData.office && !g.team)
+      const officeOnly = matching.find((g: any) => matchesOfficeFilter(agentData.office, [g.office]) && !g.team)
       if (officeOnly) return officeOnly.target_value
       const globalGoal = matching.find((g: any) => !g.office && !g.team)
       return globalGoal ? globalGoal.target_value : null

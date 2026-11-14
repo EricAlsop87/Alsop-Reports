@@ -8,7 +8,7 @@ const OFFICE_MAP: Record<string, string> = {
   Rancho: "RC",
   "Rancho Cucamonga": "RC",
   Chino: "CH",
-  Claremont: "MB",
+  Claremont: "CM",
   Montclair: "MCM",
   Montebello: "MB",
 }
@@ -23,6 +23,7 @@ export interface SaveDirectoryEntryInput {
   ring_central_phone?: string | null
   ricochet_phone?: string | null
   notes?: string | null
+  speaks_spanish?: boolean
 }
 
 export async function saveDirectoryEntry(input: SaveDirectoryEntryInput) {
@@ -38,7 +39,22 @@ export async function saveDirectoryEntry(input: SaveDirectoryEntryInput) {
 
     const targetOfficeCode = group?.name ? OFFICE_MAP[group.name] : null
 
-    // 2. Insert or update directory_entries
+    // 2. Format notes and handle Spanish speaking preference
+    let finalNotes = input.notes?.trim() || null
+    if (input.speaks_spanish === false && finalNotes) {
+      finalNotes = finalNotes
+        .replace(/\b(\*?S\s*[-–]\s*(CSR;?\s*)?Spanish|\*?S\s*[-–]|Spanish\s*Speaking|Bilingual)\b/gi, "")
+        .replace(/^\s*;\s*|\s*;\s*$/g, "")
+        .trim() || null
+    } else if (input.speaks_spanish === true) {
+      if (!finalNotes) {
+        finalNotes = "S – Spanish Speaking"
+      } else if (!/spanish|bilingual/i.test(finalNotes)) {
+        finalNotes = `${finalNotes} / S – Spanish Speaking`
+      }
+    }
+
+    // Insert or update directory_entries
     const payload = {
       group_id: input.group_id,
       name: input.name.trim(),
@@ -47,7 +63,9 @@ export async function saveDirectoryEntry(input: SaveDirectoryEntryInput) {
       email: input.email?.trim() || null,
       ring_central_phone: input.ring_central_phone?.trim() || null,
       ricochet_phone: input.ricochet_phone?.trim() || null,
-      notes: input.notes?.trim() || null,
+      primary_phone: input.ring_central_phone?.trim() || input.ricochet_phone?.trim() || null,
+      secondary_phone: input.ricochet_phone?.trim() || null,
+      notes: finalNotes,
       is_active: true,
       updated_at: new Date().toISOString(),
     }
@@ -102,6 +120,22 @@ export async function saveDirectoryEntry(input: SaveDirectoryEntryInput) {
         } catch (e) {
           console.warn("Could not sync agent channels:", e)
         }
+      }
+    }
+
+    // 4. If speaks_spanish preference provided, update matching agent in `agents` table
+    if (input.speaks_spanish !== undefined) {
+      let agentToUpdate = null
+      if (input.email) {
+        const { data } = await supabase.from("agents").select("id").ilike("email", input.email.trim()).maybeSingle()
+        agentToUpdate = data
+      }
+      if (!agentToUpdate && input.name) {
+        const { data } = await supabase.from("agents").select("id").ilike("name", input.name.trim()).maybeSingle()
+        agentToUpdate = data
+      }
+      if (agentToUpdate) {
+        await supabase.from("agents").update({ speaks_spanish: input.speaks_spanish, updated_at: new Date().toISOString() }).eq("id", agentToUpdate.id)
       }
     }
 

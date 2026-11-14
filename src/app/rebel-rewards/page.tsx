@@ -7,6 +7,7 @@ import { REBEL_TIERS, AgentRebelStandings, RebelRewardTier, calculateAgentRebelS
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser"
 import { Badge } from "@/components/ui/Badge"
 import { FilterBar, FilterState } from "@/components/ui/FilterBar"
+import { matchesOfficeFilter } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import {
   Trophy, Upload, Car, Heart, Home, DollarSign,
@@ -56,57 +57,15 @@ export default function RebelRewardsPage() {
   }, [currentAgent])
 
   const REBEL_OFFICE_OPTIONS = [
-    { code: "MC", name: "Montclair" },
+    { code: "MCM", name: "Montclair / Claremont" },
     { code: "CH", name: "Chino" },
-    { code: "CM", name: "Claremont" },
     { code: "RC", name: "Rancho Cucamonga" },
     { code: "MB", name: "Montebello" },
     { code: "PQ", name: "Process & Quality" },
   ]
 
   const matchesOffice = (agentOffice: string | undefined | null, targetCode: string): boolean => {
-    if (!agentOffice) return false
-    const off = agentOffice.trim().toUpperCase()
-    const target = targetCode.trim().toUpperCase()
-
-    if (off === target) return true
-
-    // Montclair / MCM
-    if ((target === "MC" || target === "MCM") && (off === "MC" || off === "MCM" || off.includes("MONTCLAIR"))) {
-      return true
-    }
-
-    // Claremont / CM / CL
-    if ((target === "CM" || target === "CL") && (off === "CM" || off === "CL" || off.includes("CLAREMONT"))) {
-      return true
-    }
-
-    // Chino
-    if (target === "CH" && (off === "CH" || off.includes("CHINO"))) {
-      return true
-    }
-
-    // Rancho Cucamonga
-    if (target === "RC" && (off === "RC" || off.includes("RANCHO"))) {
-      return true
-    }
-
-    // Montebello
-    if (target === "MB" && (off === "MB" || off.includes("MONTEBELLO"))) {
-      return true
-    }
-
-    // Process & Quality
-    if (target === "PQ" && (off === "PQ" || off.includes("PROCESS") || off.includes("QUALITY"))) {
-      return true
-    }
-
-    // ML
-    if (target === "ML" && off === "ML") {
-      return true
-    }
-
-    return false
+    return matchesOfficeFilter(agentOffice, [targetCode])
   }
 
   const [selectedTierFilter, setSelectedTierFilter] = useState<string>("all")

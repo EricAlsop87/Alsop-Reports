@@ -9,6 +9,7 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { FilterBar, FilterState } from "@/components/ui/FilterBar"
+import { matchesOfficeFilter } from "@/lib/utils"
 import {
   FileBarChart, TrendingUp, Target, Calendar, ChevronDown,
   ArrowUpDown, ArrowUp, ArrowDown, Users, Building2, BarChart3,
@@ -168,12 +169,7 @@ export default function QuotesPage() {
       if (!meta) return false
 
       if (filters.offices.length > 0) {
-        const officeMap: Record<string, string> = {
-          "Montclair": "MCM", "Montebello": "MB",
-          "Rancho Cucamonga": "RC", "Chino": "CH", "Claremont": "CH"
-        }
-        const abbr = officeMap[meta.office || ""] || meta.office || ""
-        if (!filters.offices.includes(abbr) && !filters.offices.includes(meta.office || "")) return false
+        if (!matchesOfficeFilter(meta.office, filters.offices)) return false
       }
       if (filters.teams.length > 0) {
         const teamMap: Record<string, string> = {
@@ -279,12 +275,7 @@ export default function QuotesPage() {
       }
 
       if (filters.offices.length > 0) {
-        const officeMap: Record<string, string> = {
-          "Montclair": "MCM", "Montebello": "MB",
-          "Rancho Cucamonga": "RC", "Chino": "CH", "Claremont": "CH"
-        }
-        const abbr = officeMap[agent.office || ""] || agent.office || ""
-        if (!filters.offices.includes(abbr) && !filters.offices.includes(agent.office || "")) return false
+        if (!matchesOfficeFilter(agent.office, filters.offices)) return false
       }
       if (filters.teams.length > 0) {
         const teamMap: Record<string, string> = {
@@ -409,13 +400,7 @@ export default function QuotesPage() {
         if (a.report_visible === false || a.active === false) return false
 
         if (filters.offices.length > 0) {
-          // Map DB office names to filter abbreviations
-          const officeMap: Record<string, string> = {
-            "Montclair": "MCM", "Montebello": "MB",
-            "Rancho Cucamonga": "RC", "Chino": "CH", "Claremont": "CH"
-          }
-          const abbr = officeMap[a.office || ""] || a.office || ""
-          if (!filters.offices.includes(abbr) && !filters.offices.includes(a.office || "")) return false
+          if (!matchesOfficeFilter(a.office, filters.offices)) return false
         }
         if (filters.teams.length > 0) {
           const teamMap: Record<string, string> = {
@@ -522,12 +507,7 @@ export default function QuotesPage() {
       data.agents.forEach(a => {
         // Apply office and agent filters, but ignore team filter
         if (filters.offices.length > 0) {
-          const officeMap: Record<string, string> = {
-            "Montclair": "MCM", "Montebello": "MB",
-            "Rancho Cucamonga": "RC", "Chino": "CH", "Claremont": "CH"
-          }
-          const abbr = officeMap[a.office || ""] || a.office || ""
-          if (!filters.offices.includes(abbr) && !filters.offices.includes(a.office || "")) return
+          if (!matchesOfficeFilter(a.office, filters.offices)) return
         }
         if (filters.agents.length > 0 && !filters.agents.includes(a.name)) return
 
@@ -559,10 +539,6 @@ export default function QuotesPage() {
   }, [data, filters.offices, filters.agents])
 
   const { officeSummary, otherOfficeStats } = useMemo(() => {
-    const officeMap: Record<string, string> = {
-      "Montclair": "MCM", "Montebello": "MB",
-      "Rancho Cucamonga": "RC", "Chino": "CH", "Claremont": "CH"
-    }
     const groups: Record<string, { nb: number; quotes: number; items: number }> = {
       "MCM": { nb: 0, quotes: 0, items: 0 },
       "MB": { nb: 0, quotes: 0, items: 0 },
@@ -585,17 +561,25 @@ export default function QuotesPage() {
         }
         if (filters.agents.length > 0 && !filters.agents.includes(a.name)) return
 
-        const mappedOffice = officeMap[a.office || ""] || a.office || "N/A"
-        if (mappedOffice === "N/A" || mappedOffice === "System") {
+        let mappedOffice = a.office || "N/A"
+        const upper = mappedOffice.toUpperCase()
+        if (upper === "MCM" || upper === "MC" || upper === "CM" || upper === "CL" || upper.includes("MONTCLAIR") || upper.includes("CLAREMONT")) {
+          mappedOffice = "MCM"
+        } else if (upper === "MB" || upper.includes("MONTEBELLO")) {
+          mappedOffice = "MB"
+        } else if (upper === "RC" || upper.includes("RANCHO")) {
+          mappedOffice = "RC"
+        } else if (upper === "CH" || upper.includes("CHINO")) {
+          mappedOffice = "CH"
+        }
+
+        if (mappedOffice === "N/A" || mappedOffice === "System" || !groups[mappedOffice]) {
           otherNB += a.nb_policies
           otherQuotes += a.quote_count
           otherItems += a.items
           return
         }
 
-        if (!groups[mappedOffice]) {
-          groups[mappedOffice] = { nb: 0, quotes: 0, items: 0 }
-        }
         groups[mappedOffice].nb += a.nb_policies
         groups[mappedOffice].quotes += a.quote_count
         groups[mappedOffice].items += a.items

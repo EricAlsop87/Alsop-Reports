@@ -55,6 +55,7 @@ export const REBEL_REWARDS_2026_SEED: RawRebelAgentRow[] = [
   { name: "Sylvia", autoItems: 25, ips: 0, afsPc: 490, ivanNlItems: 193 },
   { name: "Teyssy", autoItems: 3, ips: 3, afsPc: 8587, ivanNlItems: 0 },
   { name: "Zypher", autoItems: 2, ips: 0, afsPc: 0, ivanNlItems: 0 },
+  { name: "Valerie", autoItems: 0, ips: 0, afsPc: 0, ivanNlItems: 0 },
   { name: "Jessie", autoItems: 0, ips: 0, afsPc: 0, ivanNlItems: 0 },
   { name: "Angelina", autoItems: 0, ips: 0, afsPc: 0, ivanNlItems: 0 },
   { name: "Hrach", autoItems: 0, ips: 0, afsPc: 0, ivanNlItems: 0 },

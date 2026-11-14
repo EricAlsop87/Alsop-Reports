@@ -163,9 +163,7 @@ function LeaderboardCard({
 
     const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
       if (!gOff || !aOff) return false;
-      if (gOff === aOff) return true;
-      if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
-      return false;
+      return matchesOfficeFilter(aOff, [gOff]);
     };
 
     const teamAndOffice = matching.find((g: any) => g.team === agentTeam && matchesOfficeGoal(g.office, agentOffice));
@@ -948,9 +946,7 @@ export default function DailyReport() {
 
                   const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
                     if (!gOff || !aOff) return false;
-                    if (gOff === aOff) return true;
-                    if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
-                    return false;
+                    return matchesOfficeFilter(aOff, [gOff]);
                   };
 
                   // 1. Team + Office match (most specific)
@@ -982,9 +978,7 @@ export default function DailyReport() {
 
                   const matchesOfficeGoal = (gOff: string | null | undefined, aOff: string | null | undefined) => {
                     if (!gOff || !aOff) return false;
-                    if (gOff === aOff) return true;
-                    if (gOff === "MCM" && (aOff === "MCM" || aOff === "MC" || aOff === "CM")) return true;
-                    return false;
+                    return matchesOfficeFilter(aOff, [gOff]);
                   };
 
                   const teamAndOffice = matching.find((g: any) => g.team === agentTeam && matchesOfficeGoal(g.office, agentOffice));

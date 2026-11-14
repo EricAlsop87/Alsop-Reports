@@ -28,6 +28,7 @@ import {
   Pencil
 } from "lucide-react"
 import { ReferralEntry, ReferralSummary, isNonReferralLeadSource } from "@/lib/referralTypes"
+import { matchesOfficeFilter } from "@/lib/utils"
 import {
   getReferralsData,
   updateReferralEntry,
@@ -148,8 +149,8 @@ export function parseSoldDate(dateStr: string | null | undefined): number {
 }
 
 export const OFFICE_DICT: Record<string, { code: string; name: string }> = {
+  MCM: { code: "MCM", name: "Montclair / Claremont" },
   MC: { code: "MC", name: "Montclair" },
-  MCM: { code: "MCM", name: "Montclair" },
   CH: { code: "CH", name: "Chino" },
   CM: { code: "CM", name: "Claremont" },
   CL: { code: "CL", name: "Claremont" },
@@ -159,38 +160,38 @@ export const OFFICE_DICT: Record<string, { code: string; name: string }> = {
 }
 
 const PRODUCER_OFFICE_MAP: Record<string, string> = {
-  // Montclair (MC)
-  "eric alsop": "MC",
-  "misty torrez": "MC",
-  "misty": "MC",
-  "suzanne yniguez": "MC",
-  "suzanne": "MC",
-  "brigilda aquino": "MC",
-  "gilda aquino": "MC",
-  "gilda": "MC",
-  "alexandra quintana": "MC",
-  "alexandra": "MC",
-  "charmaine carrillo": "MC",
-  "charmaine": "MC",
-  "andrea alpine": "MC",
-  "andrea": "MC",
-  "christine lansing": "MC",
-  "christine": "MC",
-  "danielle self": "MC",
-  "danielle": "MC",
-
-  // Claremont (CM)
-  "lori ohlhauser": "CM",
-  "lori": "CM",
-  "dawn zenor": "CM",
-  "dawn": "CM",
-  "denice santos": "CM",
-  "denice": "CM",
-  "chris elliott": "CM",
-  "chris": "CM",
-  "frank villalobos": "CM",
-  "frank a villalobos": "CM",
-  "frank": "CM",
+  // Montclair / Claremont (MCM)
+  "eric alsop": "MCM",
+  "misty torrez": "MCM",
+  "misty": "MCM",
+  "suzanne yniguez": "MCM",
+  "suzanne": "MCM",
+  "brigilda aquino": "MCM",
+  "gilda aquino": "MCM",
+  "gilda": "MCM",
+  "alexandra quintana": "MCM",
+  "alexandra": "MCM",
+  "charmaine carrillo": "MCM",
+  "charmaine": "MCM",
+  "andrea alpine": "MCM",
+  "andrea": "MCM",
+  "christine lansing": "MCM",
+  "christine": "MCM",
+  "danielle self": "MCM",
+  "danielle": "MCM",
+  "lori ohlhauser": "MCM",
+  "lori": "MCM",
+  "dawn zenor": "MCM",
+  "dawn": "MCM",
+  "denice santos": "MCM",
+  "denice": "MCM",
+  "chris elliott": "MCM",
+  "chris": "MCM",
+  "frank villalobos": "MCM",
+  "frank a villalobos": "MCM",
+  "frank": "MCM",
+  "valerie granados": "MCM",
+  "valerie": "MCM",
 
   // Rancho Cucamonga (RC)
   "jennifer martinez": "RC",
@@ -471,10 +472,7 @@ export default function ReferralsPage() {
       if (e.producer) {
         const pCodes = getProducerOfficeCodes(e.producer)
         const matchOffice = selectedOffice === "all" || pCodes.some(c => 
-          c === selectedOffice || 
-          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
-          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
-          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
+          matchesOfficeFilter(c, [selectedOffice])
         )
         if (matchOffice) {
           set.add(e.producer)
@@ -509,13 +507,10 @@ export default function ReferralsPage() {
     const counts: Record<string, number> = {}
     entries.forEach(e => {
       const pCodes = getProducerOfficeCodes(e.producer)
-        const matchOffice = selectedOffice === "all" || pCodes.some(c => 
-          c === selectedOffice || 
-          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
-          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
-          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
-        )
-        if (matchOffice) {
+      const matchOffice = selectedOffice === "all" || pCodes.some(c => 
+        matchesOfficeFilter(c, [selectedOffice])
+      )
+      if (matchOffice) {
         const src = (e.lead_source || "Direct").trim()
         if (src && !isNonReferralLeadSource(src)) {
           counts[src] = (counts[src] || 0) + 1
@@ -566,10 +561,7 @@ export default function ReferralsPage() {
       if (selectedOffice !== "all") {
         const codes = getProducerOfficeCodes(e.producer)
         const matchOffice = codes.some(c => 
-          c === selectedOffice || 
-          (selectedOffice === "MC" && (c === "MCM" || c === "MC")) ||
-          (selectedOffice === "CM" && (c === "CL" || c === "CM")) ||
-          (selectedOffice === "CL" && (c === "CL" || c === "CM"))
+          matchesOfficeFilter(c, [selectedOffice])
         )
         if (!matchOffice) return false
       }
@@ -1361,7 +1353,7 @@ export default function ReferralsPage() {
               >
                 All
               </button>
-              {(["MC", "CH", "CM", "RC", "MB", "PQ"] as const).map(code => (
+              {(["MCM", "CH", "RC", "MB", "PQ"] as const).map(code => (
                 <button
                   key={code}
                   onClick={() => {
