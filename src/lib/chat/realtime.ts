@@ -140,8 +140,6 @@ export function subscribeToAllConversations(
   conversationIds: string[],
   callbacks: GlobalCallbacks,
 ): RealtimeChannel[] {
-  if (conversationIds.length === 0) return []
-
   const convSet = new Set(conversationIds)
   const seq = ++channelSeq
   const channel = supabase.channel(`global:${agentId}:${seq}`)
@@ -154,10 +152,47 @@ export function subscribeToAllConversations(
       schema: 'public',
       table: 'chat_messages',
     },
-    (payload) => {
+    async (payload) => {
       const newMsg = payload.new as any
-      if (newMsg && convSet.has(newMsg.conversation_id)) {
+      if (!newMsg) return
+
+      if (convSet.has(newMsg.conversation_id)) {
         callbacks.onNewMessage(newMsg)
+      } else {
+        // Dynamically verify membership for newly created DMs / channels created after mount
+        try {
+          const { data } = await supabase
+            .from('chat_conversation_members')
+            .select('conversation_id')
+            .eq('conversation_id', newMsg.conversation_id)
+            .eq('agent_id', agentId)
+            .maybeSingle()
+
+          if (data?.conversation_id) {
+            convSet.add(data.conversation_id)
+            callbacks.onNewMessage(newMsg)
+          }
+        } catch {}
+      }
+    },
+  )
+
+  // Listen for new conversations or memberships created for this agent
+  channel.on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'chat_conversation_members',
+      filter: `agent_id=eq.${agentId}`,
+    },
+    (payload) => {
+      const newMember = payload.new as any
+      if (newMember?.conversation_id) {
+        convSet.add(newMember.conversation_id)
+        if (callbacks.onNewConversation) {
+          callbacks.onNewConversation(newMember.conversation_id)
+        }
       }
     },
   )

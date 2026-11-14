@@ -197,4 +197,5 @@ export interface ConversationCallbacks {
 
 export interface GlobalCallbacks {
   onNewMessage: (message: Message) => void
+  onNewConversation?: (conversationId: string) => void
 }

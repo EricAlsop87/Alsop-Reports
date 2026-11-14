@@ -11,6 +11,7 @@ import {
   Monitor, MessageSquare, ShieldAlert, Send, Camera, Eye, EyeOff
 } from "lucide-react"
 import { sendDesktopNotification, requestDesktopPermission } from "@/lib/chat/notifications"
+import { playNotificationSound } from "@/lib/chat/sound"
 import { useToast } from "@/components/ui/Toast"
 import AvatarEditor from "react-avatar-editor"
 
@@ -1055,7 +1056,10 @@ export default function PersonalSettingsPage() {
                 onClick={async () => {
                   const firstName = agent?.name?.split(' ')[0] || 'there'
 
-                  // 1. Always fire the in-app toast (works immediately)
+                  // 1. Play chime sound
+                  playNotificationSound()
+
+                  // 2. Always fire the in-app toast (works immediately)
                   addToast({
                     title: `Hey ${firstName}! 👋`,
                     message: 'This is what your chat notifications will look like. Looking good!',
@@ -1063,7 +1067,7 @@ export default function PersonalSettingsPage() {
                     duration: 6000,
                   })
 
-                  // 2. Try desktop notification too
+                  // 3. Try desktop notification too
                   if (typeof window !== 'undefined' && 'Notification' in window) {
                     if (Notification.permission === 'default') {
                       const perm = await requestDesktopPermission()

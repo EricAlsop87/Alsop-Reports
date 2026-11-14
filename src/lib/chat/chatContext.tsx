@@ -509,9 +509,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           .select('conversation_id')
           .eq('agent_id', currentAgent.id)
 
-        if (!memberships || memberships.length === 0 || !isSubscribed) return
-
-        const convIds = memberships.map((m) => m.conversation_id)
+        const convIds = (memberships || []).map((m) => m.conversation_id)
 
         // IMPORTANT: await cleanup of old channels BEFORE creating new ones.
         // Without await, the old channel teardown races with the new channel
@@ -524,6 +522,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         if (!isSubscribed) return
 
         const channels = subscribeToAllConversations(currentAgent.id, convIds, {
+          onNewConversation: async () => {
+            try {
+              const counts = await getUnreadCounts(currentAgent.id)
+              if (isSubscribed) setUnreadCounts(counts)
+            } catch {}
+          },
           onNewMessage: async (msg) => {
             if (msg.sender_id === currentAgent.id) return
 
